@@ -1,0 +1,13 @@
+{
+  "name": "procedural-map-generation-notes",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "26.13.0"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "publish:local": "node build.mjs --publish",
+    "publish:r2": "sh ${CHRISTIANJMILLS_SITE:-../christianjmills}/tools/cloudflare.sh node build.mjs --publish --r2"
+  }
+}
