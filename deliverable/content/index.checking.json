@@ -1,0 +1,22 @@
+{
+ "format": "slib-checking@1",
+ "source": "index.mdoc",
+ "source_sha256": "99ebe74573a2637d7f6848cc7903edad3c96b143888a6171c1039514d8cb0934",
+ "checked": "2026-11-08",
+ "claims": {
+  "cited": 16,
+  "verified": 16,
+  "own": 17,
+  "own_run": 5
+ },
+ "verifiers": [
+  {
+   "contract": "verify-claim@1",
+   "implementation": "claude-tier",
+   "version": "1",
+   "model": "claude-opus-5-5"
+  }
+ ],
+ "last_verified": "2026-11-08",
+ "open": []
+}

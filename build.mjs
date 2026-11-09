@@ -1,6 +1,7 @@
-// The deliverable's build: stage the bundle in dist/bundle/, render the no-JavaScript fallback
-// there from the same code the interactive runs, stamp the commit it was built from, and
-// optionally hand the bundle to the site's publish command.
+// The deliverable's build: stage the bundle in dist/bundle/, resolve the page's passage-id
+// citations into the site's locators, regenerate and check the page's own measurements, render the
+// no-JavaScript fallback there from the same code the interactive runs, stamp the commit it was
+// built from, and optionally hand the bundle to the site's publish command.
 //
 //   node build.mjs                     stage the bundle only
 //   node build.mjs --publish <args>    stage, then run the site's publish command with <args>
@@ -9,11 +10,14 @@
 // checkout of cj-mills/christianjmills: $CHRISTIANJMILLS_SITE, or ../christianjmills beside this
 // repo. That checkout's spec verifies the bundle and its lockfile is the one pinned.
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crc32, deflateSync } from 'node:zlib';
+import { applyCitations } from './apply-citations.mjs';
 import { generate, openShare } from './deliverable/assets/caves.js';
+import { checkOwnRuns, measure } from './measure.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = join(here, 'deliverable');
@@ -42,6 +46,50 @@ rmSync(bundle, { recursive: true, force: true });
 cpSync(source, bundle, { recursive: true });
 const manifestPath = join(bundle, 'manifest.json');
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+
+// The page cites passages by id ({% cite id="…" /%}). source-library's `slib trace` resolved them
+// into the site's locators in the committed citations file; applying it is plain string splicing,
+// refused if the page changed since it was traced. The citations file stays out of the bundle.
+const entry = join(source, manifest.content.entry);
+const citationsFile = entry.replace(/\.mdoc$/, '.citations.json');
+const page = readFileSync(entry);
+writeFileSync(join(bundle, manifest.content.entry), applyCitations(page, JSON.parse(readFileSync(citationsFile, 'utf8'))));
+rmSync(join(bundle, manifest.content.entry.replace(/\.mdoc$/, '.citations.json')));
+
+// The data for the page's "how this was checked" note, written by `slib note` from the private
+// evidence: it must describe this exact page, and a published bundle may carry no open flags.
+const checkingFile = entry.replace(/\.mdoc$/, '.checking.json');
+const checking = JSON.parse(readFileSync(checkingFile, 'utf8'));
+rmSync(join(bundle, manifest.content.entry.replace(/\.mdoc$/, '.checking.json')));
+if (checking.format !== 'slib-checking@1') throw new Error(`${checkingFile}: not a slib-checking@1 file`);
+if (checking.source_sha256 !== createHash('sha256').update(page).digest('hex'))
+  throw new Error(`${checkingFile} describes another version of the page; run \`slib note\` on it`);
+if (checking.open.length && publishArgs.includes('--r2'))
+  throw new Error(`open flags: ${checking.open.map((o) => `${o.claim ? `claim ${o.claim}` : 'page'} ${o.state}`).join(', ')}`);
+
+// Every number the page marks {% own-run values="…" /%} is regenerated here and must be the one
+// its sentence states.
+const measured = measure();
+const runProblems = checkOwnRuns(page.toString('utf8'), measured);
+if (runProblems.length) throw new Error(`the page's own numbers don't match measure.mjs:\n  ${runProblems.join('\n  ')}`);
+const ownRuns = (page.toString('utf8').match(/\{%\s*own-run\b/g) ?? []).length;
+if (ownRuns !== checking.claims.own_run) throw new Error(`the page has ${ownRuns} own-run claims, the checking note ${checking.claims.own_run}`);
+
+// The manifest carries the note's facts; the site words and places it.
+const implementations = { 'claude-tier': 'Claude tier' };
+manifest.checked = {
+  claims: checking.claims.cited,
+  supported: checking.claims.verified,
+  measured: ownRuns,
+  verifiers: checking.verifiers.map((v) => ({
+    name: `${v.contract}, ${implementations[v.implementation] ?? v.implementation}`,
+    version: v.version,
+    ...(v.model ? { model: v.model } : {}),
+  })),
+  lastVerified: checking.last_verified,
+  openFlags: checking.open.length,
+};
+console.log(`checked: ${manifest.checked.supported} of ${manifest.checked.claims} cited claims supported (last ${manifest.checked.lastVerified}); ${ownRuns} own-run claims, ${Object.keys(measured).length} values regenerated; ${manifest.checked.openFlags} open flags`);
 if (clean) manifest.code.commit = commit;
 else console.warn('working tree has changes: the bundle names no commit');
 writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
