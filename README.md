@@ -22,6 +22,8 @@ deliverable/
 measure.mjs                     every number of our own the page states, regenerated from caves.js
 apply-citations.mjs             source-library's splicer, copied verbatim (source-library aa45a58)
 build.mjs                       stages the bundle in dist/bundle/ and publishes it
+spike/wasm-size/                the size spike for a Rust generator core as WebAssembly (its README)
+rust-toolchain.toml, mise.toml  the Rust toolchain, wasm-bindgen and wasm-opt this repo pins
 ```
 
 The page is published to the site as a deliverable bundle. The site repo,

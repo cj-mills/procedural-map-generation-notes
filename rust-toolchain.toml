@@ -1,0 +1,5 @@
+# The Rust toolchain for this repo's generator core (machine-setup's mise honours this file).
+[toolchain]
+channel = "stable"
+profile = "minimal"
+targets = ["wasm32-unknown-unknown"]

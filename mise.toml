@@ -1,0 +1,5 @@
+# Tools pinned for this repo. wasm-bindgen's CLI must match the wasm-bindgen crate version in
+# Cargo.lock exactly: it refuses a module built by another version.
+[tools]
+"github:wasm-bindgen/wasm-bindgen" = "0.2.130"
+"aqua:WebAssembly/binaryen" = "133"

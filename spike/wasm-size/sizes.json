@@ -1,0 +1,253 @@
+{
+  "measuredWith": {
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+    "wasmBindgen": "wasm-bindgen 0.2.130",
+    "wasmOpt": "wasm-opt version 133 (version_133)",
+    "node": "v26.13.0",
+    "gzip": "node:zlib gzipSync, default level"
+  },
+  "limitBytes": 51200,
+  "rows": [
+    {
+      "name": "full",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "noise",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 54729,
+      "wasmGz": 24942,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "base (no families)",
+      "features": [
+        "wasm"
+      ],
+      "wasm": 33000,
+      "wasmGz": 14797,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "full, serde_json recipe",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "noise",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm",
+        "serde"
+      ],
+      "wasm": 163500,
+      "wasmGz": 64848,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without rooms",
+      "features": [
+        "bsp",
+        "cellular",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "noise",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 54466,
+      "wasmGz": 24886,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without bsp",
+      "features": [
+        "rooms",
+        "cellular",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "noise",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 53635,
+      "wasmGz": 24450,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without cellular",
+      "features": [
+        "rooms",
+        "bsp",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "noise",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 54451,
+      "wasmGz": 24708,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without drunkard",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "dla",
+        "voronoi",
+        "noise",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 54531,
+      "wasmGz": 24818,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without dla",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "drunkard",
+        "voronoi",
+        "noise",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 53845,
+      "wasmGz": 24471,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without voronoi",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "drunkard",
+        "dla",
+        "noise",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 53734,
+      "wasmGz": 24480,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without noise",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "prefab",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 53331,
+      "wasmGz": 24174,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without prefab",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "noise",
+        "combine",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 53069,
+      "wasmGz": 24211,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without combine",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "noise",
+        "prefab",
+        "analysis",
+        "wasm"
+      ],
+      "wasm": 53933,
+      "wasmGz": 24538,
+      "glue": 12796,
+      "glueGz": 2957
+    },
+    {
+      "name": "without analysis",
+      "features": [
+        "rooms",
+        "bsp",
+        "cellular",
+        "drunkard",
+        "dla",
+        "voronoi",
+        "noise",
+        "prefab",
+        "combine",
+        "wasm"
+      ],
+      "wasm": 50313,
+      "wasmGz": 23042,
+      "glue": 12796,
+      "glueGz": 2957
+    }
+  ]
+}

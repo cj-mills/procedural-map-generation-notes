@@ -1,0 +1,42 @@
+[package]
+name = "mapgen-size-spike"
+version = "0.0.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Size spike: does a Rust map-generator core of the talk's algorithms fit a 50 KB gzipped WebAssembly module?"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# Every family on by default; the size script turns them off one at a time to measure each share.
+default = ["rooms", "bsp", "cellular", "drunkard", "dla", "voronoi", "noise", "prefab", "combine", "analysis", "wasm"]
+rooms = []
+bsp = []
+cellular = []
+drunkard = []
+dla = []
+voronoi = []
+noise = []
+prefab = []
+combine = []
+analysis = []
+# The page's exports, through wasm-bindgen. Off for the native CLI test.
+wasm = ["dep:wasm-bindgen"]
+# The recipe from JSON through serde_json instead of the hand-written text parser.
+serde = ["dep:serde", "dep:serde_json"]
+
+[dependencies]
+wasm-bindgen = { version = "=0.2.130", optional = true }
+serde = { version = "1", default-features = false, features = ["derive", "alloc"], optional = true }
+serde_json = { version = "1", default-features = false, features = ["alloc"], optional = true }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+# Not `true`: that also drops the `target_features` section, and wasm-bindgen then can't tell
+# which Wasm features are on and writes larger glue. measure.mjs strips the rest with wasm-opt.
+strip = "debuginfo"
