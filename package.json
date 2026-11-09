@@ -7,6 +7,8 @@
   },
   "scripts": {
     "build": "node build.mjs",
+    "check": "node lab/check.mjs",
+    "measure": "node lab/measure.mjs",
     "publish:local": "node build.mjs --publish",
     "publish:r2": "sh ${CHRISTIANJMILLS_SITE:-../christianjmills}/tools/cloudflare.sh node build.mjs --publish --r2"
   }

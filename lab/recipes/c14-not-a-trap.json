@@ -1,0 +1,12 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "A prefab vault in a room that fits it",
+  "note": "The talk's demo c14-not-a-trap, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "rooms", "attempts": 20, "min_size": 2, "max_size": 9},
+    {"stage": "prefab", "shape": "vault", "place": "room"}
+  ]
+}

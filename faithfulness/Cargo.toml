@@ -1,0 +1,22 @@
+# The faithfulness check's harness: Herbert Wolverson's own demo code, run without a window over
+# many seeds, measured with the core's trait code. Its own workspace, so the core's lockfile never
+# carries bracket-lib. See faithfulness/README.md.
+[workspace]
+
+[package]
+name = "wolverson-harness"
+version = "0.1.0"
+# The talk's code is edition 2018 (it names a variable `gen`, a keyword from 2024 on).
+edition = "2018"
+license = "MIT"
+publish = false
+build = "build.rs"
+
+[dependencies]
+# The talk's version. Cargo.lock started as a copy of the talk's own lockfile at 604e5b5a, so its
+# bracket-* crates, rand and rand_xorshift are the versions the talk ran with.
+bracket-lib = "=0.8.1"
+map-lab-core = { path = "../lab/core", features = ["report"] }
+
+[profile.release]
+opt-level = 3

@@ -1,0 +1,11 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Noise as an overworld",
+  "note": "The talk's demo c11-overworld, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "noise", "mode": "overworld", "octaves": 10, "gain": 0.1, "lacunarity": 5.0, "frequency": 2.0}
+  ]
+}

@@ -1,0 +1,15 @@
+[package]
+name = "map-lab-wasm"
+description = "The map lab core's WebAssembly binding for the page."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+map-lab-core = { path = "../core" }
+# Must match the wasm-bindgen CLI pinned in the repo's mise.toml exactly.
+wasm-bindgen = "=0.2.130"

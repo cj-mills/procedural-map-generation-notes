@@ -1,0 +1,14 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Rooms on the path",
+  "note": "The talk's demo c21-hot-rooms, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "rooms", "attempts": 50, "min_size": 2, "max_size": 9},
+    {"stage": "start", "at": "left"},
+    {"stage": "exit", "at": "right"},
+    {"stage": "hot-rooms"}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Noise: octaves, gain, lacunarity, frequency",
+  "note": "The talk's demo c10-perlin, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "noise", "mode": "height", "octaves": 1, "gain": 0.2, "lacunarity": 1.0, "frequency": 1.0},
+    {"stage": "noise", "mode": "height", "octaves": 10, "gain": 0.2, "lacunarity": 1.0, "frequency": 1.0},
+    {"stage": "noise", "mode": "height", "octaves": 10, "gain": 0.5, "lacunarity": 1.0, "frequency": 1.0},
+    {"stage": "noise", "mode": "height", "octaves": 10, "gain": 0.2, "lacunarity": 5.0, "frequency": 1.0},
+    {"stage": "noise", "mode": "height", "octaves": 10, "gain": 0.2, "lacunarity": 5.0, "frequency": 5.0}
+  ]
+}

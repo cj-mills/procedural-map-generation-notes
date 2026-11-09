@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cj-mills/procedural-map-generation-notes/blob/main/lab/schema/recipe.schema.json",
+  "title": "Map lab recipe",
+  "description": "A map lab recipe: a pipeline of stages plus a seed. Building it gives the same map on every platform, tile for tile.",
+  "type": "object",
+  "required": ["format", "seed", "pipeline"],
+  "additionalProperties": false,
+  "properties": {
+    "format": {"const": "map-lab-recipe/1", "description": "The recipe format and its version."},
+    "title": {"type": "string", "description": "Free text for people; ignored by the build."},
+    "note": {"type": "string", "description": "Free text for people; ignored by the build."},
+    "seed": {"type": "integer", "minimum": 0, "maximum": 9007199254740991, "description": "Seeds the one random number generator every stage draws from, in pipeline order. Kept within 2^53 - 1 so it survives JavaScript numbers."},
+    "width": {"type": "integer", "minimum": 24, "maximum": 256, "default": 80, "description": "Map size in tiles; the talk's maps are 80 by 50."},
+    "height": {"type": "integer", "minimum": 24, "maximum": 256, "default": 50, "description": "Map size in tiles; the talk's maps are 80 by 50."},
+    "pipeline": {"$ref": "#/$defs/pipeline"}
+  },
+  "$defs": {
+    "pipeline": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Stages run in order on one map. A generator starts a new map and forgets what was placed on the old one. Order rules the parser enforces: exit needs a start before it; hot-path needs an exit; hot-rooms needs a rooms or bsp generator and an exit; prefab with place=room needs a rooms or bsp generator; dla-erode needs a stage before it.",
+      "items": {"oneOf": [{"$ref": "#/$defs/stage-rooms"}, {"$ref": "#/$defs/stage-bsp"}, {"$ref": "#/$defs/stage-cellular"}, {"$ref": "#/$defs/stage-drunkard"}, {"$ref": "#/$defs/stage-dla"}, {"$ref": "#/$defs/stage-dla-erode"}, {"$ref": "#/$defs/stage-voronoi"}, {"$ref": "#/$defs/stage-noise"}, {"$ref": "#/$defs/stage-combine"}, {"$ref": "#/$defs/stage-prefab"}, {"$ref": "#/$defs/stage-cull"}, {"$ref": "#/$defs/stage-start"}, {"$ref": "#/$defs/stage-exit"}, {"$ref": "#/$defs/stage-hot-path"}, {"$ref": "#/$defs/stage-hot-rooms"}]}
+    },
+    "stage-rooms": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Generator. Random rectangular rooms, each kept if it doesn't touch an earlier one, then sorted left to right and joined in that order by L-shaped corridors.",
+      "x-talk-demo": "c01-rooms",
+      "properties": {
+        "stage": {"const": "rooms"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "attempts": {"type": "integer", "minimum": 1, "maximum": 500, "default": 20, "description": "Rooms tried; each one that overlaps an earlier room (touching counts) is discarded."},
+        "min_size": {"type": "integer", "minimum": 1, "maximum": 30, "default": 2, "description": "Smallest room side, in the talk's rectangle units: a side of n covers n + 1 tiles."},
+        "max_size": {"type": "integer", "minimum": 1, "maximum": 30, "default": 9, "description": "Largest room side, inclusive, in the same units."}
+      }
+    },
+    "stage-bsp": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Generator. Rooms placed inside ever-smaller quarters of the map: each attempt picks a rectangle from a growing list, tries a room near its corner, and on success adds that rectangle's four quarters to the list. Then sorted and joined like rooms.",
+      "x-talk-demo": "c02-bsprooms",
+      "properties": {
+        "stage": {"const": "bsp"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "attempts": {"type": "integer", "minimum": 1, "maximum": 5000, "default": 240, "description": "Room placements tried."}
+      }
+    },
+    "stage-cellular": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Generator. Random noise, then smoothing passes: a tile becomes wall with five or more wall neighbours of eight, or none, and floor otherwise. The outer ring keeps its noise.",
+      "x-talk-demo": "c03-cellular",
+      "properties": {
+        "stage": {"const": "cellular"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "wall_percent": {"type": "integer", "minimum": 0, "maximum": 100, "default": 55, "description": "The chance, in percent, that a tile starts as wall."},
+        "iterations": {"type": "integer", "minimum": 0, "maximum": 100, "default": 10, "description": "Smoothing passes."}
+      }
+    },
+    "stage-drunkard": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Generator. Diggers that stagger at random, the first from the centre and each later one from a random floor tile, until a share of the map is floor.",
+      "x-talk-demo": "c04-drunkard",
+      "properties": {
+        "stage": {"const": "drunkard"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "lifetime": {"type": "integer", "minimum": 1, "maximum": 100000, "default": 200, "description": "Steps a digger takes before it stops, less one: it digs lifetime + 1 tiles unless it leaves the map."},
+        "floor_divisor": {"type": "integer", "minimum": 1, "maximum": 20, "default": 3, "description": "Digging stops once floor covers at least 1 / floor_divisor of the map."}
+      }
+    },
+    "stage-dla": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Generator. Diffusion-limited aggregation from a small cross at the centre, until a share of the map is floor: particles from random points wander (walk), fly straight at the centre (attractor), or fly straight and land mirrored about the centre column (symmetric), and stick where they meet floor.",
+      "x-talk-demo": "c05-dla, c06-dla-attractor, c07-dla-symmetry",
+      "properties": {
+        "stage": {"const": "dla"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "mode": {"enum": ["walk", "attractor", "symmetric"], "default": "walk", "description": "How particles move: walk at random, fly straight at the centre, or fly straight and land mirrored."},
+        "floor_divisor": {"type": "integer", "minimum": 1, "maximum": 20, "default": 3, "description": "Particles stop once floor covers at least 1 / floor_divisor of the map."}
+      }
+    },
+    "stage-dla-erode": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Modifier. Particles dropped on random floor tiles wander until they leave the floor and carve the wall tile they reach.",
+      "x-talk-demo": "c08-dla-erosion",
+      "properties": {
+        "stage": {"const": "dla-erode"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "iterations": {"type": "integer", "minimum": 0, "maximum": 100000, "default": 500, "description": "Particles dropped."}
+      }
+    },
+    "stage-voronoi": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Generator. Random seed points; every tile belongs to its nearest seed; walls where neighbouring tiles belong to different seeds, and around the edge.",
+      "x-talk-demo": "c08a-voronoi",
+      "properties": {
+        "stage": {"const": "voronoi"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "seeds": {"type": "integer", "minimum": 1, "maximum": 200, "default": 16, "description": "Seed points, one cell each."},
+        "metric": {"enum": ["pythagoras", "manhattan", "chebyshev"], "default": "pythagoras", "description": "The distance measure that decides the walls. The step-through shows all three."}
+      }
+    },
+    "stage-noise": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Generator. Fractal simplex noise (fBm): a grey-scale height map (height), thresholded into water, grass and mountain (overworld), redrawn as the sampling scale shrinks (zoom), or two noises blended as the zoom deepens (double). Every noise stage of a recipe samples the same noise, from the recipe's seed.",
+      "x-talk-demo": "c10-perlin, c11-overworld, c12-noisezoom, c13-double-noise",
+      "properties": {
+        "stage": {"const": "noise"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "mode": {"enum": ["overworld", "height", "zoom", "double"], "default": "overworld", "description": "What the noise becomes: an overworld, a height map, a zoom, or a double-noise zoom."},
+        "octaves": {"type": "integer", "minimum": 1, "maximum": 16, "default": 10, "description": "Layers of noise summed, each finer than the last."},
+        "gain": {"type": "number", "minimum": 0, "maximum": 4, "default": 0.10000000149011612, "description": "How much each octave counts relative to the one before."},
+        "lacunarity": {"type": "number", "minimum": 0, "maximum": 16, "default": 5, "description": "How much finer each octave is than the one before."},
+        "frequency": {"type": "number", "minimum": 0, "maximum": 64, "default": 2, "description": "How fine the first octave is."}
+      }
+    },
+    "stage-combine": {
+      "type": "object",
+      "required": ["stage", "inputs"],
+      "additionalProperties": false,
+      "description": "Generator. Each input pipeline runs on a fresh map; the result takes the left half from the first and the right half from the second.",
+      "x-talk-demo": "c09-combination",
+      "properties": {
+        "stage": {"const": "combine"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "join": {"enum": ["halves"], "default": "halves", "description": "How the inputs are joined: the left half of the first and the right half of the second."},
+        "inputs": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/pipeline"}, "description": "Two pipelines, run in order on fresh maps of the recipe's size."}
+      }
+    },
+    "stage-prefab": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Modifier. Stamps a prefab: the vault (treasure ringed by traps, 6 by 5) in a random room big enough for it, on any open 7-by-6 patch of floor, or at the centre; or the spine (our own 11-wide hall, standing in for the talk's) down the middle of the map.",
+      "x-talk-demo": "c09-combination, c14-not-a-trap, c15-still-not-a-trap",
+      "properties": {
+        "stage": {"const": "prefab"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "shape": {"enum": ["vault", "spine"], "default": "vault", "description": "The prefab: the vault, or the spine."},
+        "place": {"enum": ["room", "open-area", "center"], "default": "room", "description": "Where it goes: in a room that fits it, on any open patch it fits, or at the centre. The spine only goes at the centre."}
+      }
+    },
+    "stage-cull": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Analysis. Finds the open tile nearest the centre and marks, or removes, every walkable tile that can't be walked to from it.",
+      "x-talk-demo": "c16-unreachable, c17-starting-left",
+      "properties": {
+        "stage": {"const": "cull"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "from": {"enum": ["center"], "default": "center", "description": "Where reachability is measured from: the open tile nearest the centre."},
+        "mode": {"enum": ["remove", "mark"], "default": "remove", "description": "Remove unreachable floor (make it wall), or only mark it."}
+      }
+    },
+    "stage-start": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Placement. The start: the open tile nearest the middle of the left edge, or nearest the centre.",
+      "x-talk-demo": "c17-starting-left, c19-ending-dijkstra",
+      "properties": {
+        "stage": {"const": "start"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "at": {"enum": ["left", "center"], "default": "left", "description": "Where the start goes."}
+      }
+    },
+    "stage-exit": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Placement. The exit: the open tile nearest the middle of the right edge, or the reachable tile farthest from the start by walking distance; then the shortest path from the start to it.",
+      "x-talk-demo": "c18-ending-right, c19-ending-dijkstra",
+      "properties": {
+        "stage": {"const": "exit"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "at": {"enum": ["right", "farthest"], "default": "right", "description": "Where the exit goes."}
+      }
+    },
+    "stage-hot-path": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Analysis. Walking distance from the start-to-exit path: tiles within the radius are on the hot path; with cull set, every tile that far or farther from the path, other than the path, becomes wall.",
+      "x-talk-demo": "c20-hot-path",
+      "properties": {
+        "stage": {"const": "hot-path"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "radius": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 10, "description": "Tiles fewer than this many steps from the path are on the hot path."},
+        "cull": {"type": "integer", "minimum": 0, "maximum": 1000, "default": 0, "description": "If above zero, tiles this many steps or more from the path, other than the path, become wall."}
+      }
+    },
+    "stage-hot-rooms": {
+      "type": "object",
+      "required": ["stage"],
+      "additionalProperties": false,
+      "description": "Analysis. Marks the rooms the start-to-exit path passes through (inside a room or on the row below it), and the rest.",
+      "x-talk-demo": "c21-hot-rooms",
+      "properties": {
+        "stage": {"const": "hot-rooms"},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."}
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Diffusion-limited aggregation, attractor",
+  "note": "The talk's demo c06-dla-attractor, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "dla", "mode": "attractor", "floor_divisor": 3}
+  ]
+}

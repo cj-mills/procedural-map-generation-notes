@@ -1,0 +1,11 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Random rooms joined by corridors",
+  "note": "The talk's demo c01-rooms, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "rooms", "attempts": 20, "min_size": 2, "max_size": 9}
+  ]
+}

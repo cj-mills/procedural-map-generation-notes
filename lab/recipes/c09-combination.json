@@ -1,0 +1,12 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Two maps combined, with a prefab",
+  "note": "The talk's demo c09-combination, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "combine", "join": "halves", "inputs": [[{"stage": "bsp", "attempts": 240}], [{"stage": "cellular", "wall_percent": 55, "iterations": 4}]]},
+    {"stage": "prefab", "shape": "spine", "place": "center"}
+  ]
+}

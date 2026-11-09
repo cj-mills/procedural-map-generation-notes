@@ -1,0 +1,414 @@
+{
+  "format": "map-lab-faithfulness/1",
+  "ours": "data/traits.json",
+  "talk": "../faithfulness/talk-traits.json",
+  "method": "For each demo and trait: [mean, standard deviation] for ours and for the talk's code, the two-sample Kolmogorov-Smirnov statistic D and its asymptotic p-value, and the effect size (difference of means over the pooled standard deviation). A trait differs when p < 0.01; KS is conservative for whole-number traits. Traits are over finished maps only: seeds with guard-hit (a loop the talk leaves uncapped that didn't end, counted per side in unfinished) are left out. failureRates: [ours, talk's, p], the share of seeds with each failure (for failures read from a finished map's traits, the share of finished seeds) and a two-proportion z-test's p-value.",
+  "tally": {"traits": 183, "differ": 1},
+  "demos": [
+    {
+      "id": "c01-rooms",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c01-rooms/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "traits": {
+        "floor_share": {"ours": [0.16113, 0.025437], "talk": [0.161586, 0.024809], "ksD": 0.08, "ksP": 0.527189, "effect": -0.018159, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "corridor_ratio": {"ours": [0.195976, 0.043299], "talk": [0.196455, 0.046751], "ksD": 0.1, "ksP": 0.256221, "effect": -0.010629, "verdict": "consistent"},
+        "path": {"ours": [150.84, 32.613996], "talk": [153.32, 29.397597], "ksD": 0.09, "ksP": 0.376659, "effect": -0.079878, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "rooms": {"ours": [12.645, 1.53975], "talk": [12.685, 1.639884], "ksD": 0.035, "ksP": 0.999613, "effect": -0.025148, "verdict": "consistent"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c02-bsprooms",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c02-bsprooms/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "traits": {
+        "floor_share": {"ours": [0.23317, 0.030643], "talk": [0.231581, 0.028941], "ksD": 0.085, "ksP": 0.448562, "effect": 0.053306, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "corridor_ratio": {"ours": [0.142444, 0.030689], "talk": [0.140711, 0.028973], "ksD": 0.1, "ksP": 0.256221, "effect": 0.058068, "verdict": "consistent"},
+        "path": {"ours": [161.215, 28.02832], "talk": [158.67, 29.443432], "ksD": 0.07, "ksP": 0.695921, "effect": 0.088538, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "rooms": {"ours": [18.29, 2.491372], "talk": [18.14, 2.399832], "ksD": 0.105, "ksP": 0.207811, "effect": 0.061324, "verdict": "consistent"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c03-cellular",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c03-cellular/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "traits": {
+        "floor_share": {"ours": [0.636764, 0.023229], "talk": [0.635061, 0.025159], "ksD": 0.06, "ksP": 0.853707, "effect": 0.070314, "verdict": "consistent"},
+        "regions": {"ours": [17.23, 4.565228], "talk": [17.315, 4.85527], "ksD": 0.05, "ksP": 0.9596, "effect": -0.018037, "verdict": "consistent"},
+        "dead_ends": {"ours": [69.095, 10.540469], "talk": [70.62, 11.605561], "ksD": 0.08, "ksP": 0.527189, "effect": -0.137563, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.131503, 0.013337], "talk": [0.13097, 0.014603], "ksD": 0.065, "ksP": 0.778707, "effect": 0.038109, "verdict": "consistent"},
+        "path": {"ours": [102.75, 8.582164], "talk": [102.041096, 6.743453], "ksD": 0.092573, "ksP": 0.582203, "effect": 0.091854, "nulls": [72, 54], "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {"disconnected": [1, 1, 1], "no-path": [0.36, 0.27, 0.052684]}
+    },
+    {
+      "id": "c04-drunkard",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c04-drunkard/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "traits": {
+        "floor_share": {"ours": [0.338791, 0.004636], "talk": [0.338665, 0.004518], "ksD": 0.055, "ksP": 0.915398, "effect": 0.027583, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [24.285, 5.928703], "talk": [24.115, 5.872325], "ksD": 0.05, "ksP": 0.9596, "effect": 0.028811, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.05514, 0.014766], "talk": [0.053953, 0.014454], "ksD": 0.085, "ksP": 0.448562, "effect": 0.081217, "verdict": "consistent"},
+        "path": {"ours": [75.02, 13.479916], "talk": [74.735, 14.167866], "ksD": 0.04, "ksP": 0.996621, "effect": 0.02061, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c05-dla",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c05-dla/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "traits": {
+        "floor_share": {"ours": [0.33325, 0], "talk": [0.33325, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [113.065, 9.023185], "talk": [113.11, 8.57939], "ksD": 0.06, "ksP": 0.853707, "effect": -0.005111, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.217416, 0.017542], "talk": [0.217446, 0.016392], "ksD": 0.07, "ksP": 0.695921, "effect": -0.001768, "verdict": "consistent"},
+        "path": {"ours": [87.565, 6.425121], "talk": [87.65, 6.250025], "ksD": 0.04, "ksP": 0.996621, "effect": -0.013411, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c06-dla-attractor",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c06-dla-attractor/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "Our line to the centre is the standard error-accumulating Bresenham; the library's octant-based one can break ties the other way.",
+      "traits": {
+        "floor_share": {"ours": [0.33325, 0], "talk": [0.33325, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "regions": {"ours": [26.25, 6.03653], "talk": [24.825, 5.661682], "ksD": 0.11, "ksP": 0.166751, "effect": 0.243502, "verdict": "consistent"},
+        "dead_ends": {"ours": [63.995, 7.953064], "talk": [62.435, 8.039836], "ksD": 0.09, "ksP": 0.376659, "effect": 0.195084, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.119677, 0.012609], "talk": [0.119359, 0.014028], "ksD": 0.075, "ksP": 0.610654, "effect": 0.023906, "verdict": "consistent"},
+        "path": {"ours": [60.903846, 3.98348], "talk": [61.195946, 4.666655], "ksD": 0.059252, "ksP": 0.94631, "effect": -0.067327, "nulls": [44, 52], "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {"disconnected": [1, 1, 1], "no-path": [0.22, 0.26, 0.348972]}
+    },
+    {
+      "id": "c07-dla-symmetry",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c07-dla-symmetry/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "Our line to the centre is the standard error-accumulating Bresenham; the library's octant-based one can break ties the other way.",
+      "traits": {
+        "floor_share": {"ours": [0.333363, 0.000125], "talk": [0.333371, 0.000125], "ksD": 0.035, "ksP": 0.999613, "effect": -0.070016, "verdict": "consistent"},
+        "regions": {"ours": [25.43, 8.111974], "talk": [23.82, 7.534684], "ksD": 0.08, "ksP": 0.527189, "effect": 0.205655, "verdict": "consistent"},
+        "dead_ends": {"ours": [64.17, 11.035853], "talk": [62.32, 11.321594], "ksD": 0.1, "ksP": 0.256221, "effect": 0.165479, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.120905, 0.020132], "talk": [0.119083, 0.018711], "ksD": 0.05, "ksP": 0.9596, "effect": 0.093742, "verdict": "consistent"},
+        "path": {"ours": [57.94152, 4.46912], "talk": [58.41989, 4.724692], "ksD": 0.082711, "ksP": 0.566282, "effect": -0.104023, "nulls": [29, 19], "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {"disconnected": [1, 1, 1], "no-path": [0.145, 0.095, 0.123891]}
+    },
+    {
+      "id": "c08-dla-erosion",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c08-dla-erosion/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "traits": {
+        "floor_share": {"ours": [0.28613, 0.025437], "talk": [0.286586, 0.024809], "ksD": 0.08, "ksP": 0.527189, "effect": -0.018159, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [51.11, 9.175996], "talk": [50.845, 9.055994], "ksD": 0.055, "ksP": 0.915398, "effect": 0.029069, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.08639, 0.019217], "talk": [0.085457, 0.02021], "ksD": 0.095, "ksP": 0.312448, "effect": 0.047314, "verdict": "consistent"},
+        "path": {"ours": [121.725, 25.676953], "talk": [121.715, 22.887617], "ksD": 0.065, "ksP": 0.778707, "effect": 0.000411, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "rooms": {"verdict": "one side only", "nulls": [0, 200]}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c08a-voronoi",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c08a-voronoi/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# (the boundaries) wall, as the frame's label 'Voronoi Boundary Walls' says; . open; the outer ring wall",
+      "differences": "The talk's last frame draws the boundaries with its open-tile glyph under a label calling them walls; both sides here read them as walls.",
+      "traits": {
+        "floor_share": {"ours": [0.835619, 0.004957], "talk": [0.834964, 0.005123], "ksD": 0.095, "ksP": 0.312448, "effect": 0.129938, "verdict": "consistent"},
+        "regions": {"ours": [16.15, 0.518502], "talk": [16.225, 0.562099], "ksD": 0.04, "ksP": 0.996621, "effect": -0.138699, "verdict": "consistent"},
+        "dead_ends": {"ours": [15.715, 3.484896], "talk": [15.88, 3.692393], "ksD": 0.035, "ksP": 0.999613, "effect": -0.045959, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.005449, 0.00151], "talk": [0.005594, 0.001828], "ksD": 0.08, "ksP": 0.527189, "effect": -0.08604, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {"disconnected": [1, 1, 1], "no-path": [1, 1, 1]}
+    },
+    {
+      "id": "c09-combination",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c09-combination/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "The spine prefab is our own design standing in for the talk's 11-by-50 layout, which isn't copied: traits that the prefab touches differ by design.",
+      "traits": {
+        "floor_share": {"ours": [0.440995, 0.030244], "talk": [0.431157, 0.028271], "ksD": 0.15, "ksP": 0.019732, "effect": 0.336046, "verdict": "consistent"},
+        "regions": {"ours": [11.395, 4.206835], "talk": [10.77, 3.835447], "ksD": 0.1, "ksP": 0.256221, "effect": 0.155263, "verdict": "consistent"},
+        "dead_ends": {"ours": [39.565, 7.675961], "talk": [39.77, 7.935487], "ksD": 0.045, "ksP": 0.985468, "effect": -0.026259, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.138646, 0.017755], "talk": [0.166358, 0.018361], "ksD": 0.56, "ksP": 0, "effect": -1.534415, "verdict": "differs"},
+        "path": {"ours": [128.084967, 20.466258], "talk": [133.753333, 22.33303], "ksD": 0.153333, "ksP": 0.050903, "effect": -0.26463, "nulls": [47, 50], "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {"disconnected": [1, 1, 1], "no-path": [0.235, 0.25, 0.726353]}
+    },
+    {
+      "id": "c10-perlin",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c10-perlin/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "every tile open; the field is each tile's grey level, (noise + 1) / 2 clamped to 0..1",
+      "differences": "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",
+      "traits": {
+        "floor_share": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "corridor_ratio": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "path": {"ours": [79, 0], "talk": [79, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "field_mean": {"ours": [0.500165, 0.002195], "talk": [0.499999, 0.002404], "ksD": 0.08, "ksP": 0.527189, "effect": 0.071849, "verdict": "consistent"},
+        "field_sd": {"ours": [0.179482, 0.002816], "talk": [0.179845, 0.002809], "ksD": 0.1, "ksP": 0.256221, "effect": -0.12919, "verdict": "consistent"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c11-overworld",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c11-overworld/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's colour",
+      "differences": "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",
+      "traits": {
+        "floor_share": {"ours": [0.377644, 0.044362], "talk": [0.376518, 0.046516], "ksD": 0.075, "ksP": 0.610654, "effect": 0.024779, "verdict": "consistent"},
+        "regions": {"ours": [4.575, 1.86056], "talk": [4.465, 1.533143], "ksD": 0.05, "ksP": 0.9596, "effect": 0.064526, "verdict": "consistent"},
+        "dead_ends": {"ours": [12.105, 4.070235], "talk": [11.825, 3.859905], "ksD": 0.09, "ksP": 0.376659, "effect": 0.070592, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.015982, 0.009014], "talk": [0.015231, 0.008312], "ksD": 0.09, "ksP": 0.376659, "effect": 0.086579, "verdict": "consistent"},
+        "path": {"ours": [94.593023, 14.966141], "talk": [93.428571, 11.650439], "ksD": 0.167774, "ksP": 0.234458, "effect": 0.086827, "nulls": [114, 137], "verdict": "consistent"},
+        "water": {"ours": [0.499374, 0.053743], "talk": [0.502099, 0.055146], "ksD": 0.095, "ksP": 0.312448, "effect": -0.050047, "verdict": "consistent"},
+        "grass": {"ours": [0.377644, 0.044362], "talk": [0.376518, 0.046516], "ksD": 0.075, "ksP": 0.610654, "effect": 0.024779, "verdict": "consistent"},
+        "mountain": {"ours": [0.122983, 0.039759], "talk": [0.121384, 0.036988], "ksD": 0.07, "ksP": 0.695921, "effect": 0.041636, "verdict": "consistent"},
+        "field_mean": {"ours": [0.001318, 0.048939], "talk": [-0.000714, 0.050025], "ksD": 0.09, "ksP": 0.376659, "effect": 0.041062, "verdict": "consistent"},
+        "field_sd": {"ours": [0.395371, 0.032044], "talk": [0.39277, 0.028985], "ksD": 0.075, "ksP": 0.610654, "effect": 0.085118, "verdict": "consistent"}
+      },
+      "failureRates": {"disconnected": [0.985, 0.985, 1], "no-path": [0.57, 0.685, 0.017377]}
+    },
+    {
+      "id": "c12-noisezoom",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c12-noisezoom/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's colour",
+      "differences": "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",
+      "traits": {
+        "floor_share": {"ours": [0.288505, 0.319185], "talk": [0.328424, 0.331509], "ksD": 0.075, "ksP": 0.610654, "effect": -0.122674, "verdict": "consistent"},
+        "regions": {"ours": [1.365, 0.602987], "talk": [1.315, 0.535921], "ksD": 0.025, "ksP": 1, "effect": 0.087652, "verdict": "consistent"},
+        "dead_ends": {"ours": [1.83, 1.393127], "talk": [1.59, 1.260892], "ksD": 0.075, "ksP": 0.610654, "effect": 0.180634, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.395964, 0.471362], "talk": [0.320334, 0.447388], "ksD": 0.105, "ksP": 0.207811, "effect": 0.16458, "verdict": "consistent"},
+        "path": {"ours": [47.634615, 39.418857], "talk": [53.341463, 38.716436], "ksD": 0.100532, "ksP": 0.376106, "effect": -0.14607, "nulls": [44, 36], "verdict": "consistent"},
+        "water": {"ours": [0.520854, 0.460683], "talk": [0.487849, 0.454684], "ksD": 0.07, "ksP": 0.695921, "effect": 0.072112, "verdict": "consistent"},
+        "grass": {"ours": [0.288505, 0.319185], "talk": [0.328424, 0.331509], "ksD": 0.075, "ksP": 0.610654, "effect": -0.122674, "verdict": "consistent"},
+        "mountain": {"ours": [0.190641, 0.283923], "talk": [0.183728, 0.272431], "ksD": 0.055, "ksP": 0.915398, "effect": 0.024848, "verdict": "consistent"},
+        "field_mean": {"ours": [-0.000824, 0.418631], "talk": [0.027301, 0.395099], "ksD": 0.08, "ksP": 0.527189, "effect": -0.069095, "verdict": "consistent"},
+        "field_sd": {"ours": [0.192312, 0.043146], "talk": [0.194882, 0.048222], "ksD": 0.08, "ksP": 0.527189, "effect": -0.056156, "verdict": "consistent"}
+      },
+      "failureRates": {"disconnected": [0.305, 0.28, 0.582622], "no-path": [0.22, 0.18, 0.317311], "short-path": [0.295, 0.26, 0.434415]}
+    },
+    {
+      "id": "c13-double-noise",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c13-double-noise/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's colour",
+      "differences": "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",
+      "traits": {
+        "floor_share": {"ours": [0.468567, 0.356091], "talk": [0.498208, 0.347246], "ksD": 0.08, "ksP": 0.527189, "effect": -0.084277, "verdict": "consistent"},
+        "regions": {"ours": [2.425, 1.580145], "talk": [2.36, 1.44945], "ksD": 0.025, "ksP": 1, "effect": 0.04287, "verdict": "consistent"},
+        "dead_ends": {"ours": [2.24, 1.626539], "talk": [2.145, 1.592689], "ksD": 0.05, "ksP": 0.9596, "effect": 0.059017, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.029235, 0.140797], "talk": [0.023579, 0.124784], "ksD": 0.09, "ksP": 0.376659, "effect": 0.042515, "verdict": "consistent"},
+        "path": {"ours": [72.157895, 31.272306], "talk": [73.793103, 27.177522], "ksD": 0.089232, "ksP": 0.730104, "effect": -0.055816, "nulls": [86, 84], "verdict": "consistent"},
+        "water": {"ours": [0.512774, 0.377757], "talk": [0.484669, 0.366222], "ksD": 0.08, "ksP": 0.527189, "effect": 0.075544, "verdict": "consistent"},
+        "grass": {"ours": [0.468567, 0.356091], "talk": [0.498208, 0.347246], "ksD": 0.08, "ksP": 0.527189, "effect": -0.084277, "verdict": "consistent"},
+        "mountain": {"ours": [0.018659, 0.050807], "talk": [0.017124, 0.049288], "ksD": 0.04, "ksP": 0.996621, "effect": 0.030667, "verdict": "consistent"},
+        "field_mean": {"verdict": "one side only", "nulls": [0, 200]},
+        "field_sd": {"verdict": "one side only", "nulls": [0, 200]}
+      },
+      "failureRates": {"disconnected": [0.64, 0.625, 0.755707], "no-path": [0.43, 0.42, 0.839691], "short-path": [0.07, 0.06, 0.685009]}
+    },
+    {
+      "id": "c14-not-a-trap",
+      "seeds": [200, 200],
+      "unfinished": [10, 18],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c14-not-a-trap/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "The talk's loop never ends when no room is big enough for the vault: such seeds time out here. Ours records prefab-no-place and builds the map without it.",
+      "traits": {
+        "floor_share": {"ours": [0.162995, 0.024414], "talk": [0.164302, 0.023794], "ksD": 0.072874, "ksP": 0.690858, "effect": -0.054238, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "corridor_ratio": {"ours": [0.194466, 0.042479], "talk": [0.191753, 0.043766], "ksD": 0.080798, "ksP": 0.561109, "effect": 0.062919, "verdict": "consistent"},
+        "path": {"ours": [151.510526, 32.926042], "talk": [153.120879, 29.382911], "ksD": 0.079757, "ksP": 0.577906, "effect": -0.051606, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "rooms": {"verdict": "one side only", "nulls": [0, 182]}
+      },
+      "failureRates": {"prefab-no-place": [0.05, 0.09, 0.116946], "guard-hit": [0.05, 0.09, 0.116946]}
+    },
+    {
+      "id": "c15-still-not-a-trap",
+      "seeds": [200, 200],
+      "unfinished": [130, 142],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c15-still-not-a-trap/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "The talk's loop never ends when no open 7-by-6 patch exists: such seeds time out here. Ours gives up after 100,000 tries and records the failure.",
+      "traits": {
+        "floor_share": {"ours": [0.640011, 0.022104], "talk": [0.639185, 0.023181], "ksD": 0.162562, "ksP": 0.342165, "effect": 0.036442, "verdict": "consistent"},
+        "regions": {"ours": [17.528571, 4.605357], "talk": [16.775862, 4.099821], "ksD": 0.13202, "ksP": 0.607094, "effect": 0.172643, "verdict": "consistent"},
+        "dead_ends": {"ours": [69.285714, 9.519077], "talk": [70.37931, 10.549512], "ksD": 0.092118, "ksP": 0.94003, "effect": -0.108842, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.127993, 0.013218], "talk": [0.130326, 0.013891], "ksD": 0.115271, "ksP": 0.767974, "effect": -0.172061, "verdict": "consistent"},
+        "path": {"ours": [101.022222, 7.120677], "talk": [103.837209, 8.414642], "ksD": 0.260465, "ksP": 0.084097, "effect": -0.361148, "nulls": [25, 15], "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {"prefab-no-place": [0.65, 0.71, 0.19836], "guard-hit": [0.65, 0.71, 0.19836], "disconnected": [1, 1, 1], "no-path": [0.357143, 0.258621, 0.231267]}
+    },
+    {
+      "id": "c16-unreachable",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c16-unreachable/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "traits": {
+        "floor_share": {"ours": [0.636764, 0.023229], "talk": [0.635061, 0.025159], "ksD": 0.06, "ksP": 0.853707, "effect": 0.070314, "verdict": "consistent"},
+        "regions": {"ours": [17.23, 4.565228], "talk": [17.315, 4.85527], "ksD": 0.05, "ksP": 0.9596, "effect": -0.018037, "verdict": "consistent"},
+        "dead_ends": {"ours": [69.095, 10.540469], "talk": [70.62, 11.605561], "ksD": 0.08, "ksP": 0.527189, "effect": -0.137563, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.131503, 0.013337], "talk": [0.13097, 0.014603], "ksD": 0.065, "ksP": 0.778707, "effect": 0.038109, "verdict": "consistent"},
+        "path": {"ours": [102.75, 8.582164], "talk": [102.041096, 6.743453], "ksD": 0.092573, "ksP": 0.582203, "effect": 0.091854, "nulls": [72, 54], "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {"disconnected": [1, 1, 1], "no-path": [0.36, 0.27, 0.052684]}
+    },
+    {
+      "id": "c17-starting-left",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c17-starting-left/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "traits": {
+        "floor_share": {"ours": [0.623745, 0.034299], "talk": [0.619331, 0.039439], "ksD": 0.085, "ksP": 0.448562, "effect": 0.119425, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [61.475, 9.089691], "talk": [61.505, 10.603876], "ksD": 0.065, "ksP": 0.778707, "effect": -0.003038, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.123923, 0.012945], "talk": [0.122717, 0.014032], "ksD": 0.09, "ksP": 0.376659, "effect": 0.08938, "verdict": "consistent"},
+        "path": {"ours": [102.24, 9.431179], "talk": [101.86, 6.975939], "ksD": 0.075, "ksP": 0.610654, "effect": 0.045811, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c18-ending-right",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c18-ending-right/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "The talk's A* (bracket-pathfinding 0.8.4) accumulates f rather than g and can return a path longer than the shortest; ours is a shortest path. The path trait measures the shortest walk on both sides; the hot path and hot rooms follow each side's own path.",
+      "astarVsShortest": "the talk's drawn A* path was longer than the shortest walk on 15 of 200 seeds, by 0.2 steps on average over all of them",
+      "traits": {
+        "floor_share": {"ours": [0.623745, 0.034299], "talk": [0.619331, 0.039439], "ksD": 0.085, "ksP": 0.448562, "effect": 0.119425, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [61.475, 9.089691], "talk": [61.505, 10.603876], "ksD": 0.065, "ksP": 0.778707, "effect": -0.003038, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.123923, 0.012945], "talk": [0.122717, 0.014032], "ksD": 0.09, "ksP": 0.376659, "effect": 0.08938, "verdict": "consistent"},
+        "path": {"ours": [102.24, 9.431179], "talk": [101.86, 6.975939], "ksD": 0.075, "ksP": 0.610654, "effect": 0.045811, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c19-ending-dijkstra",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c19-ending-dijkstra/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "The talk's A* (bracket-pathfinding 0.8.4) accumulates f rather than g and can return a path longer than the shortest; ours is a shortest path. The path trait measures the shortest walk on both sides; the hot path and hot rooms follow each side's own path.",
+      "astarVsShortest": "the talk's drawn A* path was longer than the shortest walk on 29 of 200 seeds, by 0.44 steps on average over all of them",
+      "traits": {
+        "floor_share": {"ours": [0.623745, 0.034299], "talk": [0.619331, 0.039439], "ksD": 0.085, "ksP": 0.448562, "effect": 0.119425, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [61.475, 9.089691], "talk": [61.505, 10.603876], "ksD": 0.065, "ksP": 0.778707, "effect": -0.003038, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.123923, 0.012945], "talk": [0.122717, 0.014032], "ksD": 0.09, "ksP": 0.376659, "effect": 0.08938, "verdict": "consistent"},
+        "path": {"ours": [74.31, 11.120351], "talk": [74.005, 9.939262], "ksD": 0.05, "ksP": 0.9596, "effect": 0.02892, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c20-hot-path",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c20-hot-path/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "The talk's A* (bracket-pathfinding 0.8.4) accumulates f rather than g and can return a path longer than the shortest; ours is a shortest path. The path trait measures the shortest walk on both sides; the hot path and hot rooms follow each side's own path.",
+      "astarVsShortest": "the talk's drawn A* path was longer than the shortest walk on 7 of 200 seeds, by 0.09 steps on average over all of them",
+      "traits": {
+        "floor_share": {"ours": [0.31011, 0.024134], "talk": [0.311516, 0.025809], "ksD": 0.085, "ksP": 0.448562, "effect": -0.056282, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [52.91, 7.673088], "talk": [52.195, 8.028027], "ksD": 0.065, "ksP": 0.778707, "effect": 0.091053, "verdict": "consistent"},
+        "corridor_ratio": {"ours": [0.130137, 0.018862], "talk": [0.127898, 0.018565], "ksD": 0.085, "ksP": 0.448562, "effect": 0.119659, "verdict": "consistent"},
+        "path": {"ours": [102.24, 9.431179], "talk": [101.97, 7.081656], "ksD": 0.075, "ksP": 0.610654, "effect": 0.032376, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"}
+      },
+      "failureRates": {}
+    },
+    {
+      "id": "c21-hot-rooms",
+      "seeds": [200, 200],
+      "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c21-hot-rooms/src/main.rs, run without a window by faithfulness/src/main.rs",
+      "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
+      "differences": "The talk's A* (bracket-pathfinding 0.8.4) accumulates f rather than g and can return a path longer than the shortest; ours is a shortest path. The path trait measures the shortest walk on both sides; the hot path and hot rooms follow each side's own path.",
+      "traits": {
+        "floor_share": {"ours": [0.246455, 0.02515], "talk": [0.245709, 0.025686], "ksD": 0.075, "ksP": 0.610654, "effect": 0.029357, "verdict": "consistent"},
+        "regions": {"ours": [1, 0], "talk": [1, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "dead_ends": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "corridor_ratio": {"ours": [0.159696, 0.031092], "talk": [0.161824, 0.032129], "ksD": 0.085, "ksP": 0.448562, "effect": -0.067297, "verdict": "consistent"},
+        "path": {"ours": [183.16, 29.986838], "talk": [179.455, 31.454969], "ksD": 0.085, "ksP": 0.448562, "effect": 0.120568, "verdict": "consistent"},
+        "water": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "grass": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "mountain": {"ours": [0, 0], "talk": [0, 0], "ksD": 0, "ksP": 1, "effect": 0, "verdict": "identical"},
+        "rooms": {"verdict": "one side only", "nulls": [0, 200]}
+      },
+      "failureRates": {}
+    }
+  ]
+}

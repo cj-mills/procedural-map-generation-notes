@@ -1,0 +1,11 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Zooming into noise",
+  "note": "The talk's demo c12-noisezoom, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "noise", "mode": "zoom", "octaves": 3, "gain": 0.005, "lacunarity": 4.0, "frequency": 0.08}
+  ]
+}

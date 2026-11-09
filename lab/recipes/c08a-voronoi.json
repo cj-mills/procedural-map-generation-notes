@@ -1,0 +1,11 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Voronoi cells",
+  "note": "The talk's demo c08a-voronoi, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "voronoi", "seeds": 16, "metric": "pythagoras"}
+  ]
+}

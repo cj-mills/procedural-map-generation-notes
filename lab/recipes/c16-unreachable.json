@@ -1,0 +1,12 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Finding unreachable areas",
+  "note": "The talk's demo c16-unreachable, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "cellular", "wall_percent": 55, "iterations": 10},
+    {"stage": "cull", "from": "center", "mode": "mark"}
+  ]
+}

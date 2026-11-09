@@ -1,0 +1,14 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "An exit on the right",
+  "note": "The talk's demo c18-ending-right, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "cellular", "wall_percent": 55, "iterations": 10},
+    {"stage": "cull", "from": "center", "mode": "remove"},
+    {"stage": "start", "at": "left"},
+    {"stage": "exit", "at": "right"}
+  ]
+}

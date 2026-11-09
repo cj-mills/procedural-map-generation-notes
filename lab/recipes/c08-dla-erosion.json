@@ -1,0 +1,12 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Rooms eroded by aggregation",
+  "note": "The talk's demo c08-dla-erosion, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "rooms", "attempts": 20, "min_size": 2, "max_size": 9},
+    {"stage": "dla-erode", "iterations": 500}
+  ]
+}

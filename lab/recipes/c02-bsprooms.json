@@ -1,0 +1,11 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Rooms in subdivided space",
+  "note": "The talk's demo c02-bsprooms, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "bsp", "attempts": 240}
+  ]
+}

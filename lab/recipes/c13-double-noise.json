@@ -1,0 +1,11 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Two noises blended as the zoom deepens",
+  "note": "The talk's demo c13-double-noise, with its own parameters.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "noise", "mode": "double", "octaves": 3, "gain": 0.005, "lacunarity": 4.0, "frequency": 0.08}
+  ]
+}

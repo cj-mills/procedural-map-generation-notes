@@ -9,6 +9,9 @@ the talk is cited to its recording by time, its slides by page or its code
 by line.
 
 That URL still serves the old post until the site relaunches. So far the page has one section, cellular-automata caves.
+The overhaul replaces it with a map lab on one deterministic Rust core, in `lab/`: every
+technique of the talk as a recipe stage, measured over many seeds and checked against the talk's
+own code. The page itself isn't built on it yet.
 
 ## Layout
 
@@ -22,13 +25,26 @@ deliverable/
 measure.mjs                     every number of our own the page states, regenerated from caves.js
 apply-citations.mjs             source-library's splicer, copied verbatim (source-library aa45a58)
 build.mjs                       stages the bundle in dist/bundle/ and publishes it
-spike/wasm-size/                the size spike for a Rust generator core as WebAssembly (its README)
+lab/                            the map lab's deterministic Rust core, its WebAssembly binding, the
+                                CLI for agents, the demo recipes, the recipe schema and the
+                                measurement data (lab/README.md)
+faithfulness/                   the talk's own code run without a window over many seeds, for the
+                                faithfulness check (faithfulness/README.md)
 rust-toolchain.toml, mise.toml  the Rust toolchain, wasm-bindgen and wasm-opt this repo pins
 ```
 
 The page is published to the site as a deliverable bundle. The site repo,
 [cj-mills/christianjmills](https://github.com/cj-mills/christianjmills), owns the format: its
 `spec/README.md` describes the manifest, the dialect and the bundle.
+
+## Checks
+
+```sh
+npm run check      # the lab core: tests, WebAssembly size and agreement with native, data regenerates
+npm run measure    # regenerates lab/data/
+```
+
+They need the pinned Rust toolchain (`rust-toolchain.toml`, `mise.toml`).
 
 ## Build and publish
 
