@@ -7,10 +7,11 @@
 // params.mode is "lab" (the pipeline can be edited, measured, walked and shared) or "card" (the
 // pipeline is one of the technique's demos).
 //
-// It opens as its fallback's last step stands: the finished map, the step's label and its text,
+// It mounts as its fallback's last step stands: the finished map, the step's label and its text,
 // at the same sizes, so the swap moves nothing on the page (the site's spec, Interactives). The
 // strip, the transport, the controls, the readout and the rest open when the reader asks: the
-// button beside the step's label, the map itself, or a recipe link on the page.
+// button over the map, the map itself, or a recipe link on the page. The lab at the page's head
+// doesn't wait to be asked: it opens by itself as soon as that moves nothing a reader can see.
 //
 // The module holds no wording of its own about the
 // techniques: each step's text is read from the page's step lists by its key. The names of
@@ -123,11 +124,12 @@ export async function mount(root, { params, fallback, report }) {
   // A step's text keeps its reference marker, as the site prints it: a copy opens its note as the original does.
   const stepText = h('span');
   const stepBox = h('p', { class: 'mlab-step', 'aria-live': 'polite' }, stepLabel, stepText);
-  const openBtn = h('button', { type: 'button', class: 'mlab-open', onclick: () => open(true) }, isLab ? 'Open the lab' : 'Step through it');
+  // Closed, the way in is a button over the map: it takes no room, so the closed lab keeps its fallback's size.
+  const openBtn = h('button', { type: 'button', class: 'mlab-open', onclick: () => open(true) }, h('span', { class: 'mlab-tri' }), isLab ? 'Open the lab' : 'Step through it');
   const playBtn = btn('Play', () => (st.timer ? stop() : play()), '');
   const transport = h('div', { class: 'mlab-transport', role: 'group', 'aria-label': 'Step through the build' },
     btn('⏮', () => go(0), 'q mlab-end', 'First step'), btn('◀', () => go(st.frame - 1), 'q', 'Step back'), btn('▶', () => go(st.frame + 1), 'q', 'Step forward'), btn('⏭', () => go(Infinity), 'q mlab-end', 'The finished map'), playBtn, scrub);
-  const stepArea = h('div', { class: 'mlab-steps' }, openBtn, stepBox, transport);
+  const stepArea = h('div', { class: 'mlab-steps' }, stepBox, transport);
   const stagePanel = h('div', { class: 'mlab-stage' });
   const walkBox = h('div', { class: 'mlab-walk', hidden: true });
   const readout = h('dl', { class: 'mlab-readout' });
@@ -147,7 +149,7 @@ export async function mount(root, { params, fallback, report }) {
   const openLink = !isLab && h('a', { href: '#recipe=' }, 'Open in the lab');
   const recipeText = h('textarea', { spellcheck: 'false', rows: '8', 'aria-label': 'The recipe, as JSON' });
   const cliLine = h('code', {}, 'map-lab build recipe.json');
-  const fit = h('div', { class: 'mlab-fit', 'data-fit': true }, demoBtns, pipe, errorBox, h('div', { class: 'mlab-view' }, canvas, legend), stepArea, stagePanel, walkBox);
+  const fit = h('div', { class: 'mlab-fit', 'data-fit': true }, demoBtns, pipe, errorBox, h('div', { class: 'mlab-view' }, canvas, openBtn, legend), stepArea, stagePanel, walkBox);
   const limitProbe = h('div', { class: 'mlab-limit' });
   const box = h('div', { class: 'mlab is-closed' }, limitProbe, fit, readout,
     h('div', { class: 'mlab-foot' },
@@ -590,8 +592,24 @@ export async function mount(root, { params, fallback, report }) {
     showError(refused);
   }
   // A card sent a recipe before it mounted was asked for by the reader, and a refused recipe has a message
-  // to show: both open. A recipe in the address bar at load opens nothing: its map is drawn, closed.
+  // to show: both open.
   if ((shared && !isLab) || !errorBox.hidden) open(false);
+  // The lab is the page's main part, so it opens without being asked, whenever that moves nothing a reader
+  // can see. Opening makes the figure taller, which moves only what follows it; with the figure's end at or
+  // below the window's lower edge, what follows is out of sight. With its end in the window the lab stays
+  // closed, behind its button, and opens when the reader's scrolling takes its end out of sight below.
+  if (isLab && !st.open) {
+    const figure = root.closest('figure') ?? root;
+    const settle = () => {
+      if (!st.open && figure.getBoundingClientRect().bottom < innerHeight) return;
+      removeEventListener('scroll', settle);
+      removeEventListener('resize', settle);
+      open(false);
+    };
+    addEventListener('scroll', settle, { passive: true });
+    addEventListener('resize', settle);
+    settle();
+  }
 }
 
 /** Loads a recipe sent to a mount, marking which of a card's demos it is, if any. */
@@ -714,16 +732,17 @@ style.textContent = `
 .mlab-mark i { position: absolute; inset-block-start: 3px; inset-inline-start: calc(var(--mid) * 100%); inline-size: 8px; block-size: 8px; margin-inline-start: -4px; border-radius: 50%; background: var(--color-ink); box-shadow: 0 0 0 2px var(--color-surface); }
 .mlab-mark b { position: absolute; inset-block-start: 0; inset-inline-start: calc(var(--now) * 100%); inline-size: 3px; block-size: 14px; margin-inline-start: -1.5px; border-radius: 1.5px; background: var(--color-focus); box-shadow: 0 0 0 1.5px var(--color-surface); }
 .mlab-spacer { flex: 1; }
-.mlab-steps { position: relative; }
 .mlab-open { display: none; }
 /* Closed: the fallback's last step, box for box (the site's .step: its picture, its label, its text), so the
-   swap moves nothing. The button sits on the label's line and takes no room of its own. */
+   swap moves nothing. The button lies over the map and takes no room of its own. */
 .mlab.is-closed, .is-closed .mlab-fit, .is-closed .mlab-view, .is-closed .mlab-steps { display: block; }
+.is-closed .mlab-view { position: relative; inline-size: min(100%, 480px); }
 .is-closed :is(.mlab-demos, .mlab-pipe, .mlab-error, .mlab-legend, .mlab-transport, .mlab-stage, .mlab-walk, .mlab-readout, .mlab-foot, .mlab-recipe, .mlab-at) { display: none; }
 .is-closed canvas { inline-size: 480px; cursor: pointer; }
 .is-closed .mlab-step { margin-block-start: var(--space-3xs); padding: 0; border: 0; background: none; min-block-size: 0; }
 .is-closed .mlab-n { margin-block-end: var(--space-3xs); }
-.mlab.is-closed .mlab-open { display: block; position: absolute; inset-block-start: calc(0.7em - 1.125rem); inset-inline-end: 0; min-block-size: 2.25rem; padding: 0 var(--space-3xs); border: 0; background: none; color: var(--color-link); font-weight: 600; line-height: 1.4; text-decoration: underline; cursor: pointer; }
+.mlab.is-closed .mlab-open { display: flex; align-items: center; gap: var(--space-2xs); position: absolute; inset-block-end: var(--space-s); inset-inline-start: 50%; translate: -50% 0; min-block-size: 2.75rem; padding: var(--space-2xs) var(--space-s); font-weight: 600; white-space: nowrap; box-shadow: 0 0 0 2px var(--color-surface), 0 2px 10px rgb(0 0 0 / 0.4); }
+.mlab-tri { inline-size: 0; block-size: 0; border-block: 0.4em solid transparent; border-inline-start: 0.65em solid currentColor; }
 .mlab-recipe textarea { display: block; inline-size: 100%; margin-block: var(--space-2xs); font-family: var(--font-code); font-size: var(--size-step--2); }
 .mlab-pad { display: grid; grid-template-areas: ". up ." "left down right"; grid-template-columns: repeat(3, 2.75rem); gap: var(--space-3xs); justify-content: center; }
 .mlab-pad button { min-block-size: 2.75rem; }

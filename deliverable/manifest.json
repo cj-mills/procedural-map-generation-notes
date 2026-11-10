@@ -1,7 +1,7 @@
 {
   "format": "0.1",
   "id": "procedural-map-generation-techniques-notes",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "title": "Procedural map generation: an interactive lab built on Herbert Wolverson’s talk",
   "summary": "Build a map from the techniques of Herbert Wolverson’s talk, measure it over 200 seeds, and walk it to its exit.",
   "pageType": "post",
@@ -41,6 +41,11 @@
       "date": "2026-11-10",
       "version": "0.5.0",
       "note": "The text is distilled: each rule is a numbered list with a reference a step, tables where versions or modes differ, and what we measured as short items under recurring lead-ins. Eight rule diagrams are drawn by the build. The lab and each step-through open at the size of one step, and open in full when asked, so the page no longer moves as they load. The overworld and zoom maps are drawn as water, grass and mountain, where they were gray."
+    },
+    {
+      "date": "2026-11-10",
+      "version": "0.5.1",
+      "note": "The lab at the head of the page opens by itself whenever that moves nothing in view, and a closed lab or step-through has a button over its map where it had a link beside its step’s label."
     }
   ],
   "testedAgainst": [
