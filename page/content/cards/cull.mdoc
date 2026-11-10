@@ -11,14 +11,14 @@ every open tile the flood never reached is unreachable
 mark those tiles, or turn them to wall
 ```
 
-The talk builds this on Dijkstra maps: from a starting point, every walkable tile gets the number of steps to it, and a tile left at the starting value can’t be reached [[t:214-221 s:23]].
+The talk builds this on Dijkstra maps: from a starting point, every walkable tile gets the number of steps to it, and a tile left at the sentinel value can’t be reached [[t:214-221 s:23]].
 
 ## Step through it
 @@steps limit=4
 
 ## Controls
 @@control mode
-`mark` shows the unreachable tiles and leaves them, as the talk’s first demo of it does [[c16:68-69]]. `remove` turns them to wall, as its later demos do before they place anything [[c17:56-65]].
+`mark` shows the unreachable tiles and leaves them, as the talk’s first demo of it does [[c16:62-73]]. `remove` turns them to wall, as its later demos do before they place anything [[c17:54-67 g]].
 
 ## What it produces, measured
 @@measured

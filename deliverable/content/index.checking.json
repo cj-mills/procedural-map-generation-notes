@@ -1,33 +1,24 @@
 {
  "format": "slib-checking@1",
  "source": "index.mdoc",
- "source_sha256": "27b4faf1da3637658b8943208f1fa6fb4ce76183c99e2c8389aecd0b84ece11c",
+ "source_sha256": "8a9d7d76078b990bbf43297ce8fcabbc7cab47c2e55e0b3a8c017611f8691cf1",
  "checked": "2026-11-09",
  "claims": {
-  "cited": 180,
-  "verified": 0,
-  "own": 136,
+  "cited": 182,
+  "verified": 21,
+  "own": 163,
   "own_run": 74
  },
- "verifiers": [],
- "last_verified": null,
+ "verifiers": [
+  {
+   "contract": "verify-claim@1",
+   "implementation": "claude-tier",
+   "version": "1",
+   "model": "claude-opus-5-5"
+  }
+ ],
+ "last_verified": "2026-11-09",
  "open": [
-  {
-   "claim": 1,
-   "state": "unverified"
-  },
-  {
-   "claim": 2,
-   "state": "unverified"
-  },
-  {
-   "claim": 3,
-   "state": "unverified"
-  },
-  {
-   "claim": 4,
-   "state": "unverified"
-  },
   {
    "claim": 5,
    "state": "unverified"
@@ -53,15 +44,7 @@
    "state": "unverified"
   },
   {
-   "claim": 16,
-   "state": "unverified"
-  },
-  {
    "claim": 17,
-   "state": "unverified"
-  },
-  {
-   "claim": 18,
    "state": "unverified"
   },
   {
@@ -77,31 +60,19 @@
    "state": "unverified"
   },
   {
-   "claim": 22,
-   "state": "unverified"
-  },
-  {
    "claim": 23,
    "state": "unverified"
   },
   {
-   "claim": 31,
+   "claim": 25,
    "state": "unverified"
   },
   {
-   "claim": 33,
-   "state": "unverified"
-  },
-  {
-   "claim": 35,
+   "claim": 34,
    "state": "unverified"
   },
   {
    "claim": 36,
-   "state": "unverified"
-  },
-  {
-   "claim": 37,
    "state": "unverified"
   },
   {
@@ -141,7 +112,11 @@
    "state": "unverified"
   },
   {
-   "claim": 49,
+   "claim": 47,
+   "state": "unverified"
+  },
+  {
+   "claim": 48,
    "state": "unverified"
   },
   {
@@ -149,23 +124,15 @@
    "state": "unverified"
   },
   {
+   "claim": 53,
+   "state": "unverified"
+  },
+  {
    "claim": 54,
    "state": "unverified"
   },
   {
-   "claim": 56,
-   "state": "unverified"
-  },
-  {
-   "claim": 57,
-   "state": "unverified"
-  },
-  {
    "claim": 58,
-   "state": "unverified"
-  },
-  {
-   "claim": 59,
    "state": "unverified"
   },
   {
@@ -177,55 +144,19 @@
    "state": "unverified"
   },
   {
-   "claim": 62,
-   "state": "unverified"
-  },
-  {
    "claim": 63,
    "state": "unverified"
   },
   {
-   "claim": 64,
+   "claim": 71,
    "state": "unverified"
   },
   {
-   "claim": 65,
-   "state": "unverified"
-  },
-  {
-   "claim": 66,
-   "state": "unverified"
-  },
-  {
-   "claim": 67,
-   "state": "unverified"
-  },
-  {
-   "claim": 74,
-   "state": "unverified"
-  },
-  {
-   "claim": 76,
-   "state": "unverified"
-  },
-  {
-   "claim": 77,
-   "state": "unverified"
-  },
-  {
-   "claim": 78,
-   "state": "unverified"
-  },
-  {
-   "claim": 79,
+   "claim": 73,
    "state": "unverified"
   },
   {
    "claim": 80,
-   "state": "unverified"
-  },
-  {
-   "claim": 81,
    "state": "unverified"
   },
   {
@@ -249,7 +180,19 @@
    "state": "unverified"
   },
   {
+   "claim": 87,
+   "state": "unverified"
+  },
+  {
    "claim": 88,
+   "state": "unverified"
+  },
+  {
+   "claim": 89,
+   "state": "unverified"
+  },
+  {
+   "claim": 90,
    "state": "unverified"
   },
   {
@@ -265,31 +208,11 @@
    "state": "unverified"
   },
   {
-   "claim": 97,
-   "state": "unverified"
-  },
-  {
-   "claim": 98,
-   "state": "unverified"
-  },
-  {
-   "claim": 99,
-   "state": "unverified"
-  },
-  {
    "claim": 100,
    "state": "unverified"
   },
   {
-   "claim": 101,
-   "state": "unverified"
-  },
-  {
    "claim": 102,
-   "state": "unverified"
-  },
-  {
-   "claim": 103,
    "state": "unverified"
   },
   {
@@ -309,15 +232,11 @@
    "state": "unverified"
   },
   {
-   "claim": 108,
+   "claim": 112,
    "state": "unverified"
   },
   {
-   "claim": 109,
-   "state": "unverified"
-  },
-  {
-   "claim": 111,
+   "claim": 113,
    "state": "unverified"
   },
   {
@@ -325,19 +244,19 @@
    "state": "unverified"
   },
   {
+   "claim": 115,
+   "state": "unverified"
+  },
+  {
    "claim": 117,
    "state": "unverified"
   },
   {
-   "claim": 120,
+   "claim": 119,
    "state": "unverified"
   },
   {
-   "claim": 122,
-   "state": "unverified"
-  },
-  {
-   "claim": 123,
+   "claim": 121,
    "state": "unverified"
   },
   {
@@ -345,19 +264,7 @@
    "state": "unverified"
   },
   {
-   "claim": 126,
-   "state": "unverified"
-  },
-  {
    "claim": 127,
-   "state": "unverified"
-  },
-  {
-   "claim": 128,
-   "state": "unverified"
-  },
-  {
-   "claim": 129,
    "state": "unverified"
   },
   {
@@ -373,7 +280,23 @@
    "state": "unverified"
   },
   {
+   "claim": 136,
+   "state": "unverified"
+  },
+  {
    "claim": 137,
+   "state": "unverified"
+  },
+  {
+   "claim": 138,
+   "state": "unverified"
+  },
+  {
+   "claim": 139,
+   "state": "unverified"
+  },
+  {
+   "claim": 140,
    "state": "unverified"
   },
   {
@@ -385,51 +308,11 @@
    "state": "unverified"
   },
   {
-   "claim": 146,
-   "state": "unverified"
-  },
-  {
-   "claim": 147,
-   "state": "unverified"
-  },
-  {
-   "claim": 148,
-   "state": "unverified"
-  },
-  {
-   "claim": 149,
-   "state": "unverified"
-  },
-  {
    "claim": 150,
    "state": "unverified"
   },
   {
-   "claim": 151,
-   "state": "unverified"
-  },
-  {
-   "claim": 152,
-   "state": "unverified"
-  },
-  {
-   "claim": 153,
-   "state": "unverified"
-  },
-  {
-   "claim": 154,
-   "state": "unverified"
-  },
-  {
-   "claim": 155,
-   "state": "unverified"
-  },
-  {
    "claim": 156,
-   "state": "unverified"
-  },
-  {
-   "claim": 157,
    "state": "unverified"
   },
   {
@@ -469,7 +352,15 @@
    "state": "unverified"
   },
   {
+   "claim": 167,
+   "state": "unverified"
+  },
+  {
    "claim": 168,
+   "state": "unverified"
+  },
+  {
+   "claim": 169,
    "state": "unverified"
   },
   {
@@ -477,7 +368,35 @@
    "state": "unverified"
   },
   {
-   "claim": 179,
+   "claim": 171,
+   "state": "unverified"
+  },
+  {
+   "claim": 172,
+   "state": "unverified"
+  },
+  {
+   "claim": 173,
+   "state": "unverified"
+  },
+  {
+   "claim": 174,
+   "state": "unverified"
+  },
+  {
+   "claim": 175,
+   "state": "unverified"
+  },
+  {
+   "claim": 176,
+   "state": "unverified"
+  },
+  {
+   "claim": 178,
+   "state": "unverified"
+  },
+  {
+   "claim": 180,
    "state": "unverified"
   },
   {
@@ -485,23 +404,7 @@
    "state": "unverified"
   },
   {
-   "claim": 183,
-   "state": "unverified"
-  },
-  {
-   "claim": 184,
-   "state": "unverified"
-  },
-  {
    "claim": 185,
-   "state": "unverified"
-  },
-  {
-   "claim": 186,
-   "state": "unverified"
-  },
-  {
-   "claim": 187,
    "state": "unverified"
   },
   {
@@ -509,27 +412,11 @@
    "state": "unverified"
   },
   {
-   "claim": 193,
-   "state": "unverified"
-  },
-  {
    "claim": 197,
    "state": "unverified"
   },
   {
-   "claim": 198,
-   "state": "unverified"
-  },
-  {
-   "claim": 199,
-   "state": "unverified"
-  },
-  {
    "claim": 200,
-   "state": "unverified"
-  },
-  {
-   "claim": 201,
    "state": "unverified"
   },
   {
@@ -541,7 +428,15 @@
    "state": "unverified"
   },
   {
-   "claim": 211,
+   "claim": 204,
+   "state": "unverified"
+  },
+  {
+   "claim": 205,
+   "state": "unverified"
+  },
+  {
+   "claim": 207,
    "state": "unverified"
   },
   {
@@ -549,23 +444,19 @@
    "state": "unverified"
   },
   {
-   "claim": 213,
-   "state": "unverified"
-  },
-  {
-   "claim": 214,
-   "state": "unverified"
-  },
-  {
-   "claim": 215,
-   "state": "unverified"
-  },
-  {
    "claim": 216,
    "state": "unverified"
   },
   {
+   "claim": 217,
+   "state": "unverified"
+  },
+  {
    "claim": 218,
+   "state": "unverified"
+  },
+  {
+   "claim": 219,
    "state": "unverified"
   },
   {
@@ -578,10 +469,6 @@
   },
   {
    "claim": 222,
-   "state": "unverified"
-  },
-  {
-   "claim": 226,
    "state": "unverified"
   },
   {
@@ -601,15 +488,11 @@
    "state": "unverified"
   },
   {
-   "claim": 234,
-   "state": "unverified"
-  },
-  {
    "claim": 235,
    "state": "unverified"
   },
   {
-   "claim": 236,
+   "claim": 238,
    "state": "unverified"
   },
   {
@@ -617,23 +500,15 @@
    "state": "unverified"
   },
   {
-   "claim": 245,
+   "claim": 242,
+   "state": "unverified"
+  },
+  {
+   "claim": 243,
    "state": "unverified"
   },
   {
    "claim": 247,
-   "state": "unverified"
-  },
-  {
-   "claim": 248,
-   "state": "unverified"
-  },
-  {
-   "claim": 249,
-   "state": "unverified"
-  },
-  {
-   "claim": 250,
    "state": "unverified"
   },
   {
@@ -649,19 +524,19 @@
    "state": "unverified"
   },
   {
-   "claim": 259,
+   "claim": 254,
    "state": "unverified"
   },
   {
-   "claim": 260,
+   "claim": 255,
    "state": "unverified"
   },
   {
-   "claim": 261,
+   "claim": 257,
    "state": "unverified"
   },
   {
-   "claim": 262,
+   "claim": 258,
    "state": "unverified"
   },
   {
@@ -669,15 +544,23 @@
    "state": "unverified"
   },
   {
-   "claim": 265,
+   "claim": 267,
    "state": "unverified"
   },
   {
-   "claim": 266,
+   "claim": 269,
    "state": "unverified"
   },
   {
-   "claim": 274,
+   "claim": 270,
+   "state": "unverified"
+  },
+  {
+   "claim": 271,
+   "state": "unverified"
+  },
+  {
+   "claim": 272,
    "state": "unverified"
   },
   {
@@ -689,19 +572,15 @@
    "state": "unverified"
   },
   {
-   "claim": 277,
+   "claim": 282,
    "state": "unverified"
   },
   {
-   "claim": 278,
+   "claim": 283,
    "state": "unverified"
   },
   {
-   "claim": 279,
-   "state": "unverified"
-  },
-  {
-   "claim": 281,
+   "claim": 284,
    "state": "unverified"
   },
   {
@@ -709,27 +588,79 @@
    "state": "unverified"
   },
   {
+   "claim": 286,
+   "state": "unverified"
+  },
+  {
+   "claim": 289,
+   "state": "unverified"
+  },
+  {
    "claim": 290,
    "state": "unverified"
   },
   {
-   "claim": 291,
+   "claim": 298,
    "state": "unverified"
   },
   {
-   "claim": 292,
+   "claim": 299,
    "state": "unverified"
   },
   {
-   "claim": 293,
+   "claim": 300,
    "state": "unverified"
   },
   {
-   "claim": 305,
+   "claim": 301,
+   "state": "unverified"
+  },
+  {
+   "claim": 302,
+   "state": "unverified"
+  },
+  {
+   "claim": 304,
    "state": "unverified"
   },
   {
    "claim": 307,
+   "state": "unverified"
+  },
+  {
+   "claim": 311,
+   "state": "unverified"
+  },
+  {
+   "claim": 316,
+   "state": "unverified"
+  },
+  {
+   "claim": 317,
+   "state": "unverified"
+  },
+  {
+   "claim": 318,
+   "state": "unverified"
+  },
+  {
+   "claim": 319,
+   "state": "unverified"
+  },
+  {
+   "claim": 332,
+   "state": "unverified"
+  },
+  {
+   "claim": 334,
+   "state": "unverified"
+  },
+  {
+   "claim": 339,
+   "state": "unverified"
+  },
+  {
+   "claim": 340,
    "state": "unverified"
   }
  ]

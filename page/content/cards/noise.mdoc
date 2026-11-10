@@ -1,7 +1,7 @@
 ---
 title: Noise
 ---
-Smooth random values from −1 to 1 at every point, most often read as altitude to make an overworld [[t:149-151 t:162]].
+Smooth random values from −1 to 1 at every point, most often read as altitude to make an overworld [[t:149-151 t:162-164]].
 
 ## The rule
 ```text
@@ -12,14 +12,14 @@ zoom:      sample positions are multiplied by a scale that shrinks
 double:    a second, finer noise is mixed in as the scale shrinks
 ```
 
-The demos use fractal simplex noise, the first one too, though it is named for Perlin [[c10:14-15]]. The talk gives the green band as altitudes from 0 to 0.75 [[t:164-165]]. Its code draws mountain from 0.5, and 0.75 is there only in the water’s color [[c11:31-44]].
+The demos use fractal simplex noise, the first one too, though it is named for Perlin [[c10:13-15 c11:20-22]]. The talk gives the green band as altitudes from 0 to 0.75 [[t:164-165]]. Its code draws mountain from 0.5, and 0.75 is there only in the water’s color [[c11:28-44]].
 
 ## Step through it
 @@steps limit=8 mid=3
 
 ## Controls
 @@control mode
-What is made of the noise: a `height` map in gray, an `overworld` of water, grass and mountain, a `zoom` into the overworld, or the zoom with two noises mixed, `double` [[c10:23-24 c11:31-44 c12:77-90 c13:41-44]].
+What is made of the noise: a `height` map in gray, an `overworld` of water, grass and mountain, a `zoom` into the overworld, or the zoom with two noises mixed, `double` [[c10:21-26 c11:28-44 c12:77-91 c13:39-44]].
 @@control octaves
 In the talk’s words, how many different gradients it is mixing in [[t:154]].
 @@control gain

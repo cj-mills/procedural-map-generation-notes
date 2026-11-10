@@ -44,7 +44,7 @@ What we measure on a finished map [[own]]:
 
 @@definitions
 
-A map with no start and exit of its own is measured between the open tile nearest the middle of its left edge and the open tile nearest the middle of its right edge: the probe. Those are the talk’s own rules for a start and an exit [[c17:70-86 c18:93-109]].
+A map with no start and exit of its own is measured between the open tile nearest the middle of its left edge and the open tile nearest the middle of its right edge: the probe [[own]]. Those two points are where the talk’s demos look for a start and for an exit [[c17:69-86 c18:92-109]].
 
 ### What counts as failing
 
@@ -54,13 +54,15 @@ A seed fails a demo when its map meets one of these [[own]]:
 
 ### The walk
 
-The lab’s walk uses what the talk teaches: a start and an exit placed by the pipeline, and things hidden away from the route for a player to hunt for [[t:254-256 t:271]]. The talk has no walk, and these rules are ours [[own]]:
+The talk suggests hiding something at the least accessible point of a map for a treasure hunt, and bonus things in the rooms off the route [[t:254-256 t:270-271]]. The lab’s walk borrows that: caches to find on the way to the exit. The talk has no walk, and these rules are ours [[own]]:
 
 - Up to five caches go on floor or grass, at least the hot path’s radius from the route by walking. The first goes on the tile farthest from the route, and each one after it on the tile farthest from those already placed, more than 12 steps from them [[own]].
 - You see up to nine tiles away in straight lines over tiles that can be walked on, and the walls that touch what you see. You remember what you have seen [[own]].
 - Afterward the lab draws your route over the shortest one, on the map shaded by walking distance from the start [[own]].
 
 ### Is this the talk’s technique?
+
+Reading the talk’s code takes one key: `.` is its solid tile and `#` its open one. A new map is all `.` [[backend:12-16]], and its pathfinding steps only onto neighbors that are not `.` [[backend:54-65]].
 
 We built the talk’s code with only its window and its random seeding replaced, and ran every demo on the same 200 seeds [[own]]. Its random number generator isn’t ours, so the maps can’t match tile for tile, and the comparison is of distributions: for each demo and trait a two-sample Kolmogorov–Smirnov test, with a trait counted as differing when p is under 0.01 [[own]]. {{faith.consistent}} of {{faith.compared}} compared traits are consistent [[run:faith.consistent faith.compared table.faithfulness]].
 

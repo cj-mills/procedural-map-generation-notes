@@ -12,16 +12,16 @@ sort the rooms left to right
 join each room to the one before it with an L-shaped corridor
 ```
 
-The talk’s first technique is one that anyone who has done a roguelike development tutorial has seen [[t:45-46]]. Its demo sorts the rooms by their left edge and joins each to the one before it, center to center [[c01:57 c01:67-69]].
+The talk’s first technique is one that anyone who has done a roguelike development tutorial has seen [[t:44-46]]. Its demo sorts the rooms by their left edge and joins each to the one before it, center to center [[c01:57-78]].
 
 ## Step through it
 @@steps limit=6
 
 ## Controls
 @@control attempts
-How many rectangles are tried. The demo’s loop runs a fixed 20 times, and a rectangle that overlaps is discarded without another try [[c01:20-21 c01:35-37 c01:48-52]].
+How many rectangles are tried. The demo’s loop runs a fixed 20 times, and a rectangle that overlaps is discarded without another try [[c01:20-54]].
 @@control min_size
-The smallest value a room’s width and height are drawn from [[c01:25-26]]. A room covers one tile more than the value each way, because the rectangle type the demo uses includes both of its ends [[own]].
+The smallest value a room’s width and height are drawn from [[c01:22-27]]. A room covers one tile more than the value each way, because the rectangle type the demo uses includes both of its ends [[own]].
 @@control max_size
 The largest such value. The demo writes it as an upper end of 10, which its random call leaves out [[own]].
 
@@ -33,7 +33,7 @@ Every seed gives {{c01.regions.max}} region and {{c01.dead_ends.max}} dead ends 
 ## Where it fails
 @@fails
 
-Its loops all run a fixed number of times, so it always finishes [[c01:20-21 c01:67-69]].
+Each of its loops runs a fixed number of times [[c01:20-21 c01:67-69]].
 
 ## What it combines with
 @@combines

@@ -1,7 +1,7 @@
 ---
 title: Cellular automata
 ---
-Random noise, smoothed by one counting rule again and again, until it looks like caves [[t:73-74 s:9]].
+Random noise, smoothed by one counting rule again and again, until a natural-looking map comes out of it [[t:73-74 t:83-84 s:9]].
 
 ## The rule
 ```text
@@ -12,14 +12,14 @@ repeat for every pass, for all tiles inside the edge at once:
     otherwise it becomes floor
 ```
 
-The talk gives the rule in three cases: no neighbors, a wall; one to four, empty; five or more, a wall [[t:80-82]]. The neighbors its demo counts are walls, and a tile’s own state plays no part in what it becomes [[c03:42-47 c03:60-67]].
+The talk gives the rule in three cases: no neighbors, a wall; one to four, empty; five or more, a wall [[t:80-82]]. The neighbors its demo counts are walls, and a tile’s own state plays no part in what it becomes [[c03:40-70 g]].
 
 ## Step through it
 @@steps limit=5 mid=1
 
 ## Controls
 @@control wall_percent
-The chance each tile starts as wall [[c03:20-23]].
+The chance each tile starts as wall [[c03:19-29 g]].
 @@control iterations
 How many smoothing passes run [[c03:31-34]].
 

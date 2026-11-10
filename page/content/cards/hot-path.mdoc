@@ -1,7 +1,7 @@
 ---
 title: The hot path
 ---
-Everything close to the best route through a map: the part a player is likely to see [[t:257-262 s:28]].
+Everything close to the best route through a map, though not necessarily on it [[t:257-262 s:28]].
 
 ## The rule
 ```text
@@ -11,16 +11,16 @@ tiles under a chosen count are the hot path
 optionally, turn every tile beyond a second count to wall
 ```
 
-The talk’s author finds the route, makes a Dijkstra map from all of its points, and takes everything under a value of, say, 10 [[t:258-262]]. The demo then culls at 15, so a band of floor survives beyond the hot path it shows [[c20:140-152]].
+The talk’s author finds the route, makes a Dijkstra map from all of its points, and takes everything under a value of, say, 10 [[t:258-262]]. The demo then culls at 15, so a band of floor survives beyond the hot path it shows [[c20:131-154 g]].
 
 ## Step through it
 @@steps limit=4
 
 ## Controls
 @@control radius
-Tiles fewer than this many steps from the route are the hot path [[c20:140-144]]. The lab’s walk also keeps its caches at least this far from the route [[own]].
+Tiles fewer than this many steps from the route are the hot path [[c20:131-145]]. The lab’s walk also keeps its caches at least this far from the route [[own]].
 @@control cull
-Tiles this many steps or more from the route become wall [[c20:148-152]]. At 0 nothing is culled [[own]].
+Tiles this many steps or more from the route become wall [[c20:147-154 g]]. At 0 nothing is culled [[own]].
 
 ## What it produces, measured
 @@measured

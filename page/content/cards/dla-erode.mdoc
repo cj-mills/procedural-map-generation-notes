@@ -12,14 +12,14 @@ repeat for a number of particles:
     dig that tile
 ```
 
-Each particle digs exactly one tile: the first rock its walk reaches from inside the open area [[c08:100-128]].
+Each particle digs exactly one tile: the first rock its walk reaches from inside the open area [[c08:86-128 g]].
 
 ## Step through it
 @@steps limit=5 mid=1
 
 ## Controls
 @@control iterations
-How many particles are fired, each digging one tile [[c08:86 c08:128]].
+How many particles are fired, each digging one tile [[c08:86-128]].
 
 ## What it produces, measured
 @@measured
@@ -29,7 +29,7 @@ How many particles are fired, each digging one tile [[c08:86 c08:128]].
 ## Where it fails
 @@fails
 
-The demo’s walk has no cap [[c08:102]]. Ours has one, which {{c08.fails.guard-hit}} of these seeds reach [[run:c08.fails.guard-hit]].
+The demo’s walk has no cap [[c08:100-128]]. Ours has one, which {{c08.fails.guard-hit}} of these seeds reach [[run:c08.fails.guard-hit]].
 
 ## What it combines with
 @@combines

@@ -25,8 +25,8 @@ import {
 const content = join(root, 'page/content');
 /** What is written by hand, with its short citations written out: [[t:73-74 s:9 c03:61-66 own run:c03.regions.median]]
  *  cites the talk's transcript segments 73 and 74, its slide 9 and lines 61 to 66 of the demo c03's code, and marks
- *  the claim as partly ours and as stating a measured value. `backend` is the demos' shared map code, and
- *  data:<file> a file of the bundle's own. */
+ *  the claim as partly ours and as stating a measured value. `backend` is the demos' shared map code, `g` the
+ *  lines of it that say which glyph is solid, and data:<file> a file of the bundle's own. */
 const SOURCES = { talk: 'wolverson2020-talk/transcript', slides: 'wolverson2020-slides/pdf', code: 'wolverson2020-code' };
 const DATA = { traits: 'assets/lab/traits.json', faithfulness: 'assets/lab/faithfulness.json', schema: 'assets/lab/recipe.schema.json' };
 const demoDir = (id) => Object.keys(DEMOS).find((d) => short(d) === id);
@@ -37,6 +37,8 @@ function citations(text, file) {
     const [kind, what = ''] = token.split(/:(.*)/s);
     const [a, b = a] = what.split('-').map(Number);
     if (token === 'own') return '{% own /%}';
+    // g: which glyph is solid in the talk's code. A claim about its walls and floor rests on these lines too.
+    if (token === 'g') return `{% cite id="${SOURCES.code}/backend/src/lib.rs#L12-L16" /%}{% cite id="${SOURCES.code}/backend/src/lib.rs#L54-L65" /%}`;
     if (kind === 'run' && what) return `{% own-run values="${what.split(',').join(' ')}" /%}`;
     if (kind === 'data' && DATA[what]) return `{% ref source="this" path="${DATA[what]}" lines="1-6" /%}`;
     if (!(a >= 0 && b >= a)) throw new Error(`${file}: [[${inner}]]: ${token} is not a citation`);
@@ -161,7 +163,8 @@ export function generate() {
     const same = given.every(([, v]) => JSON.stringify(v) === JSON.stringify(given[0][1]));
     const talk = same ? given[0][1].map((v) => `\`${v}\``).join(', ') : given.map(([id, v]) => `${v.map((x) => `\`${x}\``).join(', ')} in \`${short(id)}\``).join(', ');
     const range = p.kind === 'pick' ? p.options.map((o) => `\`${o}\``).join(', ') : `${p.min.toLocaleString('en-US')} to ${p.max.toLocaleString('en-US')}`;
-    return `- \`${name}\` (${range}; the talk’s: ${talk}). ${text}`;
+    // The control's range is our stage's and the talk's value is read from our recipe of its demo: ours, apart from the text's own citations.
+    return `- \`${name}\` (${range}; the talk’s: ${talk}) {% own /%}. ${text}`;
   }
   function findStages(pipeline, stage, out = []) {
     for (const s of pipeline) {
