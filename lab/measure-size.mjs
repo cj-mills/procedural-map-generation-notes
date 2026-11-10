@@ -14,6 +14,7 @@
 // wasm-bindgen (the crate's exact version) and wasm-opt.
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
@@ -22,7 +23,11 @@ const LIMIT = 50 * 1024;
 const run = (cmd, args) => execFileSync(cmd, args, { cwd: here, stdio: ['ignore', 'pipe', 'inherit'] }).toString();
 const version = (cmd) => run(cmd, ['--version']).trim().split('\n')[0];
 
-run('cargo', ['build', '--release', '--target', 'wasm32-unknown-unknown', '-p', 'map-lab-wasm']);
+// The compiler writes source paths into the module for its panic messages. Paths under the home
+// directory and this checkout are rewritten, so the published file names no account and no folder
+// of the machine that built it, and is the same from any checkout.
+const remap = [[homedir(), '/home'], [join(here, '..'), '/repo']].map(([from, to]) => `--remap-path-prefix=${from}=${to}`).join(' ');
+execFileSync('cargo', ['build', '--release', '--target', 'wasm32-unknown-unknown', '-p', 'map-lab-wasm'], { cwd: here, stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, RUSTFLAGS: `${process.env.RUSTFLAGS ?? ''} ${remap}`.trim() } });
 const out = join(here, 'target', 'web');
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
@@ -45,14 +50,14 @@ for (const [k, p] of Object.entries(files)) {
   total += sizes[k].gzipped;
 }
 console.log(`wasm ${sizes.wasm.bytes} B (${sizes.wasm.gzipped} gz) + glue ${sizes.glue.bytes} B (${sizes.glue.gzipped} gz) = ${total} B gzipped of ${LIMIT}; headroom ${LIMIT - total} B`);
-console.log('(the page module that imports them is not written yet; its gzipped size adds to this total)');
+console.log('(the page module adds to this; build.mjs prints it, and the site checks everything the page loads against its own budget)');
 writeFileSync(
   join(here, 'sizes.json'),
   JSON.stringify(
     {
       measuredWith: { rustc: version('rustc'), wasmBindgen: version('wasm-bindgen'), wasmOpt: version('wasm-opt'), node: process.version, gzip: 'node:zlib gzipSync, default level' },
       limitBytes: LIMIT,
-      counted: 'the .wasm and its wasm-bindgen glue with its doc comments removed, each gzipped, summed; the page module will add to it',
+      counted: 'the .wasm and its wasm-bindgen glue with its doc comments removed, each gzipped, summed; the page module adds to it',
       glueDocComments: { bytes: documented.length - glue.length, gzipped: gzipSync(documented).byteLength - gzipSync(glue).byteLength },
       ...sizes,
       totalGzipped: total,

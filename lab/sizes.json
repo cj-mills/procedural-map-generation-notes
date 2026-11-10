@@ -7,19 +7,19 @@
     "gzip": "node:zlib gzipSync, default level"
   },
   "limitBytes": 51200,
-  "counted": "the .wasm and its wasm-bindgen glue with its doc comments removed, each gzipped, summed; the page module will add to it",
+  "counted": "the .wasm and its wasm-bindgen glue with its doc comments removed, each gzipped, summed; the page module adds to it",
   "glueDocComments": {
     "bytes": 4771,
     "gzipped": 1500
   },
   "wasm": {
-    "bytes": 81716,
-    "gzipped": 36212
+    "bytes": 81689,
+    "gzipped": 36215
   },
   "glue": {
     "bytes": 16216,
     "gzipped": 3082
   },
-  "totalGzipped": 39294,
-  "headroom": 11906
+  "totalGzipped": 39297,
+  "headroom": 11903
 }

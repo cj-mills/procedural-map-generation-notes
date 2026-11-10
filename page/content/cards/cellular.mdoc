@@ -1,7 +1,7 @@
 ---
 title: Cellular automata
 ---
-Random noise, smoothed by one counting rule again and again, until a natural-looking map comes out of it [[t:73-74 t:83-84 s:9]].
+Random noise, with cell life rules applied to every tile again and again, until a natural-looking map comes out of it [[t:73-74 t:83-84 s:9]].
 
 ## The rule
 ```text
@@ -21,7 +21,7 @@ The talk gives the rule in three cases: no neighbors, a wall; one to four, empty
 @@control wall_percent
 The chance each tile starts as wall [[c03:19-29 g]].
 @@control iterations
-How many smoothing passes run [[c03:31-34]].
+How many times the rule is applied to the whole map [[c03:31-34 c03:56-70]].
 
 ## What it produces, measured
 @@measured
@@ -34,7 +34,7 @@ The rule says nothing about joining the caves up [[own]]. A map has {{c03.region
 ## What it combines with
 @@combines
 
-The talk brings in its cull for exactly this map: chunks that can’t be reached [[t:222-223]].
+The talk’s first big use for Dijkstra maps is on a map like this one, which can leave chunks that can’t be reached [[t:209-213 t:222-223]].
 
 ## Checked against the talk’s code
 @@checked

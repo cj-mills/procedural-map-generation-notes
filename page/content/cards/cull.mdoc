@@ -18,12 +18,12 @@ The talk builds this on Dijkstra maps: from a starting point, every walkable til
 
 ## Controls
 @@control mode
-`mark` shows the unreachable tiles and leaves them, as the talk’s first demo of it does [[c16:62-73]]. `remove` turns them to wall, as its later demos do before they place anything [[c17:54-67 g]].
+`mark` shows the unreachable tiles and leaves them, as the demo `c16-unreachable` does [[c16:62-73]]. `remove` turns them to wall, as the demo `c17-starting-left` does before it places its start [[c17:54-94 g]].
 
 ## What it produces, measured
 @@measured
 
-Marking changes no tile, so this is the cave map’s own row [[own]]. With `remove`, as in the talk’s next demo, a map is {{c17.regions.max}} region on every seed [[run:c17.regions.max]]. What the cull costs varies: the floor share after it runs from {{c17.floor_share.min}} to {{c17.floor_share.max}}, where the caves before it never fell below {{c03.floor_share.min}} [[run:c17.floor_share.min c17.floor_share.max c03.floor_share.min]]. The talk’s warning is the extreme of this: a map with only two tiles left to walk on [[t:238-240]].
+Marking changes no tile, so this is the cave map’s own row [[own]]. With `remove`, as in the talk’s next demo, a map is {{c17.regions.max}} region on every seed [[run:c17.regions.max]]. What the cull costs varies: the floor share after it runs from {{c17.floor_share.min}} to {{c17.floor_share.max}}, where the caves before it never fell below {{c03.floor_share.min}} [[run:c17.floor_share.min c17.floor_share.max c03.floor_share.min]]. The talk warns of the extreme case, a map with only two tiles you can walk on, which culling before picking a start avoids [[t:236-240]].
 
 ## Where it fails
 @@fails

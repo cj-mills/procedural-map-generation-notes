@@ -14,7 +14,7 @@ A corridor joins this room’s center to the center of the room before it: one r
 The demo starts its list with one rectangle inside the map’s edge and that rectangle’s four quarters [[c02:24-29 c02:87-111]]. Quarters shown so far: {n}.
 
 ## bsp.add
-An attempt picks any rectangle on the list and tries a room near its top-left corner [[c02:43-44 c02:114-136]]. The room is carved only if every tile within two of it is still solid and inside the map’s outer ring, and then the rectangle it came from is quartered again [[c02:45-52 c02:138-174 g]]. It is room {n}.
+An attempt picks any rectangle on the list and tries a room near its top-left corner [[c02:43-44 c02:114-136]]. The room is carved only if every tile within two of it is still solid and inside the map’s outer ring, and then the rectangle it came from is quartered again [[c02:45-52 c02:86-112 c02:138-174 g]]. It is room {n}.
 
 ## cellular.noise
 Every tile, the map’s edge included, starts as wall with a {n}% chance and as floor otherwise [[c03:19-29 g]].
@@ -29,7 +29,7 @@ The map starts solid [[c04:17-19 t:87 g]].
 A digger steps in a random direction and digs the tile it lands on, again and again, until it steps off the map or runs out of steps [[c04:54-76 t:90-95 g]]. The first starts at the center and each later one on a random open tile [[c04:21-22 c04:25-47 t:95-96 g]]. This is digger {n}.
 
 ## dla.seed
-A plus of five open tiles at the center of a solid map: the seed that everything else sticks to [[c05:19-40 t:103-104 g]].
+A plus of five open tiles at the center of a solid map: the target seed that the particles are fired at [[c05:19-40 t:103-105 g]].
 
 ## dla.particle
 A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug [[c05:49-82 t:104-108 g]]. This is particle {n}.
@@ -77,7 +77,7 @@ The first noise on its own, with the demo’s base settings [[c13:23-29 c13:71-1
 The second noise on its own: another seed, half the octaves and gain, one more of lacunarity and four times the frequency [[c13:31-37 c13:108-135]]. The talk calls it much more bumpy, and terrible as a continent [[t:169-171]].
 
 ## noise.zoomed-out
-The whole noise at scale 1, cut into water, grass and mountain by altitude [[c12:31-47 c12:66-76]].
+The noise at scale 1, labeled “Zoomed Out”, cut into three bands by its value: the talk’s water, green terrain and mountains [[c12:31-47 c12:66-76 t:164-166]].
 
 ## noise.zoomed-out#c13-double-noise
 The two noises mixed at scale 1, where the first counts in full and the second is taken away at a quarter of its strength [[c13:39-44 c13:139-149]].
@@ -104,7 +104,7 @@ The prefab is stamped where it fits: at the center of a room big enough for it, 
 The prefab is stamped down the middle of the map, over the seam between the two halves [[c09:116-133 t:186-188]]. The talk’s is a line of fortifications; ours is a hall of our own design, because we don’t copy its layout [[own]].
 
 ## prefab.no-place
-No place was found for the prefab. The talk’s loops end only when the prefab has been placed, so its code would still be looking [[c14:104-124 c15:41-67]]. Ours stops and records the seed as a failure [[own]].
+No place was found for the prefab [[own]]. The talk’s loops end only when the prefab has been placed, so its code would still be looking [[c14:104-124 c15:41-67]]. Ours stops and records the seed as a failure [[own]].
 
 ## cull.center
 The open tile nearest the center of the map is found [[c16:36-54 t:224 g]].

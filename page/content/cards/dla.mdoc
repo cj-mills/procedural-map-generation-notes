@@ -13,7 +13,7 @@ while less than a share of the map is open:
     dig the last solid tile it stood on, and with symmetry its mirror image
 ```
 
-The talk shows three versions that differ in how a particle travels: a simple one, a central attractor, and the attractor with a symmetry [[t:103-104 t:111-112 t:115-116]]. The demo of the simple version moves its particle one random step at a time [[c05:55-80]].
+The talk shows three versions: a simple one, a central attractor, and the attractor with a symmetry applied [[t:103-104 t:111-112 t:115-116]]. The demo of the simple version moves its particle one random step at a time [[c05:55-80]].
 
 ## Step through it
 @@steps limit=5 mid=2
@@ -27,7 +27,7 @@ Particles keep coming until one over this number of the map’s tiles is open: a
 ## What it produces, measured
 @@measured
 
-The talk calls the simple version’s map very winding, and guaranteed to be contiguous [[t:109]]. The walking version is both: {{c05.regions.max}} region on every seed, and {{c05.dead_ends.median}} dead ends at the median against cellular automata’s {{c03.dead_ends.median}} [[run:c05.regions.max c05.dead_ends.median c03.dead_ends.median]]. The attractor and the symmetric version are not contiguous: {{c06.regions.median}} and {{c07.regions.median}} regions at the median, and never fewer than {{c06.regions.min}} and {{c07.regions.min}} [[run:c06.regions.median c07.regions.median c06.regions.min c07.regions.min]]. Their particles follow a Bresenham line to the center [[c06:56-60]]. Such a line can step diagonally, so a dug tile can touch the cave only at a corner, and walking is four-way [[own]].
+The talk calls the simple version’s map very winding, and guaranteed to be contiguous [[t:109]]. The walking version is both: {{c05.regions.max}} region on every seed, and {{c05.dead_ends.median}} dead ends at the median against cellular automata’s {{c03.dead_ends.median}} [[run:c05.regions.max c05.dead_ends.median c03.dead_ends.median]]. The attractor and the symmetric version are not contiguous: {{c06.regions.median}} and {{c07.regions.median}} regions at the median, and never fewer than {{c06.regions.min}} and {{c07.regions.min}} [[run:c06.regions.median c07.regions.median c06.regions.min c07.regions.min]]. Their particles follow a Bresenham line to the center [[c06:56-60 c07:56-60]]. Such a line can step diagonally, so a dug tile can touch the cave only at a corner, and walking is four-way [[own]].
 
 ## Where it fails
 @@fails
@@ -37,7 +37,7 @@ The simple version’s walk has no cap in the talk’s code [[c05:55-80]]. Ours 
 ## What it combines with
 @@combines
 
-The talk also fires particles at a finished map, which is [erosion](#dla-erode) [[t:191-193]].
+The talk also fires particles at a finished map, which its slide calls DLA for erosion [[t:191-193 s:21]]. That is the [erosion](#dla-erode) card.
 
 ## Checked against the talk’s code
 @@checked

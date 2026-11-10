@@ -1,6 +1,6 @@
 @@lab
 
-This is a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, and more algorithms that fix the maps and find out whether they are usable [[t:6-9]]. A recipe is a pipeline of those techniques and a seed, and the same recipe always builds the same map [[own]]. The lab above builds one a step at a time. Below, each technique has a card: its rule, its controls, what it produces over 200 seeds, the seeds where it fails, and how our version compares with the talk’s own code [[own]].
+This is a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, and more algorithms that fix the maps and find out whether they are usable [[t:3-9]]. A recipe is a pipeline of those techniques and a seed, and the same recipe always builds the same map [[own]]. The lab above builds one a step at a time. Below, each technique has a card: its rule, its controls, what it produces over 200 seeds, the seeds where it fails, and how our version compares with the talk’s own code [[own]].
 
 ## Which technique for which map
 
@@ -26,7 +26,7 @@ These change a map that another stage made, or join two [[own]].
 
 ## Analysis and placement
 
-These read a map: what can be reached, where to start and end, and what lies near the way between. The talk builds them all on Dijkstra maps [[t:209-213]].
+These read a map: what can be reached, where to start and end, and what lies near the way between [[own]]. The talk builds its next set of algorithms on Dijkstra maps [[t:209-213]].
 
 @@group Analysis and placement
 
@@ -54,7 +54,7 @@ A seed fails a demo when its map meets one of these [[own]]:
 
 ### The walk
 
-The talk suggests hiding something at the least accessible point of a map for a treasure hunt, and bonus things in the rooms off the route [[t:254-256 t:270-271]]. The lab’s walk borrows that: caches to find on the way to the exit. The talk has no walk, and these rules are ours [[own]]:
+The talk suggests hiding something at the least accessible point of a map for a treasure hunt, and bonus things in the gray rooms, the ones its route doesn’t need [[t:254-256 t:267-271]]. The lab’s walk borrows that: caches to find on the way to the exit. The talk has no walk, and these rules are ours [[own]]:
 
 - Up to five caches go on floor or grass, at least the hot path’s radius from the route by walking. The first goes on the tile farthest from the route, and each one after it on the tile farthest from those already placed, more than 12 steps from them [[own]].
 - You see up to nine tiles away in straight lines over tiles that can be walked on, and the walls that touch what you see. You remember what you have seen [[own]].
@@ -62,7 +62,7 @@ The talk suggests hiding something at the least accessible point of a map for a 
 
 ### Is this the talk’s technique?
 
-Reading the talk’s code takes one key: `.` is its solid tile and `#` its open one. A new map is all `.` [[backend:12-16]], and its pathfinding steps only onto neighbors that are not `.` [[backend:54-65]].
+Reading the talk’s code takes one key: `.` is its solid tile and `#` its open one [[own]]. A new map is all `.` [[backend:12-16]], and its pathfinding steps only onto neighbors that are not `.` [[backend:54-65]].
 
 We built the talk’s code with only its window and its random seeding replaced, and ran every demo on the same 200 seeds [[own]]. Its random number generator isn’t ours, so the maps can’t match tile for tile, and the comparison is of distributions: for each demo and trait a two-sample Kolmogorov–Smirnov test, with a trait counted as differing when p is under 0.01 [[own]]. {{faith.consistent}} of {{faith.compared}} compared traits are consistent [[run:faith.consistent faith.compared table.faithfulness]].
 
