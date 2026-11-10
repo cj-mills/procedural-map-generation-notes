@@ -162,9 +162,9 @@ for (const [name, { recipe, seed, frame }] of figures) {
   }
 }
 mkdirSync(join(bundle, 'assets/rules'), { recursive: true });
-for (const [name, rows] of diagrams) {
+for (const [name, { rows, key }] of diagrams) {
   for (const theme of ['light', 'dark']) {
-    writeFileSync(join(bundle, `assets/rules/${name}-${theme}.png`), diagram(rows, theme));
+    writeFileSync(join(bundle, `assets/rules/${name}-${theme}.png`), diagram(rows, theme, key));
     manifest.provenance.push({ asset: `assets/rules/${name}-${theme}.png`, generator: `build.mjs, from the diagram’s rows in page/content/, drawn in the site’s ${theme} figure colors` });
   }
 }

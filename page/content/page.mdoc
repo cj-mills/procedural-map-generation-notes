@@ -9,29 +9,31 @@
 
 ## Which technique for which map
 
-Each row is a criterion of our own over the measured traits, and the demos listed are the ones the data says meet it [[run:table.guide]].
+- **Each row:** a criterion of our own over the measured traits. The demos listed are the ones the data says meet it [[run:table.guide]].
 
 @@guide
 
-The talk’s 22 demos, each built on seeds 0 to 199. A cell’s number is the median, and its mark shows where 8 of 10 seeds fall [[run:table.comparison]]. The traits are [our own definitions](#our-definitions).
+- **Each row below:** one of the talk’s 22 demos, built on seeds 0 to 199 [[run:table.comparison]].
+- **A cell:** the median. Its mark shows where 8 of 10 seeds fall [[own]].
+- **The traits:** [our own definitions](#our-definitions) [[own]].
 
 @@comparison
 
 ## Generators
 
-Each of these starts a new map [[own]].
+Each starts a new map [[own]].
 
 @@group Generators
 
 ## Shaping and combining
 
-These change a map that another stage made, or join two [[own]].
+Each changes a map that another stage made, or joins two [[own]].
 
 @@group Shaping and combining
 
 ## Analysis and placement
 
-These read a map: what can be reached, where to start and end, and what lies near the way between [[own]]. The talk builds its next set of algorithms on Dijkstra maps [[t:209-213]].
+Each reads a map: what can be reached, where to start and end, and what lies near the way between [[own]]. The talk’s next set of algorithms all rely on Dijkstra maps [[t:209-211]].
 
 @@group Analysis and placement
 
@@ -41,7 +43,9 @@ These read a map: what can be reached, where to start and end, and what lies nea
 The talk doesn’t measure its maps. Every trait, the probe and every failure criterion below is our own definition, written for this page and applied the same way to our code and to the talk’s [[own]].
 {% /callout %}
 
-Each of the talk’s 22 demos is a recipe, built once on each of seeds 0 to 199 by the same core that runs in this page [[own]]. The data file lists every value with the recipe and the seed behind it [[data:traits]].
+- **What is measured:** each of the talk’s 22 demos, as a recipe [[own]].
+- **Seeds:** 0 to 199, each built once, by the same core that runs in this page [[own]].
+- **The data file:** every value, with the recipe and the seed behind it [[data:traits]].
 
 ### Our definitions
 
@@ -49,7 +53,8 @@ What we measure on a finished map [[own]]:
 
 @@definitions
 
-A map with no start and exit of its own is measured between the open tile nearest the middle of its left edge and the open tile nearest the middle of its right edge: the probe [[own]]. Those two points are where the talk’s demos look for a start and for an exit [[c17:69-86 c18:92-109]].
+- **The probe:** for a map with no start and exit of its own. Its path is measured between the open tile nearest the middle of its left edge and the open tile nearest the middle of its right edge [[own]].
+- **Why those two:** they are where the talk’s demos look for a start and for an exit [[c17:69-86 c18:92-109]].
 
 ### What counts as failing
 
@@ -59,18 +64,24 @@ A seed fails a demo when its map meets one of these [[own]]:
 
 ### The walk
 
-The talk suggests hiding something at the least accessible point of a map for a treasure hunt, and bonus things in the gray rooms, the ones its route doesn’t need [[t:254-256 t:267-271]]. The lab’s walk borrows that: caches to find on the way to the exit. The talk has no walk, and these rules are ours [[own]]:
-
-- Up to five caches go on floor or grass, at least the hot path’s radius from the route by walking. The first goes on the tile farthest from the route, and each one after it on the tile farthest from those already placed, more than 12 steps from them [[own]].
-- You see up to nine tiles away in straight lines over tiles that can be walked on, and the walls that touch what you see. You remember what you have seen [[own]].
-- Afterward the lab draws your route over the shortest one, on the map shaded by walking distance from the start [[own]].
+- **Talk says:** hide something at the least accessible point of a map, for a treasure hunt [[t:253-256]].
+- **Talk says:** hide bonus things in the gray rooms, the ones its route doesn’t need [[t:267-271]].
+- **The lab’s walk:** borrows that, as caches to find on the way to the exit. The talk has no walk, and these rules are ours [[own]]:
+  - **Caches:** up to 5, on floor or grass, at least the hot path’s radius from the route by walking. The first goes on the tile farthest from the route. Each one after it goes on the tile farthest from those already placed, more than 12 steps from them [[own]].
+  - **Sight:** up to 9 tiles away in straight lines, over tiles that can be walked on, plus the walls that touch what you see. What you have seen stays on the map [[own]].
+  - **Afterward:** the lab draws your route over the shortest one, on the map shaded by walking distance from the start [[own]].
 
 ### Is this the talk’s technique?
 
-Reading the talk’s code takes one key: `.` is its solid tile and `#` its open one [[own]]. A new map is all `.` [[backend:12-16]], and its pathfinding steps only onto neighbors that are not `.` [[backend:54-65]].
-
-We built the talk’s code with only its window and its random seeding replaced, and ran every demo on the same 200 seeds [[own]]. Its random number generator isn’t ours, so the maps can’t match tile for tile, and the comparison is of distributions: for each demo and trait a two-sample Kolmogorov–Smirnov test, with a trait counted as differing when p is under 0.01 [[own]]. {{faith.consistent}} of {{faith.compared}} compared traits are consistent [[run:faith.consistent faith.compared table.faithfulness]].
+- **One key to the talk’s code:** `.` is its solid tile and `#` its open one [[own]].
+  - A new map is all `.` [[backend:12-16]].
+  - Its pathfinding steps only onto neighbors that are not `.` [[backend:54-65]].
+- **What we ran:** the talk’s code, with only its window and its random seeding replaced. Every demo, on the same 200 seeds [[own]].
+- **Why distributions:** its random number generator isn’t ours, so the maps can’t match tile for tile [[own]].
+- **The test:** for each demo and trait, a two-sample Kolmogorov–Smirnov test. A trait counts as differing when p is under 0.01 [[own]].
+- **The result:** {{faith.consistent}} of {{faith.compared}} compared traits are consistent [[run:faith.consistent faith.compared table.faithfulness]].
 
 @@faithfulness
 
-The comparison’s numbers and the recipe format’s schema ship with this page too [[data:faithfulness data:schema]]. The core is also a command line, `map-lab`, in this page’s repository: `map-lab build`, `traits`, `measure` and `walk` take the same recipes [[own]].
+- **Also with this page:** the comparison’s numbers and the recipe format’s schema [[data:faithfulness data:schema]].
+- **On the command line:** the core is also `map-lab`, in this page’s repository. `map-lab build`, `traits`, `measure` and `walk` take the same recipes [[own]].

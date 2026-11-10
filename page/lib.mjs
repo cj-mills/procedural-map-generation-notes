@@ -180,7 +180,8 @@ export function palette(theme) {
 // ---------------------------------------------------------------- step figures
 export const SCALE_PX = 6; // pixels a tile: drawn larger than a step shows, since a figure is never scaled up
 
-function png(width, height, rgb) {
+/** A PNG of 8-bit RGB pixels, or of RGBA with `channels` 4. */
+function png(width, height, pixels, channels = 3) {
   const chunk = (type, data) => {
     const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
     const out = Buffer.alloc(body.length + 8);
@@ -192,9 +193,9 @@ function png(width, height, rgb) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(width, 0);
   ihdr.writeUInt32BE(height, 4);
-  ihdr.set([8, 2, 0, 0, 0], 8); // 8-bit RGB
-  const raw = Buffer.alloc((width * 3 + 1) * height);
-  for (let y = 0; y < height; y++) rgb.copy(raw, y * (width * 3 + 1) + 1, y * width * 3, (y + 1) * width * 3);
+  ihdr.set([8, channels === 4 ? 6 : 2, 0, 0, 0], 8);
+  const raw = Buffer.alloc((width * channels + 1) * height);
+  for (let y = 0; y < height; y++) pixels.copy(raw, y * (width * channels + 1) + 1, y * width * channels, (y + 1) * width * channels);
   return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
 
@@ -226,25 +227,58 @@ export function figure(b, at, theme) {
   return png(w * S, h * S, rgb);
 }
 
+/** The digits a diagram prints on a tile, 3 by 5, a row a string. */
+const DIGITS = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001001001001', '111101111101111', '111101111001111'];
+/** How a diagram's `key` may draw a tile that carries a number. */
+const NUMBERED = ['floor', 'wall', 'route', 'hot', 'point', 'count'];
+
 /** A rule's diagram: a few tiles drawn large from rows of characters, for one theme.
- *  `#` solid, `.` open, `o` where a particle starts, `*` a tile it passes, `+` the tile it digs,
- *  `x` a tile it rejects. The marks differ in size as well as color, so they read without color. */
-export function diagram(rows, theme) {
+ *    `#` solid   `.` open   `_` nothing: a gap between two drawings
+ *    `o` where a particle starts   `*` a tile it passes   `+` a tile newly opened   `x` a tile rejected
+ *    `u` an open tile that can't be reached
+ *    `W` `F` the tile a rule has just decided, now wall or floor
+ *    `a`-`d` a tile of one cell or rectangle, by tint   `A`-`D` the same, on the cell's edge
+ *    `0`-`9` a number on an open tile, or on the tile its `key` names: { 0: 'route', 1: 'hot', '4+': 'wall' }
+ *  The marks differ in size and shape as well as color, so they read without color. */
+export function diagram(rows, theme, key = {}) {
   const P = palette(theme), T = 24, w = rows[0].length, h = rows.length;
   const line = P.tiles[4]; // between tiles: the muted wall tone
-  const rgb = Buffer.alloc(w * T * h * T * 3);
-  const fill = (x, y, color, inset) => {
-    for (let py = y * T + inset; py < (y + 1) * T - inset; py++) for (let px = x * T + inset; px < (x + 1) * T - inset; px++) rgb.set(color, (py * w * T + px) * 3);
+  const px = Buffer.alloc(w * T * h * T * 4);
+  const fill = (x, y, color, inset = 0) => {
+    for (let py = y * T + inset; py < (y + 1) * T - inset; py++) for (let qx = x * T + inset; qx < (x + 1) * T - inset; qx++) px.set([...color, 255], (py * w * T + qx) * 4);
   };
-  const kinds = { '#': [P.tiles[0]], '.': [P.tiles[1]], 'o': [P.tiles[0], P.marks[3], 4], '*': [P.tiles[0], P.marks[7], 8], '+': [P.tiles[1], P.marks[1], 3], 'x': [P.tiles[0], P.marks[2], 6] };
+  const ring = (x, y, base) => (fill(x, y, P.marks[1], 1), fill(x, y, base, 4));
+  const light = ([r, g, b]) => 0.2126 * toLinear(r / 255) + 0.7152 * toLinear(g / 255) + 0.0722 * toLinear(b / 255) > 0.3;
+  const digit = (x, y, n, on) => {
+    const ink = light(on) ? P.tiles[0] : P.tiles[1];
+    [...DIGITS[n]].forEach((bit, i) => {
+      if (bit !== '1') return;
+      const x0 = x * T + 8 + (i % 3) * 3, y0 = y * T + 5 + Math.floor(i / 3) * 3;
+      for (let py = y0; py < y0 + 3; py++) for (let qx = x0; qx < x0 + 3; qx++) px.set([...ink, 255], (py * w * T + qx) * 4);
+    });
+  };
+  const styleOf = (n) => key[n] ?? Object.entries(key).find(([k]) => k.endsWith('+') && n >= Number(k.slice(0, -1)))?.[1] ?? 'floor';
+  const kinds = { '#': [P.tiles[0]], '.': [P.tiles[1]], 'o': [P.tiles[0], P.marks[3], 4], '*': [P.tiles[0], P.marks[7], 8], '+': [P.tiles[1], P.marks[1], 3], 'x': [P.tiles[0], P.marks[2], 6], 'u': [P.tiles[1], P.marks[2], 5] };
   rows.forEach((row, y) => [...row].forEach((ch, x) => {
-    const kind = kinds[ch];
-    if (!kind) throw new Error(`a rule's diagram has no tile "${ch}"`);
-    fill(x, y, line, 0);
-    fill(x, y, kind[0], 1);
-    if (kind[1]) fill(x, y, kind[1], kind[2]);
+    if (ch === '_') return;
+    fill(x, y, line);
+    if (kinds[ch]) {
+      fill(x, y, kinds[ch][0], 1);
+      if (kinds[ch][1]) fill(x, y, kinds[ch][1], kinds[ch][2]);
+    } else if (ch === 'W' || ch === 'F') ring(x, y, P.tiles[ch === 'W' ? 0 : 1]);
+    else if (/[a-d]/i.test(ch)) {
+      fill(x, y, P.groups['abcd'.indexOf(ch.toLowerCase())], 1);
+      if (ch < 'a') fill(x, y, P.tiles[0], 7);
+    } else if (/\d/.test(ch)) {
+      const style = styleOf(Number(ch));
+      if (!NUMBERED.includes(style)) throw new Error(`a rule's diagram has no numbered tile "${style}"`);
+      const base = { floor: P.tiles[1], wall: P.tiles[0], route: P.marks[6], hot: P.marks[7], point: P.marks[3], count: line }[style];
+      if (style === 'count') ring(x, y, base);
+      else fill(x, y, base, 1);
+      digit(x, y, Number(ch), base);
+    } else throw new Error(`a rule's diagram has no tile "${ch}"`);
   }));
-  return png(w * T, h * T, rgb);
+  return png(w * T, h * T, px, 4);
 }
 
 /** Which frames of a run a step list shows: of the frames in `among`, each kind of step's first and

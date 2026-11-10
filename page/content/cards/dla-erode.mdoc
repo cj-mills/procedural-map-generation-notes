@@ -4,32 +4,35 @@ title: Erosion by aggregation
 Fire particles at a finished map and let them eat at its walls, so it looks more organic and keeps its structure [[t:191-197 s:21]].
 
 ## The rule
-```text
-start from a finished map
-repeat for a number of particles:
-    start a particle on a random open tile
-    step at random until it stands on rock
-    dig that tile
-```
+1. Start from a finished map. The demo’s: random rooms joined by corridors [[c08:21-83]].
+2. **Repeat 500 times** [[c08:86]]:
+   1. start a particle on a random open tile [[c08:92-101]];
+   2. step it at random until it stands on rock [[c08:102-125]];
+   3. dig that tile of rock [[c08:102-128]].
 
-Each particle digs exactly one tile: the first rock its walk reaches from inside the open area [[c08:86-128 g]].
+- **One tile a particle:** the first rock its walk reaches from inside the open area [[c08:86-128]].
 
 ## Step through it
 @@steps limit=5 mid=1
 
 ## Controls
 @@control iterations
-How many particles are fired, each digging one tile [[c08:86-128]].
+Particles fired, each digging one tile [[c08:86-128]].
 
 ## What it produces, measured
 @@measured
 
-500 particles lift the floor share from random rooms’ {{c01.floor_share.median}} to {{c08.floor_share.median}}, and turn a map with no dead ends into one with {{c08.dead_ends.median}} at the median [[run:c01.floor_share.median c08.floor_share.median c08.dead_ends.median]]. Erosion only opens tiles next to open ones, and the map stays {{c08.regions.max}} region on every seed [[run:c08.regions.max]].
+- **Talk says:** the map becomes more and more organic looking, while keeping its basic structure [[t:196-197]].
+- **Floor share:** 500 particles lift it from random rooms’ {{c01.floor_share.median}} to {{c08.floor_share.median}} [[run:c01.floor_share.median c08.floor_share.median]].
+- **Dead ends:** from {{c01.dead_ends.max}} on every seed to {{c08.dead_ends.median}} at the median [[run:c01.dead_ends.max c08.dead_ends.median]].
+- **Still one piece:** {{c08.regions.max}} region on every seed [[run:c08.regions.max]].
+  - **Why:** erosion only opens tiles next to open ones [[own]].
 
 ## Where it fails
 @@fails
 
-The demo’s walk has no cap [[c08:100-128]]. Ours has one, which {{c08.fails.guard-hit}} of these seeds reach [[run:c08.fails.guard-hit]].
+- **No cap in the talk’s code:** a particle’s walk runs until it reaches rock [[c08:100-128]].
+- **Ours has a cap:** {{c08.fails.guard-hit}} of these seeds reach it [[run:c08.fails.guard-hit]].
 
 ## What it combines with
 @@combines

@@ -4,36 +4,47 @@ title: Culling what can’t be reached
 Find the parts of a map that can’t be reached, then delete them or put them to use [[t:222-223 t:230-234 s:24]].
 
 ## The rule
-```text
-find the open tile nearest the center
-flood outward from it, counting steps: a Dijkstra map
-every open tile the flood never reached is unreachable
-mark those tiles, or turn them to wall
-```
+1. Find the open tile nearest the center of the map [[c16:36-54]].
+2. Make a Dijkstra map from that tile: every tile it can walk to gets its number of steps [[c16:62-63 t:214-219]].
+3. Open tiles left without a number can’t be reached [[c16:64-69 t:226-228]].
+4. By mode:
+   - `mark`: color those tiles and leave them open [[c16:64-69]];
+   - `remove`: turn them to wall [[c17:55-65]].
 
-The talk builds this on Dijkstra maps: from a starting point, every walkable tile gets the number of steps to it, and a tile left at the sentinel value can’t be reached [[t:214-221 s:23]].
+@@diagram cull-flood alt="A small cave with one tile numbered 0. Every tile that can be walked to from it carries its number of steps, up to 5. A pocket of two open tiles at the right is walled off; it has no number and is marked." caption="A Dijkstra map from one tile (0): each tile it can walk to gets its number of steps. The pocket at the right gets none, so it can’t be reached (small squares)." key="0:point"
+###########
+#3210123###
+#432#234#u#
+##43#345#u#
+###########
+
+- **Talk says,** of Dijkstra maps: start from one or more points and mark the rest of the map with a sentinel value, meaning you can’t go there. Then number every walkable tile by its steps from the start [[t:214-221 s:23]].
 
 ## Step through it
 @@steps limit=4
 
 ## Controls
 @@control mode
-`mark` shows the unreachable tiles and leaves them, as the demo `c16-unreachable` does [[c16:62-73]]. `remove` turns them to wall, as the demo `c17-starting-left` does before it places its start [[c17:54-94 g]].
+`mark`: shows the unreachable tiles and leaves them, as the demo `c16-unreachable` does [[c16:62-73]]. `remove`: turns them to wall, as the demo `c17-starting-left` does before it places its start [[c17:54-94]].
 
 ## What it produces, measured
 @@measured
 
-Marking changes no tile, so this is the cave map’s own row [[own]]. With `remove`, as in the talk’s next demo, a map is {{c17.regions.max}} region on every seed [[run:c17.regions.max]]. What the cull costs varies: the floor share after it runs from {{c17.floor_share.min}} to {{c17.floor_share.max}}, where the caves before it never fell below {{c03.floor_share.min}} [[run:c17.floor_share.min c17.floor_share.max c03.floor_share.min]]. The talk warns of the extreme case, a map with only two tiles you can walk on, which culling before picking a start avoids [[t:236-240]].
+- **Mark:** changes no tile, so this is the cave map’s own row [[own]].
+- **Remove:** {{c17.regions.max}} region on every seed [[run:c17.regions.max]].
+- **What it costs:** varies. Floor share after the cull: {{c17.floor_share.min}} to {{c17.floor_share.max}}. The caves before it: never below {{c03.floor_share.min}} [[run:c17.floor_share.min c17.floor_share.max c03.floor_share.min]].
+- **Talk says:** culling before picking a start avoids the extreme case, a map with only two tiles you can walk on [[t:236-240]].
 
 ## Where it fails
 @@fails
 
-These are the cave map’s failures, which marking leaves in place [[own]].
+- **The cave map’s failures:** marking leaves them in place [[own]].
 
 ## What it combines with
 @@combines
 
-The talk culls before it picks a start, so the player can’t be placed somewhere they can’t get out of [[t:236-237]].
+- **Before a start:** the talk culls before it picks one, so the player can’t be placed somewhere they can’t get out of [[t:236-237]].
+- **Or put them to use:** in a game that encourages tunneling, the talk hides things in the unreachable areas [[t:231-234]].
 
 ## Checked against the talk’s code
 @@checked

@@ -4,41 +4,56 @@ title: Random rooms
 Scatter rectangles over a solid map, keep the ones that don’t overlap, and join them with corridors [[t:47-51 s:5]].
 
 ## The rule
-```text
-repeat for a fixed number of attempts:
-    pick a random rectangle
-    carve it as a room, unless it comes within a tile of an earlier room
-sort the rooms left to right
-join each room to the one before it with an L-shaped corridor
-```
+1. **Repeat 20 times** [[c01:21]]:
+   1. pick a random rectangle [[c01:22-27]];
+   2. if it overlaps or touches a room already placed, discard it [[c01:28-38 c01:47-53]];
+   3. otherwise carve it as a room [[c01:40-46]].
+2. Sort the rooms by their left edge [[c01:57]].
+3. Join each room to the one before it, center to center [[c01:67-78]]:
+   - a corridor of two runs, one across and one up or down [[c01:72-76 c01:85-101]];
+   - a coin flip picks which run comes first [[c01:71-76]].
 
-The talk’s first technique is one that anyone who has done a roguelike development tutorial has seen [[t:44-46]]. Its demo sorts the rooms by their left edge and joins each to the one before it, center to center [[c01:57-78]].
+@@diagram rooms-join alt="A solid map with two rooms. A corridor runs right from the first room’s center, then down into the second room’s center. A third rectangle that touches the second room is marked as rejected." caption="A rectangle that touches a room is discarded (small squares). Two rooms are joined center to center by one run across and one down (marked tiles)."
+##############
+#...##########
+#...+++++++###
+#...#####....#
+######xxx....#
+######xxx....#
+######xxx#####
+##############
+
+- **Talk says:** anyone who has done a roguelike development tutorial has seen this one [[t:45-46]].
+- **Talk says:** keep adding rooms until there are enough by your own criteria [[t:50]].
+- **Demo:** a fixed 20 attempts. A rectangle that overlaps is discarded without another try [[c01:20-54]].
 
 ## Step through it
 @@steps limit=6
 
 ## Controls
 @@control attempts
-How many rectangles are tried. The demo’s loop runs a fixed 20 times, and a rectangle that overlaps is discarded without another try [[c01:20-54]].
+Rectangles tried. The demo: a fixed 20, and a discarded one is not tried again [[c01:20-54]].
 @@control min_size
-The smallest value a room’s width and height are drawn from [[c01:22-27]]. A room covers one tile more than the value each way, because the rectangle type the demo uses includes both of its ends [[own]].
+Smallest value a room’s width and height are drawn from [[c01:22-27]]. A room covers 1 tile more than the value each way: the demo’s rectangle type includes both of its ends [[own]].
 @@control max_size
-The largest such value. The demo writes it as an upper end of 10, which its random call leaves out [[own]].
+Largest such value. The demo writes it as an upper end of 10, which its random call leaves out [[own]].
 
 ## What it produces, measured
 @@measured
 
-Every seed gives {{c01.regions.max}} region and {{c01.dead_ends.max}} dead ends [[run:c01.regions.max c01.dead_ends.max]]: each room is joined to the one before it, and a corridor ends inside a room [[own]]. Of 20 attempts, {{c01.rooms.median}} place a room at the median, and never fewer than {{c01.rooms.min}} [[run:c01.rooms.median c01.rooms.min]].
+- **Random rooms:** {{c01.regions.max}} region and {{c01.dead_ends.max}} dead ends on every seed [[run:c01.regions.max c01.dead_ends.max]].
+  - **Why:** each room is joined to the one before it, and a corridor ends inside a room [[own]].
+- **Rooms placed:** of 20 attempts, {{c01.rooms.median}} at the median; never fewer than {{c01.rooms.min}} [[run:c01.rooms.median c01.rooms.min]].
 
 ## Where it fails
 @@fails
 
-Its attempts are a fixed 20, and its corridors one for each room after the first [[c01:20-21 c01:67-78]].
+- **No loop without an end:** attempts are a fixed 20; corridors, one for each room after the first [[c01:20-21 c01:67-78]].
 
 ## What it combines with
 @@combines
 
-The talk’s demos of erosion and of a prefab placed in a room both start by building a map of random rooms [[c08:21-83 c14:21-125]].
+- **As a base map:** the talk’s demos of erosion and of a prefab placed in a room both start by building random rooms [[c08:21-83 c14:21-125]].
 
 ## Checked against the talk’s code
 @@checked

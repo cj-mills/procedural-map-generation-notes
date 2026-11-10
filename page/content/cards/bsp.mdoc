@@ -4,28 +4,41 @@ title: Binary space partition rooms
 Rooms placed in ever-smaller parts of the map, so they come out better spaced than random rooms [[t:61-64 s:7]].
 
 ## The rule
-```text
-start a list with one rectangle and its four quarters
-repeat for a fixed number of attempts:
-    pick any rectangle on the list
-    try a room near its top-left corner
-    if it fits: carve it, and add that rectangle's four quarters to the list
-sort and join the rooms, as random rooms are
-```
+1. Start a list with one rectangle inside the map’s edge, and that rectangle’s four quarters [[c02:24-29 c02:87-111]].
+2. **Repeat 240 times** [[c02:41-54]]:
+   1. pick any rectangle on the list [[c02:43 c02:114-120]];
+   2. try a room near its top-left corner [[c02:44 c02:122-136]];
+   3. if every tile within 2 of the room is solid and inside the map’s outer ring, carve the room [[c02:45-49 c02:138-174]];
+   4. then add the four quarters of the rectangle it came from to the list [[c02:50 c02:86-112]].
+3. Sort the rooms by their left edge, and join each to the one before it with a corridor [[c02:57-78]].
 
-The talk describes halving the map, then each half, until a piece is about the size of a room [[t:66-69]]. Its demo is looser: it cuts into quarters, keeps every rectangle it has cut on its list, and quarters a rectangle again each time a room lands in it [[c02:41-55 c02:86-121]].
+@@diagram bsp-quarters alt="A rectangle cut into four quarters, each tinted differently. A small room sits near the top-left corner of the first quarter, and another near the top-left corner of the last." caption="The demo’s list holds a rectangle’s four quarters (tinted). A room is tried near the top-left corner of whichever rectangle is picked."
+aaaaaaabbbbbbb
+a...aaabbbbbbb
+a...aaabbbbbbb
+aaaaaaabbbbbbb
+cccccccddddddd
+cccccccd...ddd
+cccccccd...ddd
+cccccccddddddd
+
+- **Talk says:** halve the map, then each half, until a piece is about the size of a room [[t:66-69]].
+- **Demo:** looser. It cuts into quarters, keeps every rectangle it has cut on its list, and quarters a rectangle again each time a room lands in it [[c02:41-55 c02:86-121]].
 
 ## Step through it
 @@steps limit=6
 
 ## Controls
 @@control attempts
-How many times a rectangle is picked and a room tried. The demo’s counter goes up on every attempt, whether or not the room fits [[c02:41-55]].
+Times a rectangle is picked and a room tried. The demo’s counter goes up on every attempt, whether or not the room fits [[c02:41-55]].
 
 ## What it produces, measured
 @@measured
 
-Of 240 attempts, {{c02.rooms.median}} place a room at the median [[run:c02.rooms.median]]. The talk says of its animation that there are no rejections [[t:70-72]]. The demo records a frame only for a room that fits, so the attempts that fail are never shown [[c02:41-55]]. Against random rooms it places {{c02.rooms.median}} rooms to {{c01.rooms.median}} and opens {{c02.floor_share.median}} of the map to {{c01.floor_share.median}} [[run:c02.rooms.median c01.rooms.median c02.floor_share.median c01.floor_share.median]].
+- **Talk says,** of its animation: absolutely no rejections [[t:70-72]].
+- **BSP rooms:** of 240 attempts, {{c02.rooms.median}} place a room at the median [[run:c02.rooms.median]].
+  - **Why none are seen:** the demo records a frame only for a room that fits, so the attempts that fail are never shown [[c02:41-55]].
+- **vs random rooms:** {{c02.rooms.median}} rooms vs {{c01.rooms.median}}; floor share {{c02.floor_share.median}} vs {{c01.floor_share.median}} [[run:c02.rooms.median c01.rooms.median c02.floor_share.median c01.floor_share.median]].
 
 ## Where it fails
 @@fails
@@ -33,7 +46,7 @@ Of 240 attempts, {{c02.rooms.median}} place a room at the median [[run:c02.rooms
 ## What it combines with
 @@combines
 
-The talk uses it as the left half of its combined map: a fortress that breaks out into caves [[t:181-185]].
+- **Talk’s use:** the left half of its combined map, a fortress that breaks out into caves [[t:181-185]].
 
 ## Checked against the talk’s code
 @@checked

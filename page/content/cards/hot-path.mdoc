@@ -4,14 +4,23 @@ title: The hot path
 Everything close to the best route through a map, though not necessarily on it [[t:257-262 s:28]].
 
 ## The rule
-```text
-find the route from the start to the exit
-flood outward from every tile of the route at once, counting steps
-tiles under a chosen count are the hot path
-optionally, turn every tile beyond a second count to wall
-```
+1. Find the route from the start to the exit [[c20:111]].
+2. Make a Dijkstra map from every tile of the route at once: a tile’s value is its distance from the route [[c20:133-139 t:260-261]].
+3. **Hot path:** the tiles under a set distance. The demo: 10 [[c20:140-144]].
+4. **Cull,** optional: tiles at a second distance or farther become wall. The demo: 15 [[c20:147-152]].
 
-The talk’s author finds the route, makes a Dijkstra map from all of its points, and takes everything under a value of, say, 10 [[t:258-262]]. The demo then culls at 15, so a band of floor survives beyond the hot path it shows [[c20:131-154 g]].
+@@diagram hot-path-bands alt="A patch of floor crossed by a route that runs along the lower left, turns up, then runs right. Every tile carries its walking distance from the route, from 0 on the route to 6 in the far corner. Tiles at 1 are tinted as the hot path, and tiles at 4 or more are drawn as wall." caption="Each tile’s number is its walking distance from the route (0). Drawn with a hot path under 2 and a cull from 4, where the demo uses 10 and 15: 1 is hot path, 2 and 3 stay floor, 4 and up become wall." key="0:route 1:hot 4+:wall"
+65432222222
+54321111111
+43210000000
+33210111111
+2221012##22
+1111012##33
+00000123444
+11111234555
+
+- **Talk says:** everything with a value under, say, 10 is close to the best path, but not necessarily on it [[t:261-262]].
+- **Demo:** culls at 15, so a band of floor survives beyond the hot path it shows [[c20:131-154]].
 
 ## Step through it
 @@steps limit=4
@@ -20,12 +29,13 @@ The talk’s author finds the route, makes a Dijkstra map from all of its points
 @@control radius
 Tiles fewer than this many steps from the route are the hot path [[c20:131-145]]. The lab’s walk also keeps its caches at least this far from the route [[own]].
 @@control cull
-Tiles this many steps or more from the route become wall [[c20:147-154 g]]. At 0 nothing is culled [[own]].
+Tiles this many steps or more from the route become wall [[c20:147-154]]. At 0, nothing is culled [[own]].
 
 ## What it produces, measured
 @@measured
 
-The cull at 15 keeps about half the floor: a share of {{c20.floor_share.median}} at the median against {{c18.floor_share.median}} before it, on a route of the same {{c20.path.median}} steps [[run:c20.floor_share.median c18.floor_share.median c20.path.median]]. The talk offers it for a less branchy game, one that doesn’t make the player explore winding labyrinths with no purpose [[t:263-266]].
+- **Cull at 15:** keeps about half the floor. Floor share {{c20.floor_share.median}} at the median, vs {{c18.floor_share.median}} before it; the route is the same {{c20.path.median}} steps [[run:c20.floor_share.median c18.floor_share.median c20.path.median]].
+- **Talk says:** for a less branchy game. It removes the parts of the map that are irrelevant, so the player isn’t forced through winding labyrinths with no purpose [[t:263-266]].
 
 ## Where it fails
 @@fails
@@ -33,7 +43,7 @@ The cull at 15 keeps about half the floor: a share of {{c20.floor_share.median}}
 ## What it combines with
 @@combines
 
-The lab’s walk hides its caches off the hot path, by [a rule of our own](#the-walk) [[own]].
+- **The lab’s walk:** hides its caches off the hot path, by [a rule of our own](#the-walk) [[own]].
 
 ## Checked against the talk’s code
 @@checked

@@ -48,7 +48,22 @@ The text is in `page/content/`. A citation is written short, `[[t:73-74 s:9 c03:
 talk's transcript segments, a slide and lines of a demo's code, `[[own]]` for our own reasoning
 and `[[run:c03.regions.median]]` for a measured value the sentence states as
 `{{c03.regions.median}}`. Lines starting `@@` are where a generated part goes: a card's
-step-through, its measured table, its failing seeds. `page/gen.mjs` documents them.
+step-through, its measured table, its failing seeds, a rule's diagram. `page/gen.mjs` documents
+them.
+
+The text is distilled (one fact an item, in lists and tables under recurring lead-ins, with
+sentences kept for reasoning), so an item is a claim and carries its own citation. A rule is a
+numbered list with a citation a step. Where a rule is spatial, `@@diagram <name> alt="…"
+caption="…"` and rows of characters, a character a tile, make a figure the build draws for both
+themes (`diagram()` in `page/lib.mjs` lists the characters).
+
+In the talk's code `.` is the solid tile and `#` an open one. The page says so once, and
+`page/gen.mjs` declares the two passages of the shared map code that settle it as the page's
+standing context, which the verifier reads with every claim, so no claim has to cite them.
+
+A card's step-through opens on its first demo, as the last step of its fallback: the site shows
+that step alone while the module loads, and the module opens at the same step and the same size,
+so the swap moves nothing. The other demos' steps are a list of their own below it.
 
 ```sh
 node page/gen.mjs            # writes deliverable/content/index.mdoc

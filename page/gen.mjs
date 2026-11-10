@@ -25,8 +25,8 @@ import {
 const content = join(root, 'page/content');
 /** What is written by hand, with its short citations written out: [[t:73-74 s:9 c03:61-66 own run:c03.regions.median]]
  *  cites the talk's transcript segments 73 and 74, its slide 9 and lines 61 to 66 of the demo c03's code, and marks
- *  the claim as partly ours and as stating a measured value. `backend` is the demos' shared map code, `g` the
- *  lines of it that say which glyph is solid, and data:<file> a file of the bundle's own. */
+ *  the claim as partly ours and as stating a measured value. `backend` is the demos' shared map code, and
+ *  data:<file> a file of the bundle's own. */
 const SOURCES = { talk: 'wolverson2020-talk/transcript', slides: 'wolverson2020-slides/pdf', code: 'wolverson2020-code' };
 const DATA = { traits: 'assets/lab/traits.json', faithfulness: 'assets/lab/faithfulness.json', schema: 'assets/lab/recipe.schema.json' };
 const demoDir = (id) => Object.keys(DEMOS).find((d) => short(d) === id);
@@ -37,8 +37,6 @@ function citations(text, file) {
     const [kind, what = ''] = token.split(/:(.*)/s);
     const [a, b = a] = what.split('-').map(Number);
     if (token === 'own') return '{% own /%}';
-    // g: which glyph is solid in the talk's code. A claim about its walls and floor rests on these lines too.
-    if (token === 'g') return `{% cite id="${SOURCES.code}/backend/src/lib.rs#L12-L16" /%}{% cite id="${SOURCES.code}/backend/src/lib.rs#L54-L65" /%}`;
     if (kind === 'run' && what) return `{% own-run values="${what.split(',').join(' ')}" /%}`;
     if (kind === 'data' && DATA[what]) return `{% ref source="this" path="${DATA[what]}" lines="1-6" /%}`;
     if (!(a >= 0 && b >= a)) throw new Error(`${file}: [[${inner}]]: ${token} is not a citation`);
@@ -53,6 +51,11 @@ const read = (p) => citations(readFileSync(join(content, p), 'utf8'), p);
 export const PAGE = join(root, 'deliverable/content/index.mdoc');
 export const PARTS = ['The rule', 'Step through it', 'Controls', 'What it produces, measured', 'Where it fails', 'What it combines with', 'Checked against the talk’s code'];
 const LAB = { demo: 'c20-hot-path', seed: 7 };
+/** What the verifier reads with every claim of the page, which no claim then has to cite: the lines of the
+ *  demos' shared map code that say which glyph is solid. In the talk's code `.` is the solid tile and `#` an
+ *  open one, the reverse of the usual. The page states it once, under "Is this the talk's technique?"
+ *  (source-library, docs/formats.md, "Standing context for the verifier"). */
+const CONTEXT = [`${SOURCES.code}/backend/src/lib.rs#L12-L16`, `${SOURCES.code}/backend/src/lib.rs#L54-L65`];
 
 const attr = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 /** A JSON value as a Markdoc attribute literal. */
@@ -89,7 +92,7 @@ export function generate() {
     return [stage, { stage, title: meta.title, extras: JSON.parse(meta.extras ?? '[]'), parts: sections(text.slice(m[0].length)) }];
   }));
   const figures = new Map(); // name -> { recipe, seed, frame }
-  const diagrams = new Map(); // name -> the rows of a rule's diagram, a character a tile (lib.mjs, diagram())
+  const diagrams = new Map(); // name -> { rows, key }: a rule's diagram, a character a tile (lib.mjs, diagram())
   const blocks = new Map(); // every generated table and list the page states as measured, by its value's name
   const usedKeys = new Set();
   const names = { traits: [...TRAITS, ...EXTRA_TRAITS].map((t) => ({ ...t, to: SCALE[t.key] })), fails: Object.fromEntries(Object.entries(FAIL_NAMES).map(([k, v]) => [k, v.toLowerCase()])) };
@@ -115,13 +118,16 @@ export function generate() {
     const from = mine.filter((i) => i > 0 && !mine.includes(i - 1)).map((i) => i - 1);
     return { mine, among: [...new Set([...from, ...mine])].sort((a, b) => a - b) };
   }
+  /** A card's steps: its first demo's whole run through the stage, and for each demo after it what is new,
+   *  the kinds of step not yet shown and its last. The two are separate lists, because the first is the
+   *  step-through's fallback: the site shows a fallback's last step alone while its module loads, and the
+   *  module opens on that same step, so the swap changes nothing a reader can see. */
   function stepsOf(card, demos, { limit = 6, mid = 0 }) {
-    const out = [], seen = new Set();
+    const first = [], others = [], seen = new Set();
     demos.forEach((d, n) => {
       const b = build(d.recipe);
       const { mine, among } = framesOf(b, card.stage);
       if (!mine.length) throw new Error(`${d.id} has no step of ${card.stage}`);
-      // The first demo shows its whole run through the stage. Each demo after it shows what is new: kinds of step not yet shown, and its last.
       let pick;
       if (n === 0) pick = pickFrames(b.frames.list, among, limit, mid);
       else {
@@ -135,10 +141,12 @@ export function generate() {
       for (const i of pick) {
         const before = !mine.includes(i);
         if (!before) seen.add(noteFor(b.frames.list[i].note, d.id));
-        out.push(step(d.id, d.recipe, d.recipe.seed, b, i, before));
+        (n === 0 ? first : others).push(step(d.id, d.recipe, d.recipe.seed, b, i, before));
       }
+      // The first list ends on the stage's last step: where the module opens a card (lab.js, rebuild()).
+      if (n === 0 && pick.at(-1) !== mine.at(-1)) throw new Error(`${d.id}: the step list of ${card.stage} doesn't end on the stage's last step`);
     });
-    return out;
+    return { first, others };
   }
   const cliLine = (d, seed) => (d.file ? `map-lab build ${d.file}${seed === undefined || seed === d.recipe.seed ? '' : ` --seed ${seed}`}` : null);
 
@@ -147,13 +155,17 @@ export function generate() {
   function interactive(card, opts) {
     const demos = [...demosOf(card.stage), ...card.extras.map((id) => ({ id, label: OWN[id].label, file: OWN[id].file, recipe: cleanRecipe(OWN[id].recipe) }))];
     const params = { mode: 'card', stage: card.stage, demos: demos.map((d) => d.id) };
-    const what = demos.length > 1 ? `Step through ${demos.map((d) => d.label).join(', ')}` : `Step through ${demos[0].label}`;
+    const what = demos.length > 1 ? `Step through ${demos.map((d) => d.label).join('; ')}` : `Step through ${demos[0].label}`;
     const lines = demos.filter((d) => d.file).map((d) => `\`${cliLine(d)}\``);
+    const { first, others } = stepsOf(card, demos, opts);
+    const rest = demos.slice(1).map((d) => d.label);
     return [
       `{% interactive id="lab" caption="${attr(`${what}: seed ${demos[0].recipe.seed}, ${demos[0].recipe.width} by ${demos[0].recipe.height} tiles. Change the seed or a control and the map is built again.`)}" params=${literal(params)} %}`,
-      '{% steps %}', ...stepsOf(card, demos, opts), '{% /steps %}', '',
+      '{% steps %}', ...first, '{% /steps %}', '',
       `On the command line: ${lines.join(', ')}.`,
       '{% /interactive %}',
+      // The other demos' steps are a list of their own, in the page for every reader: the step-through reads their texts from it.
+      ...(others.length ? ['', `Also in the step-through: ${rest.join('; ')}. Where ${rest.length > 1 ? 'each' : 'it'} differs, and ${rest.length > 1 ? 'each one’s' : 'its'} last step:`, '', '{% steps %}', ...others, '{% /steps %}'] : []),
     ].join('\n');
   }
   function control(card, name, text) {
@@ -255,13 +267,15 @@ export function generate() {
           while (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].startsWith('@@')) text.push(lines[++i].trim());
           out.push(control(c, m[2].trim(), text.join(' ')));
         } else if (m[1] === 'diagram') {
-          // @@diagram <name> alt="…" caption="…", then its rows, a character a tile, to the next blank line.
-          const [, name, alt, caption] = /^(\S+)\s+alt="([^"]*)"\s+caption="([^"]*)"$/.exec(m[2].trim()) ?? [];
-          if (!name) throw new Error(`cards/${stage}.mdoc: @@diagram takes a name, alt="…" and caption="…"`);
+          // @@diagram <name> alt="…" caption="…" [key="0:route 1:hot 4+:wall"], then its rows, a character a tile
+          // (lib.mjs, diagram()), to the next blank line. `key` says how the tiles that carry a number are drawn.
+          const [, name, alt, caption, key = ''] = /^(\S+)\s+alt="([^"]*)"\s+caption="([^"]*)"(?:\s+key="([^"]*)")?$/.exec(m[2].trim()) ?? [];
+          if (!name) throw new Error(`cards/${stage}.mdoc: @@diagram takes a name, alt="…", caption="…" and optionally key="…"`);
           const drawn = [];
           while (i + 1 < lines.length && lines[i + 1].trim()) drawn.push(lines[++i]);
           if (!drawn.length || drawn.some((r) => r.length !== drawn[0].length)) throw new Error(`cards/${stage}.mdoc: the rows of diagram ${name} are not one width`);
-          diagrams.set(name, drawn);
+          if (diagrams.has(name)) throw new Error(`cards/${stage}.mdoc: a second diagram named ${name}`);
+          diagrams.set(name, { rows: drawn, key: Object.fromEntries(key.split(/\s+/).filter(Boolean).map((kv) => kv.split(':'))) });
           out.push(`{% figure src="assets/rules/${name}-light.png" dark="assets/rules/${name}-dark.png" alt="${attr(alt)}" caption="${attr(caption)}" /%}`);
         } else if (m[1] === 'measured') out.push(measured(c));
         else if (m[1] === 'fails') out.push(fails(c));
@@ -351,7 +365,7 @@ export function generate() {
 
   // ---------------------------------------------------------------- assemble
   const made = { lab: labPart, guide, comparison, definitions, failures, faithfulness };
-  const out = ['---', 'trace: christianjmills/procedural-map-generation-techniques-notes', '---'];
+  const out = ['---', 'trace: christianjmills/procedural-map-generation-techniques-notes', 'context:', ...CONTEXT.map((id) => `  - ${id}`), '---'];
   for (const line of read('page.mdoc').split('\n')) {
     const m = /^@@(\S+)\s*(.*)$/.exec(line);
     if (!m) out.push(line);

@@ -5,31 +5,40 @@ title: Placing the exit
 Put the exit near a point you choose, or let a Dijkstra map find the tile that is farthest from the start [[t:244-250 s:26 s:27]].
 
 ## The rule
-```text
-right:    the exit is the open tile nearest the middle of the right edge
-farthest: flood outward from the start, counting steps;
-          the exit is the reachable tile with the highest count
-then find the route from the start to the exit
-```
+{% table label="Where the exit goes, by setting" rowheads=true %}
+* Setting
+* The exit goes on
+---
+* `right` (c18)
+* the open tile nearest the middle of the right edge [[c18:92-109]]
+---
+* `farthest` (c19)
+* the tile with the largest walking distance from the start, read from a Dijkstra map [[c19:92-101]]
+{% /table %}
 
-The talk calls the second the least accessible part of the map, for when you really dislike your player [[t:249-250]]. With a start in the middle it calls putting the exit there a really bad idea, and a great way to hide something [[t:249-256]].
+Then the route from the start to the exit is found [[c18:111 c19:103]].
+
+- **Talk says,** of `farthest`: the least accessible part of the map, for when you really dislike your player [[t:249-250]].
+- **Talk says,** with a start in the middle: a really bad idea for an exit, and a great way to hide something [[t:251-256]].
 
 ## Step through it
 @@steps limit=4
 
 ## Controls
 @@control at
-`right` takes the open tile nearest the middle of the right edge [[c18:92-109 g]]. `farthest` takes the tile with the largest walking distance from the start [[c19:92-101]].
+`right`: the open tile nearest the middle of the right edge [[c18:92-109]]. `farthest`: the tile with the largest walking distance from the start [[c19:92-101]].
 
 ## What it produces, measured
 @@measured
 
-From the left edge to the right, the route is {{c18.path.median}} steps at the median. From the center to the farthest tile it is {{c19.path.median}} [[run:c18.path.median c19.path.median]]. The least accessible exit is the nearer one here, because a start in the middle has less map on any side of it [[own]].
+- **Left edge to right:** a route of {{c18.path.median}} steps at the median [[run:c18.path.median]].
+- **Center to farthest:** {{c19.path.median}} [[run:c19.path.median]].
+  - **Why the least accessible exit is the nearer one:** a start in the middle has less map on any side of it [[own]].
 
 ## Where it fails
 @@fails
 
-Take the cull out and it does fail. In a recipe of our own, the same pipeline without its cull, the exit lands in a cave the start can’t reach on {{nocull.fails.exit-unreachable}} of 200 seeds [[run:nocull.fails.exit-unreachable]]. [Seed 0]({{recipe:nocull}}) is one.
+- **Without the cull, it fails:** in a recipe of our own, the same pipeline without its cull, the exit lands in a cave the start can’t reach on {{nocull.fails.exit-unreachable}} of 200 seeds [[run:nocull.fails.exit-unreachable]]. [Seed 0]({{recipe:nocull}}) is one.
 
 ## What it combines with
 @@combines

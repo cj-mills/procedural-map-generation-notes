@@ -4,39 +4,41 @@ title: Drunkard’s walk
 A digger staggers at random through solid rock, and more follow until enough of the map is open [[t:87-97 s:11]].
 
 ## The rule
-```text
-start solid; the first digger starts at the center
-a digger steps in a random direction and digs where it lands,
-    until it leaves the map or runs out of steps
-while less than a share of the map is open:
-    start another digger on a random open tile
-```
+1. Start with a solid map [[c04:17-19]].
+2. **First digger:** starts at the center of the map [[c04:21-22]].
+3. **A digger,** again and again [[c04:54-57]]:
+   1. steps one tile in a random direction [[c04:58-64]];
+   2. digs the tile it lands on [[c04:64-66]];
+   3. stops when it steps off the map, or once its step count is over 200 [[c04:65-74]].
+4. **While less than a third of the map is open:** start another digger on a random open tile [[c04:25-47]].
 
-The talk has each new digger spawn somewhere within the open map, and stops when a third of the map is open [[t:95-97]].
+- **Talk says:** each new digger spawns somewhere within the open map. Stop when enough of the map is open: a third, here [[t:95-97]].
 
 ## Step through it
 @@steps limit=5 mid=1
 
 ## Controls
 @@control lifetime
-How many steps a digger takes. The demo stops a digger once its step count is over 200 [[c04:54-76]].
+Steps a digger takes. The demo stops a digger once its step count is over 200 [[c04:54-76]].
 @@control floor_divisor
-Diggers keep coming until one over this number of the map’s tiles is open: a third, in the demo [[c04:25 t:96-97 g]].
+Diggers keep coming until 1 / this of the map’s tiles are open. The demo: a third [[c04:25 t:96-97]].
 
 ## What it produces, measured
 @@measured
 
-The talk says this map is guaranteed to be contiguous [[t:99-100]]. It is {{c04.regions.max}} region on every seed here [[run:c04.regions.max]]. Its passages are wide: a corridor ratio of {{c04.corridor_ratio.median}} at the median, against cellular automata’s {{c03.corridor_ratio.median}} [[run:c04.corridor_ratio.median c03.corridor_ratio.median]].
+- **Talk says:** guaranteed to be contiguous [[t:99-100]].
+- **Drunkard’s walk:** holds. {{c04.regions.max}} region on every seed [[run:c04.regions.max]].
+- **Passages:** wide. Corridor ratio {{c04.corridor_ratio.median}} at the median, vs cellular automata’s {{c03.corridor_ratio.median}} [[run:c04.corridor_ratio.median c03.corridor_ratio.median]].
 
 ## Where it fails
 @@fails
 
-The demo’s loop of diggers has no cap but the open share it waits for [[c04:25-48]].
+- **No cap in the talk’s code:** its loop of diggers ends only when the open share is reached [[c04:25-48]].
 
 ## What it combines with
 @@combines
 
-The talk suggests it for limestone caverns [[t:100-102]].
+- **Talk’s use:** limestone caverns and similar [[t:100-102]].
 
 ## Checked against the talk’s code
 @@checked

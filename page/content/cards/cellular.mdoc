@@ -4,29 +4,41 @@ title: Cellular automata
 Random noise, with cell life rules applied to every tile again and again, until a natural-looking map comes out of it [[t:73-74 t:83-84 s:9]].
 
 ## The rule
-```text
-fill the map with random wall and floor
-repeat for every pass, for all tiles inside the edge at once:
-    walls = how many of the tile's eight neighbors are wall
-    the tile becomes wall if walls is 0, or 5 or more
-    otherwise it becomes floor
-```
+1. **Noise:** every tile, the map’s edge included, starts as wall with a set chance, else as floor. The demo: 55% [[c03:19-29]].
+2. **Repeat 10 times,** for every tile inside the map’s outer ring at once [[c03:31-34 c03:56-70]]:
+   1. count the walls among the tile’s 8 neighbors, in a copy of the map made before the pass [[c03:40-60]];
+   2. 0 walls: the tile becomes wall [[c03:61-66]];
+   3. 1 to 4 walls: the tile becomes floor [[c03:61-66]];
+   4. 5 or more walls: the tile becomes wall [[c03:61-66]].
 
-The talk gives the rule in three cases: no neighbors, a wall; one to four, empty; five or more, a wall [[t:80-82]]. The neighbors its demo counts are walls, and a tile’s own state plays no part in what it becomes [[c03:40-70 g]].
+@@diagram cellular-count alt="Three tiles, each with its eight neighbors, before a pass and after it. The first has no wall among its neighbors and becomes wall. The second has two and becomes floor. The third has five and becomes wall." caption="A tile’s count of walls among its 8 neighbors (top) decides what it becomes (bottom): 0, wall; 1 to 4, floor; 5 or more, wall. Only the middle tile’s change is drawn." key="0:count 2:count 5:count"
+..._..#_##.
+.0._.2#_#5.
+..._..._##.
+___________
+..._..#_##.
+.W._.F#_#W.
+..._..._##.
+
+- **Talk says:** no neighbors, a wall; 1 to 4, empty; 5 or more, a wall [[t:80-82]].
+- **Demo:** the neighbors it counts are walls, and a tile’s own state plays no part in what it becomes [[c03:40-70]].
 
 ## Step through it
 @@steps limit=5 mid=1
 
 ## Controls
 @@control wall_percent
-The chance each tile starts as wall [[c03:19-29 g]].
+Chance each tile starts as wall [[c03:19-29]].
 @@control iterations
-How many times the rule is applied to the whole map [[c03:31-34 c03:56-70]].
+Times the rule is applied to the whole map [[c03:31-34 c03:56-70]].
 
 ## What it produces, measured
 @@measured
 
-The rule says nothing about joining the caves up [[own]]. A map has {{c03.regions.median}} regions at the median and never fewer than {{c03.regions.min}} [[run:c03.regions.median c03.regions.min]]. The map has no start and exit of its own, so its path is measured between [our probe’s](#our-definitions) two points, and on {{c03.path.nulls}} of 200 seeds they lie in different caves [[run:c03.path.nulls]].
+- **Talk says:** it can give you chunks of the map that you can’t get to [[t:222-223]].
+- **Cellular automata:** {{c03.regions.median}} regions at the median; never fewer than {{c03.regions.min}} [[run:c03.regions.median c03.regions.min]].
+  - **Why:** the rule says nothing about joining the caves up [[own]].
+- **Path:** the map has no start and exit of its own, so it is measured between [our probe’s](#our-definitions) two points. On {{c03.path.nulls}} of 200 seeds they lie in different caves [[run:c03.path.nulls]].
 
 ## Where it fails
 @@fails
@@ -34,7 +46,7 @@ The rule says nothing about joining the caves up [[own]]. A map has {{c03.region
 ## What it combines with
 @@combines
 
-The talk’s first big use for Dijkstra maps is on a map like this one, which can leave chunks that can’t be reached [[t:209-213 t:222-223]].
+- **Culling:** the talk’s first big use for Dijkstra maps is on a map like this one [[t:222-223]]. See [culling](#cull).
 
 ## Checked against the talk’s code
 @@checked

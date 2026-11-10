@@ -1,140 +1,140 @@
 ## rooms.add
-A random rectangle that comes within a tile of no room placed so far is carved as a room [[c01:22-46 g]]. It is room {n}.
+**Room:** a random rectangle that overlaps or touches no room placed so far, carved as a room [[c01:22-46]]. Room {n}.
 
 ## rooms.discard
-This rectangle comes within a tile of a room already placed, so it is thrown away [[c01:22-53 t:54-55]]. Rooms placed so far: {n}.
+**Discarded:** this rectangle overlaps or touches a room already placed [[c01:22-53 t:54-55]]. Rooms so far: {n}.
 
 ## rooms.sort
-The rooms are sorted by their left edge, the order they will be joined in [[c01:57-69]]. Rooms to join: {n}.
+**Sort:** the rooms, by their left edge. It is the order they are joined in [[c01:57-69]]. Rooms to join: {n}.
 
 ## rooms.corridor
-A corridor joins this room’s center to the center of the room before it: one run across and one up or down, in an order a coin flip picks [[c01:67-78 c01:85-101 t:57-58 g]]. It is corridor {n}.
+**Corridor:** from this room’s center to the center of the room before it. One run across and one up or down; a coin flip picks which comes first [[c01:67-78 c01:85-101 t:57-58]]. Corridor {n}.
 
 ## bsp.subdivide
-The demo starts its list with one rectangle inside the map’s edge and that rectangle’s four quarters [[c02:24-29 c02:87-111]]. Quarters shown so far: {n}.
+**The list:** it starts with one rectangle inside the map’s edge, and that rectangle’s four quarters [[c02:24-29 c02:87-111]]. Quarters shown: {n}.
 
 ## bsp.add
-An attempt picks any rectangle on the list and tries a room near its top-left corner [[c02:43-44 c02:114-136]]. The room is carved only if every tile within two of it is still solid and inside the map’s outer ring, and then the rectangle it came from is quartered again [[c02:45-52 c02:86-112 c02:138-174 g]]. It is room {n}.
+**Attempt:** pick any rectangle on the list and try a room near its top-left corner [[c02:43-44 c02:114-136]]. The room is carved only if every tile within 2 of it is still solid and inside the map’s outer ring. Then the rectangle it came from is quartered again [[c02:45-52 c02:86-112 c02:138-174]]. Room {n}.
 
 ## cellular.noise
-Every tile, the map’s edge included, starts as wall with a {n}% chance and as floor otherwise [[c03:19-29 g]].
+**Noise:** every tile, the map’s edge included, starts as wall with a {n}% chance, else as floor [[c03:19-29]].
 
 ## cellular.iterate
-Every tile inside the map’s outer ring counts the walls among its eight neighbors, reading a copy of the map made before the pass [[c03:40-70 t:79-80 g]]. With five or more, or none, it becomes wall; with one to four, floor [[c03:61-66 t:81-82]]. This is pass {n}.
+**A pass:** every tile inside the map’s outer ring counts the walls among its 8 neighbors, in a copy of the map made before the pass [[c03:40-70 t:79-80]]. 5 or more, or none: wall. 1 to 4: floor [[c03:61-66 t:81-82]]. Pass {n}.
 
 ## drunkard.solid
-The map starts solid [[c04:17-19 t:87 g]].
+**Start:** a solid map [[c04:17-19 t:87]].
 
 ## drunkard.dig
-A digger steps in a random direction and digs the tile it lands on, again and again, until it steps off the map or runs out of steps [[c04:54-76 t:90-95 g]]. The first starts at the center and each later one on a random open tile [[c04:21-22 c04:25-47 t:95-96 g]]. This is digger {n}.
+**Digger:** steps in a random direction and digs the tile it lands on, again and again, until it steps off the map or runs out of steps [[c04:54-76 t:90-95]]. The first starts at the center; each later one on a random open tile [[c04:21-22 c04:25-47 t:95-96]]. Digger {n}.
 
 ## dla.seed
-**Seed:** a plus of five open tiles at the center of a solid map, the target the particles are fired at [[c05:19-40 t:103-105 g]].
+**Seed:** a plus of five open tiles at the center of a solid map, the target the particles are fired at [[c05:19-40 t:103-105]].
 
 ## dla.particle
-**Walk:** from a random tile, one random step at a time, until it steps onto open floor. Digs the solid tile it stepped from [[c05:49-82 t:104-108 g]]. Particle {n}.
+**Walk:** from a random tile, one random step at a time, until it steps onto open floor. Digs the solid tile it stepped from [[c05:49-82 t:104-108]]. Particle {n}.
 
 ## dla.particle#c06-dla-attractor
-**Attractor:** from a random tile, straight toward the center. Digs the last solid tile it stood on before open floor [[c06:49-68 t:111-112 g]]. Particle {n}.
+**Attractor:** from a random tile, straight toward the center. Digs the last solid tile it stood on before open floor [[c06:49-68 t:111-112]]. Particle {n}.
 
 ## dla.particle#c07-dla-symmetry
-**Symmetric:** straight toward the center, as the attractor. The tile it digs is dug again at its mirror image across the middle column [[c07:49-77 t:115-116 g]]. Particle {n}.
+**Symmetric:** straight toward the center, as the attractor. The tile it digs is dug again at its mirror image across the middle column [[c07:49-77 t:115-116]]. Particle {n}.
 
 ## dla-erode.start
-Erosion starts from a finished map: in the talk’s demo, random rooms joined by corridors [[c08:21-83 t:191-192]].
+**Start:** a finished map. In the talk’s demo: random rooms joined by corridors [[c08:21-83 t:191-192]].
 
 ## dla-erode.particle
-A particle starts on a random open tile and steps at random until it stands on rock. That one tile of rock is dug [[c08:86-128 t:192-193 g]]. This is particle {n}.
+**Particle:** starts on a random open tile and steps at random until it stands on rock. That one tile of rock is dug [[c08:86-128 t:192-193]]. Particle {n}.
 
 ## voronoi.seeds
-Seed points are scattered at random inside the map’s outer ring [[c08a:21-26 t:121-122]]. Seeds: {n}.
+**Scatter:** seed points, at random, inside the map’s outer ring [[c08a:21-26 t:121-122]]. Seeds: {n}.
 
 ## voronoi.membership.pythagoras
-Every tile joins its nearest seed, measured in a straight line, and the boundaries come out fairly smooth [[c08a:36-52 t:125-126 t:130]].
+**Cells, by straight-line distance:** every tile joins its nearest seed. The edges come out fairly smooth [[c08a:36-52 t:125-126 t:130]].
 
 ## voronoi.membership.manhattan
-The same with Manhattan distance, the blocks across plus the blocks down: the boundaries turn sharp-edged [[c08a:57-73 t:131-133]].
+**Cells, by Manhattan distance:** the blocks across plus the blocks down. The edges turn sharp [[c08a:57-73 t:131-133]].
 
 ## voronoi.membership.chebyshev
-The same with Chebyshev distance, which the talk places somewhere between the other two [[c08a:77-93 t:134-135]].
+**Cells, by Chebyshev distance:** the talk places the result somewhere between the other two [[c08a:77-93 t:134-135]].
 
 ## voronoi.walls
-A tile inside the map’s outer ring becomes a boundary wall when the tile to its right or the tile below it belongs to another seed [[c08a:96-113 t:137-138]]. Seeds: {n}.
+**Walls:** a tile inside the map’s outer ring becomes a wall when the tile to its right or the tile below it belongs to another seed [[c08a:96-113 t:137-138]]. Seeds: {n}.
 
 ## voronoi.roads
-Our own rule, for a use the talk describes without code: the boundaries become road and the cells solid, and a tile is road when its right, lower or lower-right neighbor belongs to another seed [[own]]. Seeds: {n}.
+**Roads, our own rule,** for a use the talk describes without code. The edges become road and the cells solid. A tile is road when its right, lower or lower-right neighbor belongs to another seed [[own]]. Seeds: {n}.
 
 ## noise.map
-Fractal simplex noise is sampled once at every tile and drawn as brightness, from 0 to 1 [[c10:11-26]].
+**Height map:** fractal simplex noise, sampled once at every tile and drawn as brightness, from 0 to 1 [[c10:11-26]].
 
 ## noise.map#c11-overworld
-Noise is sampled once at every tile and read as altitude: below 0 is water, from 0 up to 0.5 grass, and 0.5 or more mountain [[c11:20-44]].
+**Overworld:** noise, sampled once at every tile and read as altitude. Below 0: water. From 0 up to 0.5: grass. 0.5 or more: mountain [[c11:20-44]].
 
 ## noise.first
-The first noise on its own, with the demo’s base settings [[c13:23-29 c13:71-105]].
+**First noise,** on its own, with the demo’s base settings [[c13:23-29 c13:71-105]].
 
 ## noise.second
-The second noise on its own: another seed, half the octaves and gain, one more of lacunarity and four times the frequency [[c13:31-37 c13:108-135]]. The talk calls it much more bumpy, and terrible as a continent [[t:169-171]].
+**Second noise,** on its own: another seed, half the octaves and gain, 1 more of lacunarity, 4 times the frequency [[c13:31-37 c13:108-135]]. Talk says: much more bumpy, and terrible as a continent [[t:169-171]].
 
 ## noise.zoomed-out
-The noise at scale 1, labeled “Zoomed Out”, cut into three bands by its value: the talk’s water, green terrain and mountains [[c12:31-47 c12:66-76 t:164-166]].
+**Zoomed out:** the noise at scale 1, cut into 3 bands by its value: the talk’s water, green terrain and mountains [[c12:31-47 c12:66-76 t:164-166]].
 
 ## noise.zoomed-out#c13-double-noise
-The two noises mixed at scale 1, where the first counts in full and the second is taken away at a quarter of its strength [[c13:39-44 c13:139-149]].
+**Zoomed out:** the two noises mixed at scale 1. The first counts in full; the second is taken away at a quarter of its strength [[c13:39-44 c13:139-149]].
 
 ## noise.scale
-Every tile’s sample position is multiplied by a scale that shrinks a hundredth at a time, so a smaller and smaller part of the same noise fills the map [[c12:31-33 c12:77-91 t:167]]. The scale, in hundredths: {n}.
+**Zoom:** every tile’s sample position is multiplied by a scale that shrinks a hundredth at a time, so a smaller and smaller part of the same noise fills the map [[c12:31-33 c12:77-91 t:167]]. Scale, in hundredths: {n}.
 
 ## noise.scale#c13-double-noise
-As the scale shrinks, the first noise’s weight falls with it to a half and the second’s rises to a quarter, and both stay there from a scale of 0.5 down [[c13:39-44 c13:150-164 t:171-173]]. The scale, in hundredths: {n}.
+**Zoom, two noises:** as the scale shrinks, the first noise’s weight falls with it to a half and the second’s rises to a quarter. Both stay there from a scale of 0.5 down [[c13:39-44 c13:150-164 t:171-173]]. Scale, in hundredths: {n}.
 
 ## combine.input
-Each input is built on a map of its own: in the talk’s demo, rooms in subdivided space, then a cellular automata map [[c09:41-79 c09:82-97 t:181-182]]. This is input {n}.
+**An input:** built on a map of its own. In the talk’s demo: rooms in subdivided space, then a cellular automata map [[c09:41-79 c09:82-97 t:181-182]]. Input {n}.
 
 ## combine.halves
-The left half of the map is copied from the first input and the right half from the second, column for column, and nothing joins them [[c09:100-114 t:183-185]].
+**Halves:** the left half of the map is copied from the first input and the right half from the second, column for column. Nothing joins them [[c09:100-114 t:183-185]].
 
 ## prefab.show
-The prefab on its own: two treasure tiles ringed by traps, inside a margin that is left as the map has it [[c14:86-102 c14:149-155 t:200-201]].
+**The prefab,** on its own: 2 treasure tiles ringed by traps, inside a margin that is left as the map has it [[c14:86-102 c14:149-155 t:200-201]].
 
 ## prefab.placed
-The prefab is stamped where it fits: at the center of a room big enough for it, or on a patch of open floor [[c14:104-124 c15:41-67 t:203-206 g]].
+**Placed** where it fits: at the center of a room big enough for it, or on a patch of open floor [[c14:104-124 c15:41-67 t:203-206]].
 
 ## prefab.placed#c09-combination
-The prefab is stamped down the middle of the map, over the seam between the two halves [[c09:116-133 t:186-188]]. The talk’s is a line of fortifications; ours is a hall of our own design, because we don’t copy its layout [[own]].
+**Placed** down the middle of the map, over the seam between the two halves [[c09:116-133 t:186-188]]. The talk’s: a line of fortifications. Ours: a hall of our own design, because we don’t copy its layout [[own]].
 
 ## prefab.no-place
-No place was found for the prefab [[own]]. The talk’s loops end only when the prefab has been placed, so its code would still be looking [[c14:104-124 c15:41-67]]. Ours stops and records the seed as a failure [[own]].
+**No place found** for the prefab [[own]]. The talk’s loops end only when the prefab has been placed, so its code would still be looking [[c14:104-124 c15:41-67]]. Ours stops and records the seed as a failure [[own]].
 
 ## cull.center
-The open tile nearest the center of the map is found [[c16:36-54 t:224 g]].
+**Center:** the open tile nearest the center of the map is found [[c16:36-54 t:224]].
 
 ## cull.marked
-A Dijkstra map from that tile gives every tile it can walk to a distance. Open tiles left without one can’t be reached, and are marked [[c16:62-73 t:225-229 g]]. Tiles marked: {n}.
+**Marked:** a Dijkstra map from that tile gives every tile it can walk to a distance. Open tiles left without one can’t be reached [[c16:62-73 t:225-229]]. Tiles marked: {n}.
 
 ## cull.removed
-Open tiles that the open tile nearest the center can’t walk to are turned to wall [[c17:34-67 t:230 g]]. Tiles removed: {n}.
+**Removed:** open tiles that the open tile nearest the center can’t walk to are turned to wall [[c17:34-67 t:230]]. Tiles removed: {n}.
 
 ## start.desired
-Where the start should be: in the talk’s demos, the middle of the left edge or the center of the map [[c17:70 c19:69 t:241-242]].
+**Desired start:** in the talk’s demos, the middle of the left edge or the center of the map [[c17:70 c19:69 t:241-242]].
 
 ## start.placed
-The start goes on the open tile nearest that point in a straight line [[c17:71-86 t:242-243]].
+**Start:** the open tile nearest that point, in a straight line [[c17:71-86 t:242-243]].
 
 ## exit.placed
-The exit goes on the open tile nearest the middle of the right edge, and the route from the start to it is found [[c18:92-111 t:247-248 g]]. Steps on the shortest route: {n}.
+**Exit:** the open tile nearest the middle of the right edge. Then the route from the start to it is found [[c18:92-111 t:247-248]]. Steps on the shortest route: {n}.
 
 ## exit.placed#c19-ending-dijkstra
-A Dijkstra map from the start gives every tile it can reach its walking distance, and the exit goes on the tile with the largest: the least accessible one [[c19:92-103 t:249-250]]. Steps on the shortest route: {n}.
+**Exit:** a Dijkstra map from the start gives every tile it can reach its walking distance. The exit goes on the tile with the largest: the least accessible one [[c19:92-103 t:249-250]]. Steps on the shortest route: {n}.
 
 ## exit.no-path
-The exit is placed, but no route reaches it from the start: without a cull, the two can land in separate caves [[own]].
+**No route:** the exit is placed, but nothing reaches it from the start. Without a cull, the two can land in separate caves [[own]].
 
 ## hot-path.marked
-A second Dijkstra map starts from every tile of the route at once, so each tile’s value is its distance from the route. Tiles under a set distance, 10 in the demo, are the hot path [[c20:131-145 t:260-262]]. The radius: {n}.
+**Hot path:** a second Dijkstra map starts from every tile of the route at once, so each tile’s value is its distance from the route. Tiles under a set distance, 10 in the demo, are the hot path [[c20:131-145 t:260-262]]. Radius: {n}.
 
 ## hot-path.culled
-Tiles at the cull distance or farther from the route become wall. The talk’s demo culls at 15, wider than the 10 of its hot path [[c20:131-154 t:263-264 g]]. The cull distance: {n}.
+**Cull:** tiles at the cull distance or farther from the route become wall. The talk’s demo culls at 15, wider than the 10 of its hot path [[c20:131-154 t:263-264]]. Cull distance: {n}.
 
 ## hot-rooms.marked
-A room is on the route when a step of the route falls inside it. The demo highlights those rooms and grays the rest [[c21:129-156 t:267-269]]. Rooms on the route: {n}.
+**Hot rooms:** a room is on the route when a step of the route falls inside it. The demo highlights those rooms and grays the rest [[c21:129-156 t:267-269]]. Rooms on the route: {n}.
