@@ -2,7 +2,7 @@
 //! written as JSON. Written by `map-lab measure` for our core and by the faithfulness harness for
 //! the talk's own code, in one format, so `map-lab compare` reads both the same way.
 
-use crate::traits::{Traits, FAILURES};
+use crate::traits::{self, Traits, FAILURES};
 
 pub const FORMAT: &str = "map-lab-traits/1";
 
@@ -10,7 +10,7 @@ pub const FORMAT: &str = "map-lab-traits/1";
 pub const COLUMNS: &[(&str, &str)] = &[
     ("floor_share", "Walkable tiles over all tiles. Walkable: floor, grass, treasure and traps; not wall, water or mountain."),
     ("regions", "Groups of walkable tiles joined in four directions."),
-    ("dead_ends", "Walkable tiles with exactly one walkable neighbour of four."),
+    ("dead_ends", "Walkable tiles with exactly one walkable neighbor of four."),
     ("corridor_ratio", "The share of walkable tiles in no 2 x 2 block of walkable tiles: passages one tile wide."),
     ("path", "Steps on the shortest four-way walk from start to exit; null when there is none."),
     ("probed", "1 when path used the standard probe (the open tile nearest the middle of the left edge to the one nearest the middle of the right) because the map has no start and exit of its own; 0 otherwise."),
@@ -30,20 +30,7 @@ pub struct Row {
 }
 
 pub fn row(seed: u64, t: &Traits, failures: u32) -> Row {
-    let values = vec![
-        Some(t.floor_share),
-        Some(t.regions as f64),
-        Some(t.dead_ends as f64),
-        Some(t.corridor_ratio),
-        t.path.map(|p| p as f64),
-        Some(if t.probed { 1.0 } else { 0.0 }),
-        Some(t.tile_shares[2]),
-        Some(t.tile_shares[3]),
-        Some(t.tile_shares[4]),
-        t.field.map(|f| f.0),
-        t.field.map(|f| f.1),
-        t.rooms.map(|r| r as f64),
-    ];
+    let values = t.values().iter().map(|&v| (!v.is_nan()).then_some(v)).collect();
     Row { seed, values, failures }
 }
 
@@ -122,30 +109,18 @@ impl Default for Obj {
     }
 }
 
-/// Summary statistics of one column over seeds, nulls left out: n, mean, sample standard
-/// deviation, minimum, 10th percentile, median, 90th percentile, maximum (percentiles by linear
-/// interpolation between order statistics).
+/// Summary statistics of one column over seeds, nulls left out, as `traits::summary` defines
+/// them and rounded to six places: n, mean, sample standard deviation, minimum, 10th percentile,
+/// median, 90th percentile, maximum.
 pub fn summary(values: &[f64], nulls: usize) -> String {
     let mut o = Obj::new();
     o.raw("n", &values.len().to_string());
     o.raw("nulls", &nulls.to_string());
-    if values.is_empty() {
-        return o.end();
+    if let Some(s) = traits::summary(values) {
+        for (k, x) in ["mean", "sd", "min", "p10", "median", "p90", "max"].iter().zip(&s[1..]) {
+            o.raw(k, &num((x * 1e6).round() / 1e6));
+        }
     }
-    let n = values.len() as f64;
-    let mean = values.iter().sum::<f64>() / n;
-    let sd = if values.len() > 1 { (values.iter().map(|v| (v - mean) * (v - mean)).sum::<f64>() / (n - 1.0)).sqrt() } else { 0.0 };
-    let mut s = values.to_vec();
-    s.sort_by(f64::total_cmp);
-    let q = |p: f64| {
-        let h = p * (s.len() - 1) as f64;
-        let lo = h.floor() as usize;
-        let hi = (lo + 1).min(s.len() - 1);
-        s[lo] + (h - lo as f64) * (s[hi] - s[lo])
-    };
-    let r = |x: f64| num((x * 1e6).round() / 1e6);
-    o.raw("mean", &r(mean)).raw("sd", &r(sd)).raw("min", &r(s[0])).raw("p10", &r(q(0.1)));
-    o.raw("median", &r(q(0.5))).raw("p90", &r(q(0.9))).raw("max", &r(s[s.len() - 1]));
     o.end()
 }
 

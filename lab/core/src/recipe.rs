@@ -7,7 +7,8 @@
 //! ```
 //!
 //! `STAGES` is the one owner of what a recipe may say: the parser reads it, the stages read
-//! their parameters by its order, and the CLI writes the published JSON Schema from it.
+//! their parameters by its order, `stage_table` gives it to the page's controls, and the CLI
+//! writes the published JSON Schema from it.
 
 use crate::json::{self, Json};
 
@@ -15,6 +16,11 @@ pub const FORMAT: &str = "map-lab-recipe/1";
 pub const MAX_SEED: u64 = (1 << 53) - 1;
 pub const MIN_SIDE: i64 = 24;
 pub const MAX_SIDE: i64 = 256;
+/// The talk's maps are 80 by 50.
+pub const WIDTH: i64 = 80;
+pub const HEIGHT: i64 = 50;
+/// The talk's hot path: tiles fewer than this many steps from the path (`c20-hot-path/src/main.rs:131-154`).
+pub const HOT_RADIUS: i64 = 10;
 
 pub enum Param {
     /// A whole number in `min..=max`.
@@ -35,7 +41,7 @@ pub struct ParamSpec {
 pub struct StageSpec {
     pub name: &'static str,
     pub params: &'static [ParamSpec],
-    /// "talk" first: the talk's version. Labelled variants, each with its own source and a
+    /// "talk" first: the talk's version. Labeled variants, each with its own source and a
     /// measured difference, go after it.
     pub variants: &'static [&'static str],
 }
@@ -97,7 +103,11 @@ pub const STAGES: &[StageSpec] = &[
     StageSpec { name: "dla-erode", params: &[int("iterations", 0, 100_000, 500)], variants: TALK },
     StageSpec {
         name: "voronoi",
-        params: &[int("seeds", 1, 200, 16), pick("metric", &["pythagoras", "manhattan", "chebyshev"])],
+        params: &[
+            int("seeds", 1, 200, 16),
+            pick("metric", &["pythagoras", "manhattan", "chebyshev"]),
+            pick("edges", &["walls", "roads"]),
+        ],
         variants: TALK,
     },
     StageSpec {
@@ -124,7 +134,7 @@ pub const STAGES: &[StageSpec] = &[
     StageSpec { name: "cull", params: &[pick("from", &["center"]), pick("mode", &["remove", "mark"])], variants: TALK },
     StageSpec { name: "start", params: &[pick("at", &["left", "center"])], variants: TALK },
     StageSpec { name: "exit", params: &[pick("at", &["right", "farthest"])], variants: TALK },
-    StageSpec { name: "hot-path", params: &[int("radius", 1, 1000, 10), int("cull", 0, 1000, 0)], variants: TALK },
+    StageSpec { name: "hot-path", params: &[int("radius", 1, 1000, HOT_RADIUS), int("cull", 0, 1000, 0)], variants: TALK },
     StageSpec { name: "hot-rooms", params: &[], variants: TALK },
 ];
 
@@ -204,8 +214,8 @@ pub fn parse(src: &str) -> Result<Recipe, RecipeError> {
     })?;
     let fields = object(&doc, "recipe")?;
     let mut seed = None;
-    let mut width = 80;
-    let mut height = 50;
+    let mut width = WIDTH as i32;
+    let mut height = HEIGHT as i32;
     let mut pipeline = None;
     let mut format_ok = false;
     for (k, v) in fields {
@@ -466,4 +476,133 @@ pub fn push_uint(s: &mut String, n: u64) {
         push_uint(s, n / 10);
     }
     s.push((b'0' + (n % 10) as u8) as char);
+}
+
+/// A decimal to at most six places, trailing zeros dropped: the form the parser reads back as
+/// the same `f32` (`decimal`). A parameter's limits and default are never negative.
+pub fn push_decimal(s: &mut String, x: f32) {
+    let micro = (x as f64 * 1e6 + 0.5) as u64;
+    push_uint(s, micro / 1_000_000);
+    let mut frac = micro % 1_000_000;
+    if frac == 0 {
+        return;
+    }
+    s.push('.');
+    let mut places = 6;
+    while frac % 10 == 0 {
+        frac /= 10;
+        places -= 1;
+    }
+    let mut lead = 10u64.pow(places - 1);
+    while lead > frac {
+        s.push('0');
+        lead /= 10;
+    }
+    push_uint(s, frac);
+}
+
+pub const STAGES_FORMAT: &str = "map-lab-stages/1";
+
+/// `STAGES` as JSON on one line, for the page's controls (the WebAssembly binding exports it)
+/// and for agents (`map-lab stages`): what a recipe may say, without the wording, which is in
+/// the published schema.
+///
+/// ```json
+/// { "format": "map-lab-stages/1",
+///   "recipe": { "format": "map-lab-recipe/1", "maxSeed": 9007199254740991,
+///               "minSide": 24, "maxSide": 256, "width": 80, "height": 50 },
+///   "stages": [ { "name": "cellular", "generator": true, "variants": ["talk"],
+///                 "params": [ { "name": "wall_percent", "kind": "int", "min": 0, "max": 100, "default": 55 } ] } ] }
+/// ```
+///
+/// A parameter's `kind` is `int` or `num` (with `min`, `max`, `default`), `pick` (with
+/// `options` and `default`, the first option) or `inputs` (with `count`, the number of
+/// pipelines it takes). A stage with `generator` starts a new map.
+pub fn stage_table() -> String {
+    let mut s = String::from("{\"format\":");
+    quote(&mut s, STAGES_FORMAT);
+    s.push_str(",\"recipe\":{\"format\":");
+    quote(&mut s, FORMAT);
+    for (k, v) in [("maxSeed", MAX_SEED as i64), ("minSide", MIN_SIDE), ("maxSide", MAX_SIDE), ("width", WIDTH), ("height", HEIGHT)] {
+        key(&mut s, k);
+        push_uint(&mut s, v as u64);
+    }
+    s.push_str("},\"stages\":[");
+    for (n, st) in STAGES.iter().enumerate() {
+        if n > 0 {
+            s.push(',');
+        }
+        s.push_str("{\"name\":");
+        quote(&mut s, st.name);
+        key(&mut s, "generator");
+        s.push_str(if KINDS[n].is_generator() { "true" } else { "false" });
+        key(&mut s, "variants");
+        quotes(&mut s, st.variants);
+        key(&mut s, "params");
+        s.push('[');
+        for (m, p) in st.params.iter().enumerate() {
+            if m > 0 {
+                s.push(',');
+            }
+            s.push_str("{\"name\":");
+            quote(&mut s, p.name);
+            key(&mut s, "kind");
+            match p.kind {
+                Param::Int { min, max, default } => {
+                    quote(&mut s, "int");
+                    for (k, v) in [("min", min), ("max", max), ("default", default)] {
+                        key(&mut s, k);
+                        push_uint(&mut s, v as u64);
+                    }
+                }
+                Param::Num { min, max, default } => {
+                    quote(&mut s, "num");
+                    for (k, v) in [("min", min), ("max", max), ("default", default)] {
+                        key(&mut s, k);
+                        push_decimal(&mut s, v);
+                    }
+                }
+                Param::Pick(options) => {
+                    quote(&mut s, "pick");
+                    key(&mut s, "options");
+                    quotes(&mut s, options);
+                    key(&mut s, "default");
+                    quote(&mut s, options[0]);
+                }
+                Param::Inputs(count) => {
+                    quote(&mut s, "inputs");
+                    key(&mut s, "count");
+                    push_uint(&mut s, count as u64);
+                }
+            }
+            s.push('}');
+        }
+        s.push_str("]}");
+    }
+    s.push_str("]}");
+    s
+}
+
+/// Names in `STAGES` are plain ASCII: nothing to escape.
+fn quote(s: &mut String, v: &str) {
+    s.push('"');
+    s.push_str(v);
+    s.push('"');
+}
+
+fn key(s: &mut String, k: &str) {
+    s.push(',');
+    quote(s, k);
+    s.push(':');
+}
+
+fn quotes(s: &mut String, items: &[&str]) {
+    s.push('[');
+    for (n, v) in items.iter().enumerate() {
+        if n > 0 {
+            s.push(',');
+        }
+        quote(s, v);
+    }
+    s.push(']');
 }

@@ -154,10 +154,10 @@ enum Reading {
     /// are open tiles carrying the start, the exit and the path; `$` treasure, `^` trap; `!`, the
     /// marker the demos put on a desired start or exit point, solid.
     Dungeon,
-    /// c08a's last frame, labelled "Voronoi Boundary Walls": `#` marks the boundaries, read as
+    /// c08a's last frame, labeled "Voronoi Boundary Walls": `#` marks the boundaries, read as
     /// walls as the label says; `.` is open; the outer ring, which the demo resets, is wall.
     Voronoi,
-    /// c10: every tile `#`, the noise in its colour.
+    /// c10: every tile `#`, the noise in its color.
     Height,
     /// c11 to c13: `~` water, `;` grass, `^` mountain.
     Terrain,
@@ -175,14 +175,14 @@ fn reading(id: &str) -> Reading {
 const READINGS: [&str; 4] = [
     "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
     "# (the boundaries) wall, as the frame's label 'Voronoi Boundary Walls' says; . open; the outer ring wall",
-    "every tile open; the field is each tile's grey level, (noise + 1) / 2 clamped to 0..1",
-    "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's colour",
+    "every tile open; the field is each tile's gray level, (noise + 1) / 2 clamped to 0..1",
+    "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's color",
 ];
 
 /// Known differences between our version and the talk's, beside the random number generator.
 fn differences(id: &str) -> &'static str {
     match id {
-        "c06-dla-attractor" | "c07-dla-symmetry" => "Our line to the centre is the standard error-accumulating Bresenham; the library's octant-based one can break ties the other way.",
+        "c06-dla-attractor" | "c07-dla-symmetry" => "Our line to the center is the standard error-accumulating Bresenham; the library's octant-based one can break ties the other way.",
         "c08a-voronoi" => "The talk's last frame draws the boundaries with its open-tile glyph under a label calling them walls; both sides here read them as walls.",
         "c09-combination" => "The spine prefab is our own design standing in for the talk's 11-by-50 layout, which isn't copied: traits that the prefab touches differ by design.",
         "c10-perlin" | "c11-overworld" | "c12-noisezoom" | "c13-double-noise" => "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",

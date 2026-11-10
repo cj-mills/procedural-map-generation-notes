@@ -6,6 +6,6 @@
   "width": 80,
   "height": 50,
   "pipeline": [
-    {"stage": "voronoi", "seeds": 16, "metric": "pythagoras"}
+    {"stage": "voronoi", "seeds": 16, "metric": "pythagoras", "edges": "walls"}
   ]
 }

@@ -30,7 +30,7 @@
       "x-talk-demo": "c01-rooms",
       "properties": {
         "stage": {"const": "rooms"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "attempts": {"type": "integer", "minimum": 1, "maximum": 500, "default": 20, "description": "Rooms tried; each one that overlaps an earlier room (touching counts) is discarded."},
         "min_size": {"type": "integer", "minimum": 1, "maximum": 30, "default": 2, "description": "Smallest room side, in the talk's rectangle units: a side of n covers n + 1 tiles."},
         "max_size": {"type": "integer", "minimum": 1, "maximum": 30, "default": 9, "description": "Largest room side, inclusive, in the same units."}
@@ -44,7 +44,7 @@
       "x-talk-demo": "c02-bsprooms",
       "properties": {
         "stage": {"const": "bsp"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "attempts": {"type": "integer", "minimum": 1, "maximum": 5000, "default": 240, "description": "Room placements tried."}
       }
     },
@@ -52,11 +52,11 @@
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Generator. Random noise, then smoothing passes: a tile becomes wall with five or more wall neighbours of eight, or none, and floor otherwise. The outer ring keeps its noise.",
+      "description": "Generator. Random noise, then smoothing passes: a tile becomes wall with five or more wall neighbors of eight, or none, and floor otherwise. The outer ring keeps its noise.",
       "x-talk-demo": "c03-cellular",
       "properties": {
         "stage": {"const": "cellular"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "wall_percent": {"type": "integer", "minimum": 0, "maximum": 100, "default": 55, "description": "The chance, in percent, that a tile starts as wall."},
         "iterations": {"type": "integer", "minimum": 0, "maximum": 100, "default": 10, "description": "Smoothing passes."}
       }
@@ -65,11 +65,11 @@
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Generator. Diggers that stagger at random, the first from the centre and each later one from a random floor tile, until a share of the map is floor.",
+      "description": "Generator. Diggers that stagger at random, the first from the center and each later one from a random floor tile, until a share of the map is floor.",
       "x-talk-demo": "c04-drunkard",
       "properties": {
         "stage": {"const": "drunkard"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "lifetime": {"type": "integer", "minimum": 1, "maximum": 100000, "default": 200, "description": "Steps a digger takes before it stops, less one: it digs lifetime + 1 tiles unless it leaves the map."},
         "floor_divisor": {"type": "integer", "minimum": 1, "maximum": 20, "default": 3, "description": "Digging stops once floor covers at least 1 / floor_divisor of the map."}
       }
@@ -78,12 +78,12 @@
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Generator. Diffusion-limited aggregation from a small cross at the centre, until a share of the map is floor: particles from random points wander (walk), fly straight at the centre (attractor), or fly straight and land mirrored about the centre column (symmetric), and stick where they meet floor.",
+      "description": "Generator. Diffusion-limited aggregation from a small cross at the center, until a share of the map is floor: particles from random points wander (walk), fly straight at the center (attractor), or fly straight and land mirrored about the center column (symmetric), and stick where they meet floor.",
       "x-talk-demo": "c05-dla, c06-dla-attractor, c07-dla-symmetry",
       "properties": {
         "stage": {"const": "dla"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
-        "mode": {"enum": ["walk", "attractor", "symmetric"], "default": "walk", "description": "How particles move: walk at random, fly straight at the centre, or fly straight and land mirrored."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
+        "mode": {"enum": ["walk", "attractor", "symmetric"], "default": "walk", "description": "How particles move: walk at random, fly straight at the center, or fly straight and land mirrored."},
         "floor_divisor": {"type": "integer", "minimum": 1, "maximum": 20, "default": 3, "description": "Particles stop once floor covers at least 1 / floor_divisor of the map."}
       }
     },
@@ -95,7 +95,7 @@
       "x-talk-demo": "c08-dla-erosion",
       "properties": {
         "stage": {"const": "dla-erode"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "iterations": {"type": "integer", "minimum": 0, "maximum": 100000, "default": 500, "description": "Particles dropped."}
       }
     },
@@ -103,27 +103,28 @@
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Generator. Random seed points; every tile belongs to its nearest seed; walls where neighbouring tiles belong to different seeds, and around the edge.",
+      "description": "Generator. Random seed points; every tile belongs to its nearest seed; walls where neighboring tiles belong to different seeds, and around the edge. Or roads there instead, with the cells solid.",
       "x-talk-demo": "c08a-voronoi",
       "properties": {
         "stage": {"const": "voronoi"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "seeds": {"type": "integer", "minimum": 1, "maximum": 200, "default": 16, "description": "Seed points, one cell each."},
-        "metric": {"enum": ["pythagoras", "manhattan", "chebyshev"], "default": "pythagoras", "description": "The distance measure that decides the walls. The step-through shows all three."}
+        "metric": {"enum": ["pythagoras", "manhattan", "chebyshev"], "default": "pythagoras", "description": "The distance measure that decides the edges. The step-through shows all three."},
+        "edges": {"enum": ["walls", "roads"], "default": "walls", "description": "What the cells' edges become: walls around open cells, as the talk's demo draws them, or roads between solid cells, which the talk describes without code. The road rule is ours: it adds the lower-right neighbor to the talk's edge test, so the roads join in four directions."}
       }
     },
     "stage-noise": {
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Generator. Fractal simplex noise (fBm): a grey-scale height map (height), thresholded into water, grass and mountain (overworld), redrawn as the sampling scale shrinks (zoom), or two noises blended as the zoom deepens (double). Every noise stage of a recipe samples the same noise, from the recipe's seed.",
+      "description": "Generator. Fractal simplex noise (fBm): a grayscale height map (height), thresholded into water, grass and mountain (overworld), redrawn as the sampling scale shrinks (zoom), or two noises blended as the zoom deepens (double). Every noise stage of a recipe samples the same noise, from the recipe's seed.",
       "x-talk-demo": "c10-perlin, c11-overworld, c12-noisezoom, c13-double-noise",
       "properties": {
         "stage": {"const": "noise"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "mode": {"enum": ["overworld", "height", "zoom", "double"], "default": "overworld", "description": "What the noise becomes: an overworld, a height map, a zoom, or a double-noise zoom."},
         "octaves": {"type": "integer", "minimum": 1, "maximum": 16, "default": 10, "description": "Layers of noise summed, each finer than the last."},
-        "gain": {"type": "number", "minimum": 0, "maximum": 4, "default": 0.10000000149011612, "description": "How much each octave counts relative to the one before."},
+        "gain": {"type": "number", "minimum": 0, "maximum": 4, "default": 0.1, "description": "How much each octave counts relative to the one before."},
         "lacunarity": {"type": "number", "minimum": 0, "maximum": 16, "default": 5, "description": "How much finer each octave is than the one before."},
         "frequency": {"type": "number", "minimum": 0, "maximum": 64, "default": 2, "description": "How fine the first octave is."}
       }
@@ -136,7 +137,7 @@
       "x-talk-demo": "c09-combination",
       "properties": {
         "stage": {"const": "combine"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "join": {"enum": ["halves"], "default": "halves", "description": "How the inputs are joined: the left half of the first and the right half of the second."},
         "inputs": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/pipeline"}, "description": "Two pipelines, run in order on fresh maps of the recipe's size."}
       }
@@ -145,25 +146,25 @@
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Modifier. Stamps a prefab: the vault (treasure ringed by traps, 6 by 5) in a random room big enough for it, on any open 7-by-6 patch of floor, or at the centre; or the spine (our own 11-wide hall, standing in for the talk's) down the middle of the map.",
+      "description": "Modifier. Stamps a prefab: the vault (treasure ringed by traps, 6 by 5) in a random room big enough for it, on any open 7-by-6 patch of floor, or at the center; or the spine (our own 11-wide hall, standing in for the talk's) down the middle of the map.",
       "x-talk-demo": "c09-combination, c14-not-a-trap, c15-still-not-a-trap",
       "properties": {
         "stage": {"const": "prefab"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "shape": {"enum": ["vault", "spine"], "default": "vault", "description": "The prefab: the vault, or the spine."},
-        "place": {"enum": ["room", "open-area", "center"], "default": "room", "description": "Where it goes: in a room that fits it, on any open patch it fits, or at the centre. The spine only goes at the centre."}
+        "place": {"enum": ["room", "open-area", "center"], "default": "room", "description": "Where it goes: in a room that fits it, on any open patch it fits, or at the center. The spine only goes at the center."}
       }
     },
     "stage-cull": {
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Analysis. Finds the open tile nearest the centre and marks, or removes, every walkable tile that can't be walked to from it.",
+      "description": "Analysis. Finds the open tile nearest the center and marks, or removes, every walkable tile that can't be walked to from it.",
       "x-talk-demo": "c16-unreachable, c17-starting-left",
       "properties": {
         "stage": {"const": "cull"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
-        "from": {"enum": ["center"], "default": "center", "description": "Where reachability is measured from: the open tile nearest the centre."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
+        "from": {"enum": ["center"], "default": "center", "description": "Where reachability is measured from: the open tile nearest the center."},
         "mode": {"enum": ["remove", "mark"], "default": "remove", "description": "Remove unreachable floor (make it wall), or only mark it."}
       }
     },
@@ -171,11 +172,11 @@
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Placement. The start: the open tile nearest the middle of the left edge, or nearest the centre.",
+      "description": "Placement. The start: the open tile nearest the middle of the left edge, or nearest the center.",
       "x-talk-demo": "c17-starting-left, c19-ending-dijkstra",
       "properties": {
         "stage": {"const": "start"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "at": {"enum": ["left", "center"], "default": "left", "description": "Where the start goes."}
       }
     },
@@ -187,7 +188,7 @@
       "x-talk-demo": "c18-ending-right, c19-ending-dijkstra",
       "properties": {
         "stage": {"const": "exit"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "at": {"enum": ["right", "farthest"], "default": "right", "description": "Where the exit goes."}
       }
     },
@@ -199,7 +200,7 @@
       "x-talk-demo": "c20-hot-path",
       "properties": {
         "stage": {"const": "hot-path"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."},
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."},
         "radius": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 10, "description": "Tiles fewer than this many steps from the path are on the hot path."},
         "cull": {"type": "integer", "minimum": 0, "maximum": 1000, "default": 0, "description": "If above zero, tiles this many steps or more from the path, other than the path, become wall."}
       }
@@ -212,7 +213,7 @@
       "x-talk-demo": "c21-hot-rooms",
       "properties": {
         "stage": {"const": "hot-rooms"},
-        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."}
+        "variant": {"enum": ["talk"], "default": "talk", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."}
       }
     }
   }

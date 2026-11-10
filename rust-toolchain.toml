@@ -1,4 +1,4 @@
-# The Rust toolchain for this repo's generator core (machine-setup's mise honours this file).
+# The Rust toolchain for this repo's generator core (machine-setup's mise honors this file).
 [toolchain]
 channel = "stable"
 profile = "minimal"

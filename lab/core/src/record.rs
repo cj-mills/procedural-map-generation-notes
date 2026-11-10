@@ -8,7 +8,7 @@
 use crate::grid::Grid;
 
 /// Marks. Below `GROUP` each is one kind of highlight; `GROUP + n` is group `n` (a room in the
-/// order it was placed, a Voronoi cell), for colouring.
+/// order it was placed, a Voronoi cell), for coloring.
 pub const NEW: u8 = 1;
 pub const REJECTED: u8 = 2;
 pub const POINT: u8 = 3;
@@ -110,6 +110,7 @@ notes! {
     VoronoiManhattan = "voronoi.membership.manhattan",
     VoronoiChebyshev = "voronoi.membership.chebyshev",
     VoronoiWalls = "voronoi.walls",
+    VoronoiRoads = "voronoi.roads",
     NoiseMap = "noise.map",
     NoiseFirst = "noise.first",
     NoiseSecond = "noise.second",

@@ -23,7 +23,7 @@ pub fn distances(g: &Grid, sources: &[usize]) -> Vec<i32> {
     while head < queue.len() {
         let i = queue[head];
         head += 1;
-        let m = g.neighbours(i, &mut nb);
+        let m = g.neighbors(i, &mut nb);
         for &j in &nb[..m] {
             if d[j] < 0 && walkable(g.t[j]) {
                 d[j] = d[i] + 1;
@@ -44,24 +44,24 @@ pub fn shortest_path(g: &Grid, from: usize, to: usize) -> Vec<usize> {
     let mut at = from;
     let mut nb = [0usize; 4];
     while at != to {
-        let n = g.neighbours(at, &mut nb);
+        let n = g.neighbors(at, &mut nb);
         at = *nb[..n].iter().find(|&&j| d[j] == d[at] - 1).unwrap();
         path.push(at);
     }
     path
 }
 
-/// Mark or remove the floor that can't be reached from the open tile nearest the centre
+/// Mark or remove the floor that can't be reached from the open tile nearest the center
 /// (`c16-unreachable/src/main.rs:36-73`, `c17-starting-left/src/main.rs:34-67`).
 pub fn cull(c: &mut Ctx, s: &Stage) {
     let remove = s.pick(1) == 0;
     let (w, h) = (c.g.w, c.g.h);
-    let Some(centre) = nearest_walkable(&c.g, w / 2, h / 2) else {
+    let Some(center) = nearest_walkable(&c.g, w / 2, h / 2) else {
         c.failures |= NO_FLOOR;
         return;
     };
-    c.rec.frame(&c.g, Note::CullCenter, 0, vec![pack(centre, START)]);
-    let d = distances(&c.g, &[centre]);
+    c.rec.frame(&c.g, Note::CullCenter, 0, vec![pack(center, START)]);
+    let d = distances(&c.g, &[center]);
     let lost: Vec<usize> = (0..c.g.len()).filter(|&i| walkable(c.g.t[i]) && d[i] < 0).collect();
     if remove {
         for &i in &lost {
@@ -74,7 +74,7 @@ pub fn cull(c: &mut Ctx, s: &Stage) {
     c.dist = d;
 }
 
-/// The start: the open tile nearest a desired point, the left edge's middle or the centre
+/// The start: the open tile nearest a desired point, the left edge's middle or the center
 /// (`c17-starting-left/src/main.rs:69-94`, `c19-ending-dijkstra/src/main.rs:68-90`).
 pub fn start(c: &mut Ctx, s: &Stage) {
     let (w, h) = (c.g.w, c.g.h);
@@ -144,6 +144,7 @@ pub fn hot_path(c: &mut Ctx, s: &Stage) {
         c.rec.frame(&c.g, Note::HotPathCulled, cull, Vec::new());
     }
     c.hot = hot;
+    c.hot_radius = radius;
 }
 
 /// The rooms the path passes through, and the rest (`c21-hot-rooms/src/main.rs:129-156`): a room

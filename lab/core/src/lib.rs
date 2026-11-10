@@ -6,10 +6,11 @@
 //! The talk's code (thebracket/roguelike-celebration-2020 at `604e5b5a`) is cited by file and
 //! line beside each stage; none of it is copied.
 
-pub mod analyse;
+pub mod analyze;
 pub mod generate;
 pub mod grid;
 pub mod json;
+pub mod level;
 pub mod noise;
 pub mod place;
 pub mod recipe;
@@ -42,6 +43,8 @@ pub struct Ctx<'r> {
     pub dist: Vec<i32>,
     /// Walking distance from the path, after a hot-path stage.
     pub hot: Vec<i32>,
+    /// The hot path's radius: the last hot-path stage's, or the talk's.
+    pub hot_radius: i32,
     /// For each room, whether the path passes through it, after a hot-rooms stage.
     pub important: Vec<bool>,
     pub field: Vec<f32>,
@@ -65,6 +68,8 @@ pub struct Build {
     pub path: Vec<usize>,
     pub dist: Vec<i32>,
     pub hot: Vec<i32>,
+    /// Tiles fewer than this many steps from the path are on the hot path (`level::caches`).
+    pub hot_radius: i32,
     pub field: Vec<f32>,
     /// Failures set by the stages as they ran (`traits::FAILURES`, the first four).
     pub stage_failures: u32,
@@ -92,7 +97,7 @@ pub fn build(r: &Recipe, record: bool) -> Build {
     let mut names = Vec::new();
     let mut c = Ctx::fresh(r.seed, r.width, r.height, &mut rng, &mut rec, &mut names);
     run_stages(&mut c, &r.pipeline);
-    let Ctx { g, rooms, made_rooms, important, start, exit, path, dist, hot, field, failures, .. } = c;
+    let Ctx { g, rooms, made_rooms, important, start, exit, path, dist, hot, hot_radius, field, failures, .. } = c;
     let rooms = made_rooms.then_some(rooms);
     Build {
         width: r.width,
@@ -107,9 +112,24 @@ pub fn build(r: &Recipe, record: bool) -> Build {
         path,
         dist,
         hot,
+        hot_radius,
         field,
         stage_failures: failures,
     }
+}
+
+/// Build a recipe on each of `count` seeds from `from` and measure it: for each seed, a row of
+/// `traits::ROW` numbers, its values (`Traits::values`) and then its failure bits. The recipe's
+/// own seed is not used. `traits::summarize` reads the rows.
+pub fn measure(r: &mut Recipe, from: u64, count: u32) -> Vec<f64> {
+    let mut rows = Vec::with_capacity(count as usize * traits::ROW);
+    for seed in from..from + count as u64 {
+        r.seed = seed;
+        let b = build(r, false);
+        rows.extend(b.traits().values());
+        rows.push(b.failures() as f64);
+    }
+    rows
 }
 
 impl<'r> Ctx<'r> {
@@ -127,6 +147,7 @@ impl<'r> Ctx<'r> {
             path: Vec::new(),
             dist: Vec::new(),
             hot: Vec::new(),
+            hot_radius: recipe::HOT_RADIUS as i32,
             important: Vec::new(),
             field: Vec::new(),
             failures: 0,
@@ -154,6 +175,7 @@ fn run_stages(c: &mut Ctx, stages: &[Stage]) {
             c.path.clear();
             c.dist.clear();
             c.hot.clear();
+            c.hot_radius = recipe::HOT_RADIUS as i32;
             c.important.clear();
             c.field.clear();
         }
@@ -168,11 +190,11 @@ fn run_stages(c: &mut Ctx, stages: &[Stage]) {
             Kind::Noise => noise::noise(c, s),
             Kind::Combine => place::combine(c, s),
             Kind::Prefab => place::prefab(c, s),
-            Kind::Cull => analyse::cull(c, s),
-            Kind::Start => analyse::start(c, s),
-            Kind::Exit => analyse::exit(c, s),
-            Kind::HotPath => analyse::hot_path(c, s),
-            Kind::HotRooms => analyse::hot_rooms(c, s),
+            Kind::Cull => analyze::cull(c, s),
+            Kind::Start => analyze::start(c, s),
+            Kind::Exit => analyze::exit(c, s),
+            Kind::HotPath => analyze::hot_path(c, s),
+            Kind::HotRooms => analyze::hot_rooms(c, s),
         }
     }
 }

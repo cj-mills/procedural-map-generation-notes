@@ -1,10 +1,12 @@
 //! The core's checks: every demo recipe builds the same map every time and matches the
 //! committed golden hashes; frames replay to the map; the parser refuses what it should, and
-//! where; and the talk's conventions the stages rely on hold.
+//! where; the talk's conventions the stages rely on hold; the stage table says what the parser
+//! reads; and the level's caches keep to their rule.
 
+use map_lab_core::analyze::distances;
 use map_lab_core::grid::*;
-use map_lab_core::recipe::{self, parse};
-use map_lab_core::{build, tiles_hash};
+use map_lab_core::recipe::{self, parse, Param};
+use map_lab_core::{build, level, measure, tiles_hash, traits};
 use std::fs;
 use std::path::PathBuf;
 
@@ -12,8 +14,18 @@ fn lab() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
 }
 
+/// The talk's 22 demos.
 fn recipes() -> Vec<(String, String)> {
-    let mut v: Vec<_> = fs::read_dir(lab().join("recipes"))
+    recipes_in("recipes")
+}
+
+/// Our own recipes, which aren't demos of the talk: settings the talk describes without code.
+fn own_recipes() -> Vec<(String, String)> {
+    recipes_in("recipes/own")
+}
+
+fn recipes_in(dir: &str) -> Vec<(String, String)> {
+    let mut v: Vec<_> = fs::read_dir(lab().join(dir))
         .unwrap()
         .map(|e| e.unwrap().path())
         .filter(|p| p.extension().is_some_and(|x| x == "json"))
@@ -30,28 +42,33 @@ fn twenty_two_demo_recipes() {
     assert!(names.contains(&"c08a-voronoi".to_string()));
 }
 
-/// `golden-hashes.txt`: recipe, seed, tiles hash, frame count, for seeds 0..5, written by
-/// `map-lab hashes recipes/*.json --seeds 0..5`. A change here changes published maps: it needs
-/// a reason in the commit.
+/// `golden-hashes.txt`: recipe, seed, tiles hash, frame count and the level's caches (cell
+/// indices, or `-` for none), for seeds 0..5, written by
+/// `map-lab hashes recipes/*.json recipes/own/*.json --seeds 0..5`. A change here changes
+/// published maps or levels: it needs a reason in the commit.
 #[test]
-fn maps_match_the_golden_hashes() {
+fn maps_and_levels_match_the_golden_hashes() {
     let golden = fs::read_to_string(lab().join("golden-hashes.txt")).unwrap();
+    let all: Vec<_> = recipes().into_iter().chain(own_recipes()).collect();
     let mut n = 0;
     for line in golden.lines() {
         let f: Vec<&str> = line.split(' ').collect();
-        let text = fs::read_to_string(lab().join("recipes").join(format!("{}.json", f[0]))).unwrap();
-        let mut r = parse(&text).ok().unwrap();
+        let text = &all.iter().find(|(name, _)| name == f[0]).expect(line).1;
+        let mut r = parse(text).ok().unwrap();
         r.seed = f[1].parse().unwrap();
         let b = build(&r, true);
-        assert_eq!(format!("{} {}", tiles_hash(&b.tiles), b.frames.len()), format!("{} {}", f[2], f[3]), "{line}");
+        let caches: Vec<String> = level::caches(&b).iter().map(|i| i.to_string()).collect();
+        let caches = if caches.is_empty() { "-".to_string() } else { caches.join(",") };
+        assert_eq!(format!("{} {} {}", tiles_hash(&b.tiles), b.frames.len(), caches), format!("{} {} {}", f[2], f[3], f[4]), "{line}");
         n += 1;
     }
-    assert_eq!(n, 22 * 5);
+    assert_eq!(n, all.len() * 5);
+    assert_eq!(all.len(), 23);
 }
 
 #[test]
 fn deterministic_and_frames_replay() {
-    for (name, text) in recipes() {
+    for (name, text) in recipes().into_iter().chain(own_recipes()) {
         for seed in [0, 7, 1 << 40] {
             let mut r = parse(&text).ok().unwrap();
             r.seed = seed;
@@ -174,5 +191,132 @@ fn every_stage_named_in_the_table_runs() {
         let r = parse(&with(&one)).map_err(|e| e.message()).unwrap();
         let b = build(&r, true);
         assert_eq!(b.tiles.len(), 80 * 50, "{}", s.name);
+    }
+}
+
+#[test]
+fn voronoi_edges_are_walls_unless_roads() {
+    let map = |stage: &str, seed: u64| {
+        let mut r = parse(&with(stage)).map_err(|e| e.message()).unwrap();
+        r.seed = seed;
+        build(&r, false)
+    };
+    for seed in 0..20 {
+        let default = map(r#"{"stage": "voronoi"}"#, seed);
+        let walls = map(r#"{"stage": "voronoi", "edges": "walls"}"#, seed);
+        let roads = map(r#"{"stage": "voronoi", "edges": "roads"}"#, seed);
+        assert_eq!(default.tiles, walls.tiles, "seed {seed}: walls is the default");
+        let g = roads.grid();
+        for i in 0..g.len() {
+            let (x, y) = g.xy(i);
+            if x == 0 || y == 0 || x == g.w - 1 || y == g.h - 1 {
+                assert_eq!(g.t[i], WALL, "seed {seed}: the map's edge stays wall");
+            } else if walls.tiles[i] == WALL {
+                assert_eq!(g.t[i], FLOOR, "seed {seed}: every wall of the talk's rule is road");
+            }
+        }
+        // The talk's edges as floor would be dozens of regions; the road rule joins them.
+        assert!(roads.traits().regions <= 3, "seed {seed}: {} regions of road", roads.traits().regions);
+        assert!(walls.traits().regions >= 10, "seed {seed}: the walls seal the cells");
+    }
+    assert_eq!(err(&with(r#"{"stage": "voronoi", "edges": "paths"}"#)), "pipeline[0].edges: not one of the allowed values");
+}
+
+#[test]
+fn the_stage_table_says_what_the_parser_reads() {
+    let table = recipe::stage_table();
+    assert!(map_lab_core::json::parse(&table).is_ok(), "{table}");
+    assert!(table.starts_with(r#"{"format":"map-lab-stages/1","recipe":{"format":"map-lab-recipe/1","maxSeed":9007199254740991,"minSide":24,"maxSide":256,"width":80,"height":50},"stages":[{"name":"rooms","generator":true,"variants":["talk"],"params":[{"name":"attempts","kind":"int","min":1,"max":500,"default":20},"#), "{table}");
+    assert!(table.contains(r#"{"name":"gain","kind":"num","min":0,"max":4,"default":0.1}"#), "{table}");
+    assert!(table.contains(r#"{"name":"edges","kind":"pick","options":["walls","roads"],"default":"walls"}"#), "{table}");
+    assert!(table.contains(r#"{"name":"combine","generator":true,"variants":["talk"],"params":[{"name":"join","kind":"pick","options":["halves"],"default":"halves"},{"name":"inputs","kind":"inputs","count":2}]}"#), "{table}");
+    assert!(table.ends_with(r#"{"name":"hot-rooms","generator":false,"variants":["talk"],"params":[]}]}"#), "{table}");
+    for s in recipe::STAGES {
+        assert_eq!(table.matches(&format!(r#"{{"name":"{}","generator":"#, s.name)).count(), 1, "{}", s.name);
+        // Every decimal in the table reads back as the same `f32`.
+        for (i, p) in s.params.iter().enumerate() {
+            let Param::Num { min, max, default } = p.kind else { continue };
+            for v in [min, max, default] {
+                let mut text = String::new();
+                recipe::push_decimal(&mut text, v);
+                let r = parse(&with(&format!(r#"{{"stage": "{}", "{}": {text}}}"#, s.name, p.name))).map_err(|e| e.message()).unwrap();
+                assert_eq!(r.pipeline[0].num(i), v, "{}.{} {text}", s.name, p.name);
+            }
+        }
+    }
+    let text = |x: f32| {
+        let mut s = String::new();
+        recipe::push_decimal(&mut s, x);
+        s
+    };
+    assert_eq!([text(0.1), text(0.005), text(5.0), text(0.08), text(2.5), text(0.000001), text(16.0)], ["0.1", "0.005", "5", "0.08", "2.5", "0.000001", "16"]);
+}
+
+#[test]
+fn caches_keep_to_their_rule() {
+    let mut levels = 0;
+    for (name, text) in recipes() {
+        for seed in 0..10 {
+            let mut r = parse(&text).ok().unwrap();
+            r.seed = seed;
+            let b = build(&r, false);
+            let caches = level::caches(&b);
+            assert_eq!(caches, level::caches(&build(&r, true)), "{name} seed {seed}: the same level every time");
+            if b.path.is_empty() {
+                assert!(caches.is_empty(), "{name} seed {seed}: no caches without a path");
+                continue;
+            }
+            levels += 1;
+            assert!(caches.len() <= level::CACHES);
+            let g = b.grid();
+            let hot = distances(&g, &b.path);
+            for (n, &c) in caches.iter().enumerate() {
+                assert!(matches!(g.t[c], FLOOR | GRASS), "{name} seed {seed}: a cache on tile {}", g.t[c]);
+                assert!(hot[c] >= b.hot_radius, "{name} seed {seed}: a cache {} steps from the path", hot[c]);
+                let from = distances(&g, &[c]);
+                for &other in &caches[..n] {
+                    assert!(from[other] > level::CACHE_SPACING, "{name} seed {seed}: caches {} steps apart", from[other]);
+                }
+            }
+            if let Some(&first) = caches.first() {
+                assert_eq!(hot[first], *hot.iter().zip(&g.t).filter(|(_, t)| matches!(**t, FLOOR | GRASS)).map(|(h, _)| h).max().unwrap());
+            }
+        }
+    }
+    assert!(levels >= 40, "{levels} levels checked");
+    // The hot path's radius is the recipe's: nothing is off a hot path as wide as the map.
+    let stages = r#"{"stage": "cellular"}, {"stage": "cull"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "hot-path", "radius": 1000}"#;
+    let b = build(&parse(&with(stages)).ok().unwrap(), false);
+    assert!(!b.path.is_empty() && level::caches(&b).is_empty());
+}
+
+#[test]
+fn summaries_are_the_data_files() {
+    let s = traits::summary(&[4.0, 1.0, 3.0, 2.0]).unwrap();
+    let want = [4.0, 2.5, 1.2909944487358056, 1.0, 1.3, 2.5, 3.7, 4.0];
+    for (a, b) in s.iter().zip(want) {
+        assert!((a - b).abs() < 1e-12, "{s:?}");
+    }
+    assert_eq!(traits::summary(&[7.0]).unwrap(), [1.0, 7.0, 0.0, 7.0, 7.0, 7.0, 7.0, 7.0]);
+    assert!(traits::summary(&[]).is_none());
+
+    let mut r = parse(&with(r#"{"stage": "rooms"}"#)).ok().unwrap();
+    let rows = measure(&mut r, 0, 30);
+    assert_eq!(rows.len(), 30 * traits::ROW);
+    let sums = traits::summarize(&rows);
+    assert_eq!(sums.len(), traits::VALUES * traits::SUMMARY + traits::FAILURES.len());
+    // Rooms maps have no noise field: no seed has a field mean (value 9).
+    assert_eq!(sums[9 * traits::SUMMARY], 0.0);
+    assert!(sums[9 * traits::SUMMARY + 1].is_nan());
+    // Every seed has a floor share (value 0), and its row is the build's own traits.
+    assert_eq!(sums[0], 30.0);
+    r.seed = 4;
+    let b = build(&r, false);
+    let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+    assert_eq!(bits(&rows[4 * traits::ROW..5 * traits::ROW - 1]), bits(&b.traits().values()));
+    assert_eq!(rows[5 * traits::ROW - 1], b.failures() as f64);
+    let failing = |bit: usize| rows.chunks(traits::ROW).filter(|row| row[traits::VALUES] as u32 & (1 << bit) != 0).count() as f64;
+    for bit in 0..traits::FAILURES.len() {
+        assert_eq!(sums[traits::VALUES * traits::SUMMARY + bit], failing(bit));
     }
 }

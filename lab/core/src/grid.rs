@@ -68,10 +68,10 @@ impl Grid {
     pub fn indices_of(&self, v: u8) -> Vec<usize> {
         (0..self.len()).filter(|&i| self.t[i] == v).collect()
     }
-    /// The four orthogonal neighbours of `i` inside the grid, in the order left, right, up, down
+    /// The four orthogonal neighbors of `i` inside the grid, in the order left, right, up, down
     /// (the order of the talk's `get_available_exits`, `backend/src/lib.rs:48-68`).
     #[inline]
-    pub fn neighbours(&self, i: usize, out: &mut [usize; 4]) -> usize {
+    pub fn neighbors(&self, i: usize, out: &mut [usize; 4]) -> usize {
         let (x, y) = self.xy(i);
         let mut n = 0;
         if x > 0 {
@@ -92,7 +92,7 @@ impl Grid {
         }
         n
     }
-    /// The talk's L-shaped corridor between two room centres; `horizontal_first` is its coin.
+    /// The talk's L-shaped corridor between two room centers; `horizontal_first` is its coin.
     pub fn corridor(&mut self, a: (i32, i32), b: (i32, i32), horizontal_first: bool) {
         if horizontal_first {
             self.h_line(a.0, b.0, a.1);

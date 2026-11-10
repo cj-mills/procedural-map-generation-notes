@@ -5,7 +5,7 @@
   "columns": {
     "floor_share": "Walkable tiles over all tiles. Walkable: floor, grass, treasure and traps; not wall, water or mountain.",
     "regions": "Groups of walkable tiles joined in four directions.",
-    "dead_ends": "Walkable tiles with exactly one walkable neighbour of four.",
+    "dead_ends": "Walkable tiles with exactly one walkable neighbor of four.",
     "corridor_ratio": "The share of walkable tiles in no 2 x 2 block of walkable tiles: passages one tile wide.",
     "path": "Steps on the shortest four-way walk from start to exit; null when there is none.",
     "probed": "1 when path used the standard probe (the open tile nearest the middle of the left edge to the one nearest the middle of the right) because the map has no start and exit of its own; 0 otherwise.",
@@ -1896,7 +1896,7 @@
   "width": 80,
   "height": 50,
   "pipeline": [
-    {"stage": "voronoi", "seeds": 16, "metric": "pythagoras"}
+    {"stage": "voronoi", "seeds": 16, "metric": "pythagoras", "edges": "walls"}
   ]
 },
       "summary": {

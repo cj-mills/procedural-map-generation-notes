@@ -123,7 +123,7 @@ fn fits(g: &Grid, room: Rect) -> bool {
     room.grown(2).cells().all(|(x, y)| x >= 1 && y >= 1 && x <= g.w - 2 && y <= g.h - 2 && g.get(x, y) == WALL)
 }
 
-/// Random noise, then repeated smoothing: a cell becomes wall with five or more wall neighbours,
+/// Random noise, then repeated smoothing: a cell becomes wall with five or more wall neighbors,
 /// or none, and floor otherwise. The outer ring keeps its noise (`c03-cellular/src/main.rs:17-70`).
 pub fn cellular(c: &mut Ctx, s: &Stage) {
     let (wall_pct, iterations) = (s.int(0), s.int(1));
@@ -154,7 +154,7 @@ fn smooth(g: &mut Grid) {
     }
 }
 
-/// Diggers that stagger at random, the first from the centre and each later one from a random
+/// Diggers that stagger at random, the first from the center and each later one from a random
 /// floor tile, until a share of the map is floor (`c04-drunkard/src/main.rs:14-76`).
 pub fn drunkard(c: &mut Ctx, s: &Stage) {
     let (lifetime, divisor) = (s.int(0), s.int(1));
@@ -205,9 +205,9 @@ fn stagger(c: &mut Ctx, (mut x, mut y): (i32, i32), lifetime: i32) -> Vec<u32> {
 /// hits it is a failure of the seed, recorded, rather than a page that hangs.
 const WALK_CAP: u32 = 10_000_000;
 
-/// Diffusion-limited aggregation from a small cross at the centre: particles from random points
-/// wander (walk), fly straight at the centre (attractor), or fly straight and land mirrored about
-/// the centre column (symmetric), and stick where they meet floor
+/// Diffusion-limited aggregation from a small cross at the center: particles from random points
+/// wander (walk), fly straight at the center (attractor), or fly straight and land mirrored about
+/// the center column (symmetric), and stick where they meet floor
 /// (`c05-dla/src/main.rs:19-84`, `c06-dla-attractor/src/main.rs:49-69`, `c07-dla-symmetry/src/main.rs:49-79`).
 pub fn dla(c: &mut Ctx, s: &Stage) {
     let (mode, divisor) = (s.pick(0), s.int(1));
@@ -323,10 +323,16 @@ pub fn dla_erode(c: &mut Ctx, s: &Stage) {
 }
 
 /// Voronoi cells: random seed points, each tile given to its nearest seed under three distance
-/// measures, then walls where neighbouring tiles belong to different seeds
+/// measures, then walls where neighboring tiles belong to different seeds
 /// (`c08a-voronoi/src/main.rs:20-113`).
+///
+/// With `edges: roads` the edges are floor and the cells solid: the talk describes roads along
+/// the edges of Voronoi cells and gives no code for them, so that rule is our own. A road tile
+/// is one whose right, lower or lower-right neighbor belongs to another cell. The talk's wall
+/// test leaves out the lower-right one, and its edges then touch only corner to corner where a
+/// boundary runs down and to the left: enough to seal a cell, but a road has to be walked.
 pub fn voronoi(c: &mut Ctx, s: &Stage) {
-    let (n, metric) = (s.int(0) as usize, s.pick(1));
+    let (n, metric, roads) = (s.int(0) as usize, s.pick(1), s.pick(2) == 1);
     let (w, h) = (c.g.w, c.g.h);
     c.g = Grid::new(w, h, WALL);
     let seeds: Vec<(i32, i32)> = (0..n).map(|_| (c.rng.range(1, w - 1), c.rng.range(1, h - 1))).collect();
@@ -352,10 +358,11 @@ pub fn voronoi(c: &mut Ctx, s: &Stage) {
     for i in 0..c.g.len() {
         let (x, y) = c.g.xy(i);
         let edge = x == 0 || y == 0 || x == w - 1 || y == h - 1;
-        let border = !edge && (chosen[i] != chosen[i + 1] || chosen[i] != chosen[i + wu]);
-        c.g.t[i] = if edge || border { WALL } else { FLOOR };
+        let other = |j: usize| chosen[j] != chosen[i];
+        let border = !edge && (other(i + 1) || other(i + wu) || (roads && other(i + wu + 1)));
+        c.g.t[i] = if edge || border != roads { WALL } else { FLOOR };
     }
-    c.rec.frame(&c.g, Note::VoronoiWalls, n as i32, Vec::new());
+    c.rec.frame(&c.g, if roads { Note::VoronoiRoads } else { Note::VoronoiWalls }, n as i32, Vec::new());
 }
 
 /// The nearest seed, the first on a tie. Straight-line distance is compared squared, which

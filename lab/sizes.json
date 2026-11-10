@@ -9,13 +9,13 @@
   "limitBytes": 51200,
   "counted": "the .wasm and its wasm-bindgen glue, each gzipped, summed; the page module will add to it",
   "wasm": {
-    "bytes": 72296,
-    "gzipped": 32004
+    "bytes": 78519,
+    "gzipped": 34991
   },
   "glue": {
-    "bytes": 16532,
-    "gzipped": 3519
+    "bytes": 18949,
+    "gzipped": 4093
   },
-  "totalGzipped": 35523,
-  "headroom": 15677
+  "totalGzipped": 39084,
+  "headroom": 12116
 }

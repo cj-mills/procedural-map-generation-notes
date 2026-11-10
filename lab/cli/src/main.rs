@@ -6,9 +6,11 @@
 //!   map-lab compare <ours.json> <theirs.json> [--out FILE]
 //!   map-lab hashes <recipe.json>... [--seeds FROM..TO]
 //!   map-lab schema
+//!   map-lab stages
 //!
-//! A recipe file is JSON (`map-lab schema` prints its schema). Output is plain text or JSON on
-//! standard output; errors go to standard error with a non-zero exit.
+//! A recipe file is JSON (`map-lab schema` prints its schema; `map-lab stages` prints the same
+//! stages and parameters as the table the page's controls read). Output is plain text or JSON
+//! on standard output; errors go to standard error with a non-zero exit.
 
 mod compare;
 mod docs;
@@ -18,7 +20,7 @@ use map_lab_core::grid::{GLYPHS, TILE_KINDS, TILE_NAMES};
 use map_lab_core::recipe::{self, Recipe};
 use map_lab_core::record::{MARK_NAMES, NOTE_KEYS};
 use map_lab_core::report::{self, failure_names, list, string, Obj, Row, COLUMNS};
-use map_lab_core::{build, tiles_hash, Build};
+use map_lab_core::{build, level, tiles_hash, Build};
 use std::process::exit;
 
 fn main() {
@@ -35,6 +37,10 @@ fn main() {
             println!("{}", schema::schema());
             Ok(())
         }
+        "stages" => {
+            println!("{}", recipe::stage_table());
+            Ok(())
+        }
         "-h" | "--help" | "help" => usage(),
         _ => Err(format!("unknown command {cmd:?}")),
     };
@@ -46,7 +52,7 @@ fn main() {
 
 fn usage() -> ! {
     eprintln!(
-        "usage:\n  map-lab build <recipe.json> [--seed N] [--json] [--path] [--frames]\n  map-lab traits <recipe.json> [--seeds FROM..TO]\n  map-lab measure <recipe.json>... [--seeds FROM..TO] [--out FILE]\n  map-lab compare <ours.json> <theirs.json> [--out FILE]\n  map-lab hashes <recipe.json>... [--seeds FROM..TO]\n  map-lab schema"
+        "usage:\n  map-lab build <recipe.json> [--seed N] [--json] [--path] [--frames]\n  map-lab traits <recipe.json> [--seeds FROM..TO]\n  map-lab measure <recipe.json>... [--seeds FROM..TO] [--out FILE]\n  map-lab compare <ours.json> <theirs.json> [--out FILE]\n  map-lab hashes <recipe.json>... [--seeds FROM..TO]\n  map-lab schema\n  map-lab stages"
     );
     exit(2)
 }
@@ -133,6 +139,7 @@ fn cmd_build(a: &[String]) -> Result<(), String> {
         o.raw("failures", &list(failure_names(failures).into_iter().map(string)));
         o.raw("start", &point(&b, b.start));
         o.raw("exit", &point(&b, b.exit));
+        o.raw("caches", &list(level::caches(&b).into_iter().map(|i| point(&b, Some(i)))));
         o.raw("stages", &list(b.stage_names.iter().map(|s| string(s))));
         o.raw("tilesHash", &tiles_hash(&b.tiles).to_string());
         if a.has("frames") {
@@ -173,13 +180,17 @@ fn cmd_build(a: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-/// The map as text rows; `@` the start and `>` the exit, `*` the path with `--path`.
+/// The map as text rows; `@` the start, `>` the exit and `&` each cache, `*` the path with
+/// `--path`.
 fn render(b: &Build, with_path: bool) -> Vec<String> {
     let mut chars: Vec<u8> = b.tiles.iter().map(|&t| GLYPHS[t as usize]).collect();
     if with_path {
         for &i in &b.path {
             chars[i] = b'*';
         }
+    }
+    for i in level::caches(b) {
+        chars[i] = b'&';
     }
     if let Some(s) = b.start {
         chars[s] = b'@';
@@ -197,6 +208,7 @@ fn legend() -> String {
     }
     o.raw("@", &string("start"));
     o.raw(">", &string("exit"));
+    o.raw("&", &string("cache"));
     o.raw("*", &string("path (with --path)"));
     o.end()
 }
@@ -311,7 +323,9 @@ fn cmd_hashes(a: &[String]) -> Result<(), String> {
         for seed in seeds.0..seeds.1 {
             r.seed = seed;
             let b = build(&r, true);
-            println!("{} {} {} {}", id_of(file), seed, tiles_hash(&b.tiles), b.frames.len());
+            let caches: Vec<String> = level::caches(&b).iter().map(|i| i.to_string()).collect();
+            let caches = if caches.is_empty() { "-".into() } else { caches.join(",") };
+            println!("{} {} {} {} {}", id_of(file), seed, tiles_hash(&b.tiles), b.frames.len(), caches);
         }
     }
     Ok(())

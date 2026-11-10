@@ -81,7 +81,7 @@ pub fn prefab(c: &mut Ctx, s: &Stage) {
         c.rec.frame(&c.g, Note::PrefabShow, 0, marks_of(&c.g, vault_cells(bx, by), POINT));
     }
     let base = match place {
-        // In a random room that has space for it, at the room's centre (`c14-not-a-trap/src/main.rs:104-124`).
+        // In a random room that has space for it, at the room's center (`c14-not-a-trap/src/main.rs:104-124`).
         // The talk's loop runs forever when no room is big enough; here that is a failure.
         0 => {
             let big = |r: &Rect| r.width() > 5 && r.height() > 5;

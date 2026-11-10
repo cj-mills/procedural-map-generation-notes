@@ -101,7 +101,7 @@ const GAP = 16;
 const GENERATIONS = [0, 3, 10];
 const ROCK = [0x3a, 0x3f, 0x47];
 const OPEN = [0xe9, 0xe4, 0xd8];
-const GAP_COLOUR = [0xff, 0xff, 0xff];
+const GAP_COLOR = [0xff, 0xff, 0xff];
 
 function png(width, height, rgb) {
   const chunk = (type, data) => {
@@ -130,7 +130,7 @@ const panelW = WIDTH * SCALE;
 const outW = GENERATIONS.length * panelW + (GENERATIONS.length - 1) * GAP;
 const outH = HEIGHT * SCALE;
 const rgb = Buffer.alloc(outW * outH * 3);
-for (let p = 0; p < outW * outH; p++) rgb.set(GAP_COLOUR, p * 3);
+for (let p = 0; p < outW * outH; p++) rgb.set(GAP_COLOR, p * 3);
 
 GENERATIONS.forEach((iterations, panel) => {
   const grid = generate({ width: WIDTH, height: HEIGHT, rockPercent: 55, seed: 1, iterations });

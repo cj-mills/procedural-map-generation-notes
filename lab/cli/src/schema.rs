@@ -1,8 +1,15 @@
 //! The published JSON Schema for recipes, written from the core's `STAGES` table and `docs`.
 
 use crate::docs;
-use map_lab_core::recipe::{Param, FORMAT, MAX_SEED, MAX_SIDE, MIN_SIDE, STAGES};
-use map_lab_core::report::{list, num, string, Obj};
+use map_lab_core::recipe::{push_decimal, Param, FORMAT, HEIGHT, MAX_SEED, MAX_SIDE, MIN_SIDE, STAGES, WIDTH};
+use map_lab_core::report::{list, string, Obj};
+
+/// A parameter's decimal as the recipe writes it: `0.1`, not the `f32`'s digits as an `f64`.
+fn decimal(x: f32) -> String {
+    let mut s = String::new();
+    push_decimal(&mut s, x);
+    s
+}
 
 pub fn schema() -> String {
     let mut props = Obj::lines(4);
@@ -18,7 +25,7 @@ pub fn schema() -> String {
     seed.raw("type", &string("integer")).raw("minimum", "0").raw("maximum", &MAX_SEED.to_string());
     seed.raw("description", &string("Seeds the one random number generator every stage draws from, in pipeline order. Kept within 2^53 - 1 so it survives JavaScript numbers."));
     props.raw("seed", &seed.end());
-    for (k, d) in [("width", 80), ("height", 50)] {
+    for (k, d) in [("width", WIDTH), ("height", HEIGHT)] {
         let mut o = Obj::new();
         o.raw("type", &string("integer")).raw("minimum", &MIN_SIDE.to_string()).raw("maximum", &MAX_SIDE.to_string());
         o.raw("default", &d.to_string()).raw("description", &string("Map size in tiles; the talk's maps are 80 by 50."));
@@ -59,7 +66,7 @@ pub fn schema() -> String {
         ps.raw("stage", &name.end());
         let mut v = Obj::new();
         v.raw("enum", &list(s.variants.iter().map(|x| string(x)))).raw("default", &string(s.variants[0]));
-        v.raw("description", &string("Which version of the technique: \"talk\" is the talk's own. Labelled variants, each with its own source and a measured difference, come after it."));
+        v.raw("description", &string("Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."));
         ps.raw("variant", &v.end());
         for prm in s.params {
             let (_, _, d) = docs::PARAMS.iter().find(|d| d.0 == s.name && d.1 == prm.name).expect("docs for every parameter");
@@ -69,8 +76,8 @@ pub fn schema() -> String {
                     o.raw("type", &string("integer")).raw("minimum", &min.to_string()).raw("maximum", &max.to_string()).raw("default", &default.to_string());
                 }
                 Param::Num { min, max, default } => {
-                    o.raw("type", &string("number")).raw("minimum", &num(*min as f64)).raw("maximum", &num(*max as f64));
-                    o.raw("default", &num(*default as f64));
+                    o.raw("type", &string("number")).raw("minimum", &decimal(*min)).raw("maximum", &decimal(*max));
+                    o.raw("default", &decimal(*default));
                 }
                 Param::Pick(options) => {
                     o.raw("enum", &list(options.iter().map(|x| string(x)))).raw("default", &string(options[0]));

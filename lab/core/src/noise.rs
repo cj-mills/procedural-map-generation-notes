@@ -116,7 +116,7 @@ fn terrain(n: f32) -> u8 {
     }
 }
 
-/// One byte a cell for the step-through: the talk's colour driver, 0 to 1, scaled to 0 to 255.
+/// One byte a cell for the step-through: the talk's color driver, 0 to 1, scaled to 0 to 255.
 fn byte(v: f32) -> u8 {
     let v = if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { v };
     (v * 255.0 + 0.5) as u8
@@ -151,7 +151,7 @@ pub fn noise(c: &mut Ctx, s: &Stage) {
         }
     };
     match mode {
-        // height: a grey-scale height map, (noise + 1) / 2 (`c10-perlin/src/main.rs:21-26`).
+        // height: a grayscale height map, (noise + 1) / 2 (`c10-perlin/src/main.rs:21-26`).
         1 => {
             sample(&mut field, &|x, y| (first.get(x / 50.0, y / 25.0) + 1.0) / 2.0);
             c.g.t.iter_mut().for_each(|t| *t = FLOOR);

@@ -1,18 +1,22 @@
 //! The map lab core for the page, through wasm-bindgen. A `Lab` is one recipe built with every
-//! frame kept; the page steps through the frames and reads the result.
+//! frame kept; the page steps through the frames and reads the result, the level's caches, and
+//! the recipe measured over many seeds. `stage_table` is what the page's controls are made from.
 //!
 //! Packed values: a frame's changes and marks are `u32`s, cell index in the high 24 bits and
 //! tile or mark in the low 8 (`map_lab_core::record`). Cell index = y × width + x. -1 means none.
 
-use map_lab_core::grid::Grid;
 use map_lab_core::record::{MARK_NAMES, NOTE_KEYS};
 use map_lab_core::traits::{self, FAILURES};
-use map_lab_core::{build, recipe, tiles_hash, Build};
+use map_lab_core::recipe::{self, Recipe};
+use map_lab_core::{build, level, tiles_hash, Build};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct Lab {
+    r: Recipe,
     b: Build,
+    /// `measure`'s rows so far.
+    rows: Vec<f64>,
 }
 
 fn opt(i: Option<usize>) -> i32 {
@@ -25,7 +29,7 @@ impl Lab {
     #[wasm_bindgen(constructor)]
     pub fn new(recipe_json: &str) -> Result<Lab, JsError> {
         let r = recipe::parse(recipe_json).map_err(|e| JsError::new(&e.message()))?;
-        Ok(Lab { b: build(&r, true) })
+        Ok(Lab { b: build(&r, true), r, rows: Vec::new() })
     }
     pub fn width(&self) -> i32 {
         self.b.width
@@ -98,32 +102,48 @@ impl Lab {
             .flat_map(|(n, r)| [r.x1, r.y1, r.x2, r.y2, self.b.important.get(n).copied().unwrap_or(false) as i32])
             .collect()
     }
+    /// The level's caches, as cell indices: placed off the hot path by the core's one rule
+    /// (`map_lab_core::level`). Empty without a path from the start to the exit.
+    pub fn caches(&self) -> Vec<u32> {
+        level::caches(&self.b).iter().map(|&i| i as u32).collect()
+    }
     /// The measured traits in the data file's column order: floor share, regions, dead ends,
     /// corridor ratio, path (NaN for none), probed (0 or 1), water, grass, mountain, field mean,
     /// field sd (NaN without a field), rooms (NaN without rooms).
     pub fn traits(&self) -> Vec<f64> {
-        let t = self.b.traits();
-        let nan = f64::NAN;
-        vec![
-            t.floor_share,
-            t.regions as f64,
-            t.dead_ends as f64,
-            t.corridor_ratio,
-            t.path.map_or(nan, |p| p as f64),
-            t.probed as u8 as f64,
-            t.tile_shares[2],
-            t.tile_shares[3],
-            t.tile_shares[4],
-            t.field.map_or(nan, |f| f.0),
-            t.field.map_or(nan, |f| f.1),
-            t.rooms.map_or(nan, |r| r as f64),
-        ]
+        self.b.traits().values().into()
     }
     /// Failure bits; `failure_key(bit)` names each.
     pub fn failures(&self) -> u32 {
-        let g = Grid { w: self.b.width, h: self.b.height, t: self.b.tiles.clone() };
-        self.b.stage_failures | traits::failures(&g, &self.b.traits())
+        self.b.failures()
     }
+    /// "Measure over 200 seeds", a slice at a time so the page stays responsive: builds this
+    /// recipe on the next `count` seeds, the first call starting at seed 0, and returns how many
+    /// seeds are measured so far. The recipe's own seed is not used.
+    pub fn measure(&mut self, count: u32) -> usize {
+        let from = self.rows.len() / traits::ROW;
+        self.rows.extend(map_lab_core::measure(&mut self.r, from as u64, count));
+        from + count as usize
+    }
+    /// The seeds measured so far, 13 numbers a seed: the traits in `traits` order, then the
+    /// seed's failure bits. Row `n` is seed `n`.
+    pub fn measured(&self) -> Vec<f64> {
+        self.rows.clone()
+    }
+    /// The summary of the seeds measured so far, as the data file summarizes a demo: for each
+    /// of the 12 traits 8 numbers (seeds that have it, mean, standard deviation, minimum, 10th
+    /// percentile, median, 90th percentile, maximum; NaN after the count when no seed has it),
+    /// then for each failure bit the number of seeds failing it.
+    pub fn summary(&self) -> Vec<f64> {
+        traits::summarize(&self.rows)
+    }
+}
+
+/// What a recipe may say, as JSON: every stage and its parameters with their kinds, limits and
+/// defaults, for the page's controls (`map_lab_core::recipe::stage_table` documents the shape).
+#[wasm_bindgen]
+pub fn stage_table() -> String {
+    recipe::stage_table()
 }
 
 /// The page's annotation key for a frame's note.

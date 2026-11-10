@@ -19,7 +19,7 @@ panic = "abort"
 strip = "debuginfo"
 
 # The CLI runs many seeds; it is built for speed. Its maps are the same: the core has no
-# floating-point code whose result depends on optimisation (lab/README.md, Determinism).
+# floating-point code whose result depends on optimization (lab/README.md, Determinism).
 [profile.fast]
 inherits = "release"
 opt-level = 3

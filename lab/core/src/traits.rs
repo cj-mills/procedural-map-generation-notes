@@ -1,7 +1,7 @@
 //! The measured traits of a finished map, and the failures read from them. One definition, used
 //! for our maps and for the talk's own maps in the faithfulness check (`faithfulness/`).
 
-use crate::analyse::{distances, shortest_path};
+use crate::analyze::{distances, shortest_path};
 use crate::grid::*;
 
 pub struct Traits {
@@ -9,7 +9,7 @@ pub struct Traits {
     pub floor_share: f64,
     /// Groups of walkable tiles joined in four directions.
     pub regions: u32,
-    /// Walkable tiles with exactly one walkable neighbour of four.
+    /// Walkable tiles with exactly one walkable neighbor of four.
     pub dead_ends: u32,
     /// The share of walkable tiles in no 2 × 2 block of walkable tiles: passages one tile wide.
     pub corridor_ratio: f64,
@@ -25,6 +25,99 @@ pub struct Traits {
     pub field: Option<(f64, f64)>,
     /// Rooms placed, for maps built from rooms.
     pub rooms: Option<u32>,
+}
+
+/// How many values a map has (`Traits::values`), and the data file columns.
+pub const VALUES: usize = 12;
+/// How many numbers `summarize` gives for each value.
+pub const SUMMARY: usize = 8;
+
+impl Traits {
+    /// The traits as numbers, in the data file's column order (`report::COLUMNS`): floor share,
+    /// regions, dead ends, corridor ratio, path, probed (0 or 1), water, grass, mountain, field
+    /// mean, field standard deviation, rooms. NaN where a map has no such value: no path, no
+    /// field, no rooms.
+    pub fn values(&self) -> [f64; VALUES] {
+        let nan = f64::NAN;
+        [
+            self.floor_share,
+            self.regions as f64,
+            self.dead_ends as f64,
+            self.corridor_ratio,
+            self.path.map_or(nan, |p| p as f64),
+            self.probed as u8 as f64,
+            self.tile_shares[WATER as usize],
+            self.tile_shares[GRASS as usize],
+            self.tile_shares[MOUNTAIN as usize],
+            self.field.map_or(nan, |f| f.0),
+            self.field.map_or(nan, |f| f.1),
+            self.rooms.map_or(nan, |r| r as f64),
+        ]
+    }
+}
+
+/// One value over many seeds: how many seeds have it, then mean, sample standard deviation,
+/// minimum, 10th percentile, median, 90th percentile and maximum (percentiles by linear
+/// interpolation between order statistics). `None` when no seed has the value.
+pub fn summary(values: &[f64]) -> Option<[f64; SUMMARY]> {
+    if values.is_empty() {
+        return None;
+    }
+    let n = values.len() as f64;
+    let mean = values.iter().sum::<f64>() / n;
+    let sd = if values.len() > 1 { (values.iter().map(|v| (v - mean) * (v - mean)).sum::<f64>() / (n - 1.0)).sqrt() } else { 0.0 };
+    let mut s = values.to_vec();
+    // Shell sort: the library's sort costs kilobytes of WebAssembly, and this is a few hundred values.
+    let mut gap = s.len() / 2;
+    while gap > 0 {
+        for i in gap..s.len() {
+            let mut j = i;
+            while j >= gap && s[j - gap] > s[j] {
+                s.swap(j - gap, j);
+                j -= gap;
+            }
+        }
+        gap /= 2;
+    }
+    let q = |p: f64| {
+        let h = p * (s.len() - 1) as f64;
+        let lo = h as usize;
+        let hi = (lo + 1).min(s.len() - 1);
+        s[lo] + (h - lo as f64) * (s[hi] - s[lo])
+    };
+    Some([n, mean, sd, s[0], q(0.1), q(0.5), q(0.9), s[s.len() - 1]])
+}
+
+/// How many numbers a seed's row has in `crate::measure`: its values, then its failure bits.
+pub const ROW: usize = VALUES + 1;
+
+/// Summaries of measured rows (`crate::measure`), for the page's "Measure over 200 seeds": for
+/// each of the `VALUES` values its `SUMMARY` numbers (all NaN but the count, 0, when no seed
+/// has it), then for each failure in `FAILURES` order the number of seeds failing it.
+pub fn summarize(rows: &[f64]) -> Vec<f64> {
+    let seeds = rows.len() / ROW;
+    let mut out = Vec::with_capacity(VALUES * SUMMARY + FAILURES.len());
+    let mut column = Vec::with_capacity(seeds);
+    for c in 0..VALUES {
+        column.clear();
+        for n in 0..seeds {
+            let v = rows[n * ROW + c];
+            if !v.is_nan() {
+                column.push(v);
+            }
+        }
+        match summary(&column) {
+            Some(s) => out.extend(s),
+            None => {
+                out.push(0.0);
+                out.resize(out.len() + SUMMARY - 1, f64::NAN);
+            }
+        }
+    }
+    for b in 0..FAILURES.len() {
+        out.push((0..seeds).filter(|n| rows[n * ROW + VALUES] as u32 & (1 << b) != 0).count() as f64);
+    }
+    out
 }
 
 /// A map shorter than this many steps from start to exit, as a fraction of its width, counts as
@@ -50,7 +143,7 @@ pub fn measure(g: &Grid, start: Option<usize>, exit: Option<usize>, field: &[f32
         seen[i] = true;
         stack.push(i);
         while let Some(j) = stack.pop() {
-            let m = g.neighbours(j, &mut nb);
+            let m = g.neighbors(j, &mut nb);
         for &k in &nb[..m] {
                 if open[k] && !seen[k] {
                     seen[k] = true;
@@ -66,7 +159,7 @@ pub fn measure(g: &Grid, start: Option<usize>, exit: Option<usize>, field: &[f32
         if !open[i] {
             continue;
         }
-        let m = g.neighbours(i, &mut nb);
+        let m = g.neighbors(i, &mut nb);
         if nb[..m].iter().filter(|&&k| open[k]).count() == 1 {
             dead_ends += 1;
         }

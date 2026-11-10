@@ -5,7 +5,7 @@
   "columns": {
     "floor_share": "Walkable tiles over all tiles. Walkable: floor, grass, treasure and traps; not wall, water or mountain.",
     "regions": "Groups of walkable tiles joined in four directions.",
-    "dead_ends": "Walkable tiles with exactly one walkable neighbour of four.",
+    "dead_ends": "Walkable tiles with exactly one walkable neighbor of four.",
     "corridor_ratio": "The share of walkable tiles in no 2 x 2 block of walkable tiles: passages one tile wide.",
     "path": "Steps on the shortest four-way walk from start to exit; null when there is none.",
     "probed": "1 when path used the standard probe (the open tile nearest the middle of the left edge to the one nearest the middle of the right) because the map has no start and exit of its own; 0 otherwise.",
@@ -1142,7 +1142,7 @@
       "id": "c06-dla-attractor",
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c06-dla-attractor/src/main.rs, run without a window by faithfulness/src/main.rs",
       "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
-      "differences": "Our line to the centre is the standard error-accumulating Bresenham; the library's octant-based one can break ties the other way.",
+      "differences": "Our line to the center is the standard error-accumulating Bresenham; the library's octant-based one can break ties the other way.",
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 0.33325, "sd": 0, "min": 0.33325, "p10": 0.33325, "median": 0.33325, "p90": 0.33325, "max": 0.33325},
         "regions": {"n": 200, "nulls": 0, "mean": 24.825, "sd": 5.661682, "min": 11, "p10": 18, "median": 24, "p90": 33, "max": 42},
@@ -1365,7 +1365,7 @@
       "id": "c07-dla-symmetry",
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c07-dla-symmetry/src/main.rs, run without a window by faithfulness/src/main.rs",
       "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
-      "differences": "Our line to the centre is the standard error-accumulating Bresenham; the library's octant-based one can break ties the other way.",
+      "differences": "Our line to the center is the standard error-accumulating Bresenham; the library's octant-based one can break ties the other way.",
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 0.333371, "sd": 0.000125, "min": 0.33325, "p10": 0.33325, "median": 0.33325, "p90": 0.3335, "max": 0.3335},
         "regions": {"n": 200, "nulls": 0, "mean": 23.82, "sd": 7.534684, "min": 7, "p10": 13, "median": 25, "p90": 33, "max": 41},
@@ -2255,7 +2255,7 @@
     {
       "id": "c10-perlin",
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c10-perlin/src/main.rs, run without a window by faithfulness/src/main.rs",
-      "classification": "every tile open; the field is each tile's grey level, (noise + 1) / 2 clamped to 0..1",
+      "classification": "every tile open; the field is each tile's gray level, (noise + 1) / 2 clamped to 0..1",
       "differences": "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 1, "sd": 0, "min": 1, "p10": 1, "median": 1, "p90": 1, "max": 1},
@@ -2478,7 +2478,7 @@
     {
       "id": "c11-overworld",
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c11-overworld/src/main.rs, run without a window by faithfulness/src/main.rs",
-      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's colour",
+      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's color",
       "differences": "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 0.376518, "sd": 0.046516, "min": 0.277, "p10": 0.313225, "median": 0.3765, "p90": 0.443375, "max": 0.48475},
@@ -2701,7 +2701,7 @@
     {
       "id": "c12-noisezoom",
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c12-noisezoom/src/main.rs, run without a window by faithfulness/src/main.rs",
-      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's colour",
+      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's color",
       "differences": "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 0.328424, "sd": 0.331509, "min": 0.00025, "p10": 0.001225, "median": 0.220125, "p90": 0.854775, "max": 0.8865},
@@ -2924,7 +2924,7 @@
     {
       "id": "c13-double-noise",
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c13-double-noise/src/main.rs, run without a window by faithfulness/src/main.rs",
-      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's colour",
+      "classification": "~ water, ; grass, ^ mountain; for c11 and c12 the field is recovered from each tile's color",
       "differences": "Our simplex noise is our own implementation of FastNoise's, with its permutation drawn from our generator.",
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 0.498208, "sd": 0.347246, "min": 0.00025, "p10": 0.07895, "median": 0.520875, "p90": 0.900775, "max": 0.95475},

@@ -1,0 +1,11 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Voronoi roads",
+  "note": "Not one of the talk's demos: the talk describes roads along the edges of Voronoi cells and gives no code. The road rule is our own.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "voronoi", "seeds": 16, "metric": "pythagoras", "edges": "roads"}
+  ]
+}
