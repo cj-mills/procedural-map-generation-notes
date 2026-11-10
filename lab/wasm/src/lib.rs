@@ -1,6 +1,8 @@
 //! The map lab core for the page, through wasm-bindgen. A `Lab` is one recipe built with every
 //! frame kept; the page steps through the frames and reads the result, the level's caches, and
-//! the recipe measured over many seeds. `stage_table` is what the page's controls are made from.
+//! the recipe measured over many seeds. It also holds the walk through the level: the page
+//! sends each step and draws what comes back. `stage_table` is what the page's controls are
+//! made from.
 //!
 //! Packed values: a frame's changes and marks are `u32`s, cell index in the high 24 bits and
 //! tile or mark in the low 8 (`map_lab_core::record`). Cell index = y × width + x. -1 means none.
@@ -8,6 +10,7 @@
 use map_lab_core::record::{MARK_NAMES, NOTE_KEYS};
 use map_lab_core::traits::{self, FAILURES};
 use map_lab_core::recipe::{self, Recipe};
+use map_lab_core::walk::Walk;
 use map_lab_core::{build, level, tiles_hash, Build};
 use wasm_bindgen::prelude::*;
 
@@ -17,6 +20,7 @@ pub struct Lab {
     b: Build,
     /// `measure`'s rows so far.
     rows: Vec<f64>,
+    walk: Option<Walk>,
 }
 
 fn opt(i: Option<usize>) -> i32 {
@@ -29,7 +33,7 @@ impl Lab {
     #[wasm_bindgen(constructor)]
     pub fn new(recipe_json: &str) -> Result<Lab, JsError> {
         let r = recipe::parse(recipe_json).map_err(|e| JsError::new(&e.message()))?;
-        Ok(Lab { b: build(&r, true), r, rows: Vec::new() })
+        Ok(Lab { b: build(&r, true), r, rows: Vec::new(), walk: None })
     }
     pub fn width(&self) -> i32 {
         self.b.width
@@ -116,6 +120,36 @@ impl Lab {
     /// Failure bits; `failure_key(bit)` names each.
     pub fn failures(&self) -> u32 {
         self.b.failures()
+    }
+    /// Start the walk, or start it again, from the level's start (`map_lab_core::walk`). False
+    /// when there is no level to walk: no start, no exit, or no path between them.
+    pub fn walk(&mut self) -> bool {
+        self.walk = Walk::new(&self.b);
+        self.walk.is_some()
+    }
+    /// One step left, right, up or down (0 to 3). False, and nothing changes, when the tile
+    /// there can't be walked on, the walk is over, or it hasn't been started.
+    pub fn step(&mut self, dir: u8) -> bool {
+        self.walk.as_mut().is_some_and(|w| w.step(dir))
+    }
+    /// Every tile the walker has stood on, as cell indices, the start first: the last is where
+    /// they are, and its length less one is the steps taken. Empty before `walk`.
+    pub fn route(&self) -> Vec<u32> {
+        self.walk.as_ref().map_or(Vec::new(), |w| w.route.iter().map(|&i| i as u32).collect())
+    }
+    /// One byte a tile: 0 unseen, 1 seen earlier and remembered, 2 in view now. The walker
+    /// sees nine tiles, in straight lines over tiles that can be walked on, and the walls that
+    /// touch what they see. Empty before `walk`.
+    pub fn seen(&self) -> Vec<u8> {
+        self.walk.as_ref().map_or(Vec::new(), |w| w.seen.clone())
+    }
+    /// A bit for each cache in `caches` order, set once the walker has stepped on it.
+    pub fn found(&self) -> u32 {
+        self.walk.as_ref().map_or(0, |w| w.found.iter().enumerate().map(|(n, &f)| (f as u32) << n).sum())
+    }
+    /// Whether the walker has reached the exit.
+    pub fn walk_done(&self) -> bool {
+        self.walk.as_ref().is_some_and(|w| w.done())
     }
     /// "Measure over 200 seeds", a slice at a time so the page stays responsive: builds this
     /// recipe on the next `count` seeds, the first call starting at seed 0, and returns how many

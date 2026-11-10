@@ -17,6 +17,7 @@ pub mod recipe;
 pub mod record;
 pub mod rng;
 pub mod traits;
+pub mod walk;
 #[cfg(feature = "report")]
 pub mod report;
 

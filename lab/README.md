@@ -16,7 +16,7 @@ own code, run over the same seeds.
 
 ```
 core/       map-lab-core: the grid, the random number generator, the recipe parser, every stage,
-            the step-through frames, the measured traits and the level's caches
+            the step-through frames, the measured traits, the level's caches and the walk
 wasm/       map-lab-wasm: the page's binding (wasm-bindgen)
 cli/        map-lab: the command line for agents and for the build
 recipes/    one recipe per demo of the talk, with the talk's parameters
@@ -25,7 +25,7 @@ schema/     recipe.schema.json, the published JSON Schema (written by `map-lab s
 data/       traits.json and faithfulness.json, the measurement data (written by measure.mjs)
 golden-hashes.txt   every recipe's map and caches for seeds 0..5: the regression check
 measure-size.mjs    builds the WebAssembly binding and measures it gzipped; writes sizes.json
-check-wasm.mjs      checks the WebAssembly build against the native build: maps, caches, traits
+check-wasm.mjs      checks the WebAssembly build against the native build: maps, caches, walks, traits
 measure.mjs         regenerates data/ (or, with --check, checks it regenerates byte for byte)
 check.mjs           the repo's checks: all of the above (npm run check)
 time-measure.mjs    times "Measure over 200 seeds" in headless Chromium under a 4x CPU slowdown
@@ -83,6 +83,7 @@ variants go after it, each with its own source and a measured difference.
 cd lab
 cargo run --profile fast -p map-lab -- build recipes/c18-ending-right.json --seed 3 --path
 cargo run --profile fast -p map-lab -- build recipes/c03-cellular.json --json --frames
+cargo run --profile fast -p map-lab -- walk recipes/c20-hot-path.json --seed 7 --moves RRRRUULD
 cargo run --profile fast -p map-lab -- traits recipes/c15-still-not-a-trap.json --seeds 0..20
 cargo run --profile fast -p map-lab -- measure recipes/*.json --seeds 0..200 --out traits.json
 cargo run --profile fast -p map-lab -- schema
@@ -123,6 +124,26 @@ gives no code for it; the rule is our own.
 A map with no path has none, and a map with little off its hot path has fewer. Every one of
 seeds 0..200 of c18, c19 and c20 has five; c21 has five on 198 seeds and four on two.
 
+## The walk
+
+The walk through a level is the core's too (`core/src/walk.rs`): the page sends each step and
+draws what comes back, and `map-lab walk` replays a route from its moves. So a recipe and a list
+of moves give the same walk everywhere, and the walk's rules have the repo's checks. The talk
+has no walk; these rules are our own.
+
+- The walker starts on the start and takes one step at a time: left, right, up or down, written
+  `L`, `R`, `U`, `D`. A step onto a tile that can't be walked on is refused.
+- Stepping on a cache finds it. Standing on the exit ends the walk.
+- **The field of view:** a tile is in view when it is within nine tiles of the walker in a
+  straight line and every tile on the line between them can be walked on. A tile that can't be
+  walked on is also in view when it touches a tile in view that can, corners included. Without
+  that second rule a corridor's walls show only in patches.
+- A tile that was in view stays remembered. The map the walker knows is what they have seen.
+
+`map-lab walk` prints that map (unseen tiles blank; the exit and the caches only once seen),
+then the steps taken against the shortest walk and the caches found. With `--json` it adds the
+route and every tile's state.
+
 ## Measured traits and failures
 
 These are defined once in `core/src/traits.rs`, and their wording is in `data/traits.json`:
@@ -157,6 +178,10 @@ where each failure happens.
 The page replays the changes to step through the build. It reads the finished map's tiles,
 rooms, start, exit, path, caches, distance maps, field, traits and failures.
 
+The walk is `lab.walk()` to start it, or start it again, and `lab.step(direction)` for each
+move. After each one the page reads `lab.seen()` (a byte a tile: unseen, remembered, in view),
+`lab.route()`, `lab.found()` and `lab.walk_done()`.
+
 "Measure over 200 seeds" is `lab.measure(count)`: it builds the lab's recipe on the next `count`
 seeds, from seed 0, and returns how many are measured so far. The page calls it in slices, so it
 stays responsive. `lab.measured()` gives a row of traits and failures a seed, and
@@ -176,7 +201,9 @@ applies (`node time-measure.mjs`, read on November 9, 2026; times vary by machin
 So the page can't measure in one call. A slice has to be sized by time, not by seeds: one seed
 of c05 is about 47 ms.
 
-`wasm/src/lib.rs` documents each export.
+`wasm/src/lib.rs` documents each export. So does `target/web/map_lab_wasm.d.ts`, which
+`measure-size.mjs` writes beside the glue. The glue itself is built without those comments:
+wasm-bindgen copies them in, and they were about a third of its gzipped size.
 
 ## Determinism
 
@@ -196,8 +223,8 @@ npm run check     # from the repo root
 The checks run `cargo test`, measure the WebAssembly module and fail if the `.wasm` plus its
 glue exceeds 50 KB gzipped. Until the site's own budget for interactives counts WebAssembly,
 this repo holds itself to that limit. They also check the WebAssembly build against the native
-one over 20 seeds a recipe (maps, frames, caches, measured traits, the stage table and the
-200-seed summaries), and that `data/` regenerates byte for byte.
+one over 20 seeds a recipe (maps, frames, caches, walks, measured traits, the stage table and
+the 200-seed summaries), and that `data/` regenerates byte for byte.
 
 The pinned toolchain is in `rust-toolchain.toml` and `mise.toml` at the repo root. Node is
 26.13.0.

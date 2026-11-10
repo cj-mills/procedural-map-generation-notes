@@ -1,12 +1,13 @@
 //! The core's checks: every demo recipe builds the same map every time and matches the
 //! committed golden hashes; frames replay to the map; the parser refuses what it should, and
 //! where; the talk's conventions the stages rely on hold; the stage table says what the parser
-//! reads; and the level's caches keep to their rule.
+//! reads; the level's caches keep to their rule; and the walk keeps to its rules.
 
-use map_lab_core::analyze::distances;
+use map_lab_core::analyze::{distances, shortest_path};
 use map_lab_core::grid::*;
 use map_lab_core::recipe::{self, parse, Param};
-use map_lab_core::{build, level, measure, tiles_hash, traits};
+use map_lab_core::walk::{Walk, IN_VIEW, REMEMBERED, SIGHT, UNSEEN};
+use map_lab_core::{build, level, measure, tiles_hash, traits, Build};
 use std::fs;
 use std::path::PathBuf;
 
@@ -319,4 +320,138 @@ fn summaries_are_the_data_files() {
     for bit in 0..traits::FAILURES.len() {
         assert_eq!(sums[traits::VALUES * traits::SUMMARY + bit], failing(bit));
     }
+}
+
+/// The moves that take a walker along `path`, tile by tile.
+fn moves_along(g: &Grid, path: &[usize]) -> Vec<u8> {
+    path.windows(2)
+        .map(|w| {
+            let ((ax, ay), (bx, by)) = (g.xy(w[0]), g.xy(w[1]));
+            [(-1, 0), (1, 0), (0, -1), (0, 1)].iter().position(|&d| d == (bx - ax, by - ay)).unwrap() as u8
+        })
+        .collect()
+}
+
+#[test]
+fn the_walk_keeps_to_its_rules() {
+    let mut walked = 0;
+    for (name, text) in recipes() {
+        for seed in 0..5 {
+            let mut r = parse(&text).ok().unwrap();
+            r.seed = seed;
+            let b = build(&r, false);
+            let Some(mut w) = Walk::new(&b) else {
+                assert!(b.path.is_empty(), "{name} seed {seed}: a level with no walk");
+                continue;
+            };
+            walked += 1;
+            let g = b.grid();
+            assert_eq!((w.at(), w.route.len(), w.done()), (b.start.unwrap(), 1, false));
+            assert_eq!(w.caches, level::caches(&b));
+
+            // A step into a wall, or off the map, is refused and changes nothing.
+            let (x, y) = g.xy(w.at());
+            for (dir, (dx, dy)) in [(-1, 0), (1, 0), (0, -1), (0, 1)].into_iter().enumerate() {
+                if !walkable(g.get(x + dx, y + dy)) {
+                    let before = w.seen.clone();
+                    assert!(!w.step(dir as u8), "{name} seed {seed}: walked into a wall");
+                    assert_eq!((w.route.len(), &w.seen), (1, &before));
+                }
+            }
+
+            // To the first cache and back, then along the path: the cache is found, the exit
+            // ends the walk, and the steps are the route's.
+            let mut steps = 0;
+            if let Some(&cache) = w.caches.first() {
+                let there = shortest_path(&g, w.at(), cache);
+                let back: Vec<usize> = there.iter().rev().copied().collect();
+                for m in moves_along(&g, &there).into_iter().chain(moves_along(&g, &back)) {
+                    // The exit may be on the way: the walk ends there.
+                    steps += w.step(m) as usize;
+                }
+                assert!(w.found[0] || w.done(), "{name} seed {seed}: stood on a cache without finding it");
+            }
+            if !w.done() {
+                for m in moves_along(&g, &b.path) {
+                    assert!(w.step(m), "{name} seed {seed}: a step along the path was refused");
+                    steps += 1;
+                }
+            }
+            assert!(w.done() && w.at() == b.exit.unwrap(), "{name} seed {seed}");
+            assert_eq!(w.route.len() - 1, steps);
+            assert!(!w.step(0) && !w.step(1), "{name} seed {seed}: a step after the exit");
+
+            // In view: within sight of the walker. Seen tiles stay seen.
+            let (px, py) = g.xy(w.at());
+            for (i, &s) in w.seen.iter().enumerate() {
+                let (x, y) = g.xy(i);
+                if s == IN_VIEW && walkable(g.t[i]) {
+                    assert!((x - px).pow(2) + (y - py).pow(2) <= SIGHT * SIGHT);
+                } else if s == IN_VIEW {
+                    assert!((x - px).abs() <= SIGHT + 1 && (y - py).abs() <= SIGHT + 1);
+                }
+            }
+            assert!(w.route.iter().all(|&i| w.seen[i] != UNSEEN));
+            assert_eq!(w.seen[w.at()], IN_VIEW);
+        }
+    }
+    assert!(walked >= 20, "{walked} levels walked");
+}
+
+#[test]
+fn the_walker_sees_nine_tiles_and_not_through_walls() {
+    // A corridor along row 12 from x = 2 to x = 21, with a side room below its left end that a
+    // wall hides from the right.
+    let (w, h) = (24, 24);
+    let mut g = Grid::new(w, h, WALL);
+    for x in 2..=21 {
+        g.set(x, 12, FLOOR);
+    }
+    for (x, y) in [(2, 13), (2, 14), (3, 14), (4, 14)] {
+        g.set(x, y, FLOOR);
+    }
+    let (start, exit) = (g.idx(2, 12), g.idx(21, 12));
+    let path = shortest_path(&g, start, exit);
+    let b = Build {
+        width: w,
+        height: h,
+        tiles: g.t.clone(),
+        frames: Vec::new(),
+        stage_names: Vec::new(),
+        rooms: None,
+        important: Vec::new(),
+        start: Some(start),
+        exit: Some(exit),
+        path,
+        dist: Vec::new(),
+        hot: Vec::new(),
+        hot_radius: 10,
+        field: Vec::new(),
+        stage_failures: 0,
+    };
+    let mut walk = Walk::new(&b).unwrap();
+    let seen = |walk: &Walk, x: i32, y: i32| walk.seen[g.idx(x, y)];
+    // From (2, 12): nine tiles along the corridor and no farther; the walls beside it, which
+    // the line of sight alone shows only in patches; the side room straight below; but not the
+    // room's far end, around the corner.
+    assert_eq!((seen(&walk, 11, 12), seen(&walk, 12, 12)), (IN_VIEW, UNSEEN));
+    assert_eq!((seen(&walk, 5, 11), seen(&walk, 5, 13)), (IN_VIEW, IN_VIEW));
+    assert_eq!((seen(&walk, 2, 14), seen(&walk, 4, 14)), (IN_VIEW, UNSEEN));
+    assert_eq!(seen(&walk, 5, 10), UNSEEN, "a tile behind the corridor's wall");
+    // Twelve steps right: the start is out of sight and remembered, the far end is in view.
+    for _ in 0..12 {
+        assert!(walk.step(1));
+    }
+    assert_eq!((seen(&walk, 2, 12), seen(&walk, 21, 12), seen(&walk, 2, 14)), (REMEMBERED, IN_VIEW, REMEMBERED));
+    assert_eq!(seen(&walk, 4, 14), UNSEEN, "never in view");
+    assert!(!walk.step(2) && !walk.step(3), "walls above and below the corridor");
+    assert_eq!(walk.route.len(), 13);
+}
+
+#[test]
+fn no_walk_without_a_level() {
+    let b = build(&parse(&with(r#"{"stage": "cellular"}"#)).ok().unwrap(), false);
+    assert!(Walk::new(&b).is_none(), "no start and no exit");
+    let b = build(&parse(&with(r#"{"stage": "cellular"}, {"stage": "start"}"#)).ok().unwrap(), false);
+    assert!(Walk::new(&b).is_none(), "no exit");
 }

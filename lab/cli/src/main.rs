@@ -1,6 +1,7 @@
 //! `map-lab`: the map lab's core on the command line, for agents and for the build.
 //!
 //!   map-lab build <recipe.json> [--seed N] [--json] [--path] [--frames]
+//!   map-lab walk <recipe.json> [--seed N] [--moves LRUD...] [--json]
 //!   map-lab traits <recipe.json> [--seeds FROM..TO]
 //!   map-lab measure <recipe.json>... [--seeds FROM..TO] [--out FILE]
 //!   map-lab compare <ours.json> <theirs.json> [--out FILE]
@@ -20,6 +21,7 @@ use map_lab_core::grid::{GLYPHS, TILE_KINDS, TILE_NAMES};
 use map_lab_core::recipe::{self, Recipe};
 use map_lab_core::record::{MARK_NAMES, NOTE_KEYS};
 use map_lab_core::report::{self, failure_names, list, string, Obj, Row, COLUMNS};
+use map_lab_core::walk::{Walk, IN_VIEW, MOVES, UNSEEN};
 use map_lab_core::{build, level, tiles_hash, Build};
 use std::process::exit;
 
@@ -29,6 +31,7 @@ fn main() {
     let rest = &args[1..];
     let r = match cmd.as_str() {
         "build" => cmd_build(rest),
+        "walk" => cmd_walk(rest),
         "traits" => cmd_traits(rest),
         "measure" => cmd_measure(rest),
         "compare" => compare::cmd(rest),
@@ -52,7 +55,7 @@ fn main() {
 
 fn usage() -> ! {
     eprintln!(
-        "usage:\n  map-lab build <recipe.json> [--seed N] [--json] [--path] [--frames]\n  map-lab traits <recipe.json> [--seeds FROM..TO]\n  map-lab measure <recipe.json>... [--seeds FROM..TO] [--out FILE]\n  map-lab compare <ours.json> <theirs.json> [--out FILE]\n  map-lab hashes <recipe.json>... [--seeds FROM..TO]\n  map-lab schema\n  map-lab stages"
+        "usage:\n  map-lab build <recipe.json> [--seed N] [--json] [--path] [--frames]\n  map-lab walk <recipe.json> [--seed N] [--moves LRUD...] [--json]\n  map-lab traits <recipe.json> [--seeds FROM..TO]\n  map-lab measure <recipe.json>... [--seeds FROM..TO] [--out FILE]\n  map-lab compare <ours.json> <theirs.json> [--out FILE]\n  map-lab hashes <recipe.json>... [--seeds FROM..TO]\n  map-lab schema\n  map-lab stages"
     );
     exit(2)
 }
@@ -176,6 +179,74 @@ fn cmd_build(a: &[String]) -> Result<(), String> {
                 );
             }
         }
+    }
+    Ok(())
+}
+
+/// Walk a recipe's level by a list of moves and print what the walker knows: the map as far as
+/// they have seen it, then the walk's numbers. A move the level refuses is counted, not taken.
+fn cmd_walk(a: &[String]) -> Result<(), String> {
+    let a = parse_args(a, &["seed", "moves"])?;
+    let [file] = a.files.as_slice() else { return Err("walk takes one recipe file".into()) };
+    let (_, mut r) = load(file)?;
+    if let Some(s) = a.get("seed") {
+        r.seed = s.parse().map_err(|_| "bad --seed")?;
+    }
+    let b = build(&r, false);
+    let mut w = Walk::new(&b).ok_or("this map is not a level: a walk needs a start, an exit and a path between them")?;
+    let mut refused = 0;
+    for m in a.get("moves").unwrap_or("").bytes() {
+        let dir = MOVES.iter().position(|&l| l == m.to_ascii_uppercase()).ok_or("--moves is letters from L, R, U and D")?;
+        if !w.step(dir as u8) {
+            refused += 1;
+        }
+    }
+    // What the walker knows: unseen tiles blank, the exit and unfound caches only once seen.
+    let mut chars: Vec<u8> = b.tiles.iter().zip(&w.seen).map(|(&t, &s)| if s == UNSEEN { b' ' } else { GLYPHS[t as usize] }).collect();
+    for (&c, &found) in w.caches.iter().zip(&w.found) {
+        if !found && w.seen[c] != UNSEEN {
+            chars[c] = b'&';
+        }
+    }
+    if let Some(e) = b.exit.filter(|&e| w.seen[e] != UNSEEN) {
+        chars[e] = b'>';
+    }
+    chars[w.at()] = b'@';
+    let rows: Vec<String> = chars.chunks(b.width as usize).map(|r| String::from_utf8(r.to_vec()).unwrap()).collect();
+    let steps = w.route.len() - 1;
+    let shortest = b.path.len() - 1;
+    let found = w.found.iter().filter(|&&f| f).count();
+    if a.has("json") {
+        let mut o = Obj::new();
+        o.raw("seed", &r.seed.to_string());
+        o.raw("steps", &steps.to_string());
+        o.raw("refused", &refused.to_string());
+        o.raw("shortest", &shortest.to_string());
+        o.raw("done", if w.done() { "true" } else { "false" });
+        o.raw("at", &point(&b, Some(w.at())));
+        o.raw("route", &list(w.route.iter().map(|&i| point(&b, Some(i)))));
+        o.raw("caches", &list(w.caches.iter().map(|&i| point(&b, Some(i)))));
+        o.raw("found", &list(w.found.iter().map(|&f| if f { "true".to_string() } else { "false".to_string() })));
+        o.raw("inView", &w.seen.iter().filter(|&&s| s == IN_VIEW).count().to_string());
+        o.raw("seenAbout", &string("one digit a tile, row by row: 0 unseen, 1 seen earlier and remembered, 2 in view now"));
+        o.raw("seen", &list(w.seen.chunks(b.width as usize).map(|row| string(&row.iter().map(|s| (b'0' + s) as char).collect::<String>()))));
+        o.raw("map", &list(rows.iter().map(|r| string(r))));
+        println!("{}", o.end());
+    } else {
+        for row in &rows {
+            println!("{row}");
+        }
+        println!();
+        println!(
+            "seed {}  steps {}  refused moves {}  the shortest walk {}  caches found {} of {}  {}",
+            r.seed,
+            steps,
+            refused,
+            shortest,
+            found,
+            w.caches.len(),
+            if w.done() { "at the exit" } else { "not at the exit" }
+        );
     }
     Ok(())
 }

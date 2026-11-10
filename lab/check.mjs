@@ -1,11 +1,11 @@
 // The repo's checks for the map lab core, in order:
 //   1. cargo test: the core (golden hashes, determinism, frames replay, the parser's refusals,
-//      the talk's conventions, the stage table, the caches' rule, the summaries) and the CLI
+//      the talk's conventions, the stage table, the caches' rule, the walk's rules, the summaries) and the CLI
 //      (the schema is current and covers every stage);
 //   2. the WebAssembly build, measured: module glue and .wasm within 50 KB gzipped;
 //   3. the WebAssembly build against the native build over 20 seeds a recipe: tile for tile,
-//      cache for cache and trait for trait; the stage table; and "Measure over 200 seeds"
-//      against the data file's summaries;
+//      cache for cache and trait for trait; each level's walk; the stage table; and "Measure
+//      over 200 seeds" against the data file's summaries;
 //   4. the measurement data regenerates byte for byte.
 //
 //   node lab/check.mjs          (npm run check)

@@ -3,7 +3,8 @@
 //
 //   - each map, tile for tile: the same tiles hash and the same number of frames as
 //     `map-lab hashes` prints, and frames that replay to the final map;
-//   - each level: the same caches;
+//   - each level: the same caches, and the same walk along its path (`Lab.step` against
+//     `map-lab walk`): the route, what the walker has seen, the caches found;
 //   - each seed's measured traits and failures from `Lab.measure`, taken in two slices, against
 //     `map-lab traits`;
 //   - with --data, `Lab.summary` over seeds 0..200 against the committed lab/data/traits.json,
@@ -47,6 +48,7 @@ const failureKeys = Array.from({ length: 8 }, (_, bit) => glue.failure_key(bit))
 const same = (a, b) => a === b || (a == null && Number.isNaN(b));
 
 let maps = 0;
+let walks = 0;
 for (const file of recipes) {
   const recipe = JSON.parse(readFileSync(file, 'utf8'));
   const id = idOf(file);
@@ -61,6 +63,25 @@ for (const file of recipes) {
     const want = native.get(`${id} ${seed}`);
     maps++;
     if (got !== want || !replayed) fail(`${id} seed ${seed}: wasm ${got}, native ${want}${replayed ? '' : ', frames do not replay to the final map'}`);
+
+    // The walk: along the level's path. The first move is made twice, so its second may be
+    // refused, and one more comes after the exit, which always is.
+    const path = lab.path();
+    if (!lab.walk()) {
+      if (path.length) fail(`${id} seed ${seed}: a level with no walk`);
+    } else {
+      const w = lab.width();
+      const letters = Array.from(path.slice(1), (to, n) => ({ [-1]: 'L', 1: 'R', [-w]: 'U', [w]: 'D' })[to - path[n]]);
+      const moves = [...letters.slice(0, 1), ...letters, 'L'];
+      let taken = 0;
+      for (const m of moves) taken += lab.step('LRUD'.indexOf(m));
+      const mine = { steps: lab.route().length - 1, done: lab.walk_done(), found: lab.found(), seen: lab.seen().join('') };
+      const theirs = JSON.parse(run('walk', file, '--seed', String(seed), '--moves', moves.join(''), '--json'));
+      const want = { steps: theirs.steps, done: theirs.done, found: theirs.found.reduce((a, f, n) => a | (f << n), 0), seen: theirs.seen.join('') };
+      const route = Array.from(lab.route(), (i) => `${i % w},${Math.floor(i / w)}`).join(' ');
+      if (JSON.stringify(mine) !== JSON.stringify(want) || route !== theirs.route.map((p) => p.join(',')).join(' ') || taken !== theirs.steps) fail(`${id} seed ${seed}: the walk differs from the native one`);
+      walks++;
+    }
     lab.free();
   }
 
@@ -125,3 +146,4 @@ if (failed) {
   process.exit(1);
 }
 console.log(`${maps} maps (${recipes.length} recipes x ${seeds} seeds) match the native build tile for tile, frame for frame and cache for cache, replay from their frames, and measure the same`);
+console.log(`${walks} levels walk the same as the native build: the route, what was seen, the caches found`);
