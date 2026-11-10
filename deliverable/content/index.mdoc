@@ -279,7 +279,7 @@ Stage `rooms`. The talk’s demo: `c01-rooms`.
 {% part title="The rule" %}
 1. **Repeat 20 times** {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L21" /%}:
    1. pick a random rectangle {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L22-L27" /%};
-   2. if it overlaps or touches a room already placed, discard it {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L28-L38" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L47-L53" /%};
+   2. if it overlaps or touches a room already placed, discard it {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L28-L53" /%};
    3. otherwise carve it as a room {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L40-L46" /%}.
 2. Sort the rooms by their left edge {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L57" /%}.
 3. Join each room to the one before it, center to center {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L78" /%}:
@@ -613,7 +613,7 @@ The talk’s demos that run it with other stages {% own /%}:
 - [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoiY2VudGVyIn0seyJzdGFnZSI6ImV4aXQiLCJhdCI6ImZhcnRoZXN0In1dLCJzZWVkIjoxfQ) `c19`: the least accessible exit
 - [cellular → cull → start → exit → hot-path](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9LHsic3RhZ2UiOiJob3QtcGF0aCIsInJhZGl1cyI6MTAsImN1bGwiOjE1fV0sInNlZWQiOjF9) `c20`: the hot path
 
-- **Culling:** the talk’s first big use for Dijkstra maps is on a map like this one {% cite id="wolverson2020-talk/transcript#s222" /%}{% cite id="wolverson2020-talk/transcript#s223" /%}. See [culling](#cull).
+- **Dijkstra maps:** the talk’s first big use for them is on something like cellular automata, which can leave chunks of the map that can’t be reached {% cite id="wolverson2020-talk/transcript#s209" /%}{% cite id="wolverson2020-talk/transcript#s210" /%}{% cite id="wolverson2020-talk/transcript#s211" /%}{% cite id="wolverson2020-talk/transcript#s212" /%}{% cite id="wolverson2020-talk/transcript#s213" /%}{% cite id="wolverson2020-talk/transcript#s222" /%}{% cite id="wolverson2020-talk/transcript#s223" /%}{% cite id="wolverson2020-talk/transcript#s224" /%}{% cite id="wolverson2020-talk/transcript#s225" /%}{% cite id="wolverson2020-talk/transcript#s226" /%}{% cite id="wolverson2020-talk/transcript#s227" /%}{% cite id="wolverson2020-talk/transcript#s228" /%}. See [culling](#cull).
 {% /part %}
 
 {% part title="Checked against the talk’s code" %}
@@ -632,7 +632,7 @@ Stage `drunkard`. The talk’s demo: `c04-drunkard`.
 {% part title="The rule" %}
 1. Start with a solid map {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L17-L19" /%}.
 2. **First digger:** starts at the center of the map {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L21-L22" /%}.
-3. **A digger,** again and again {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L54-L57" /%}:
+3. **A digger,** in a loop {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L54-L76" /%}:
    1. steps one tile in a random direction {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L58-L64" /%};
    2. digs the tile it lands on {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L64-L66" /%};
    3. stops when it steps off the map, or once its step count is over 200 {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L65-L74" /%}.
@@ -733,7 +733,7 @@ Stage `dla`. The talk’s demos: `c05-dla`, `c06-dla-attractor`, `c07-dla-symmet
    2. move it until it stands on open floor {% cite id="wolverson2020-code/c05-dla/src/main.rs#L53-L80" /%};
    3. dig the last solid tile it stood on {% cite id="wolverson2020-code/c05-dla/src/main.rs#L53-L82" /%}.
 
-The talk’s three versions differ in step 2 {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}:
+The talk gives three versions: the simple one, a central attractor, and the attractor with a symmetry applied {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}. In its demos they differ in step 2 {% own /%}:
 
 {% table label="How a particle travels, by version" rowheads=true %}
 * Version
@@ -845,7 +845,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 * {% now trait="path" digits=0 /%}
 {% /table %}
 
-- **Talk says:** the simple version is very winding, and guaranteed to be contiguous {% cite id="wolverson2020-talk/transcript#s109" /%}.
+- **Talk says:** the simple version is very winding, and guaranteed to be contiguous {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-talk/transcript#s109" /%}.
 - **Walk:** both hold. 1 region on every seed; 113 dead ends at the median, vs cellular automata’s 67 {% own-run values="c05.regions.max c05.dead_ends.median c03.dead_ends.median" /%}.
 - **Attractor, symmetric:** not contiguous. 26 and 25 regions at the median; never fewer than 13 and 5 {% own-run values="c06.regions.median c07.regions.median c06.regions.min c07.regions.min" /%}.
   - **Why:** their particles follow a Bresenham line to the center {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L56-L60" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L56-L60" /%}. A diagonal step on that line leaves the dug tile touching the cave only at a corner, and walking is four-way {% own /%}.
@@ -977,7 +977,7 @@ Also in the step-through: Roads (our rule). Where it differs, and its last step:
 
 {% part title="Controls" %}
 - `seeds` (1 to 200; the talk’s: `16`) {% own /%}. Seed points scattered {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L21-L27" /%}.
-- `metric` (`pythagoras`, `manhattan`, `chebyshev`; the talk’s: `pythagoras`) {% own /%}. The distance that decides a tile’s nearest seed. The demo shows all three and builds its walls from the straight-line one {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L36-L53" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L57-L73" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L77-L93" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L96-L110" /%}.
+- `metric` (`pythagoras`, `manhattan`, `chebyshev`; the talk’s: `pythagoras`) {% own /%}. The distance that decides a tile’s nearest seed. The demo shows all three and builds its edges from the straight-line one {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L36-L53" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L57-L73" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L77-L93" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L96-L110" /%}.
 - `edges` (`walls`, `roads`; the talk’s: `walls`) {% own /%}. `walls`: the talk’s demo. `roads`: our own rule for the roads the talk describes {% own /%}.
 {% /part %}
 
@@ -1420,7 +1420,7 @@ Stage `combine`. The talk’s demo: `c09-combination`.
 
 {% part title="The rule" %}
 1. Build the first input on a map of its own. The demo’s: rooms in subdivided space {% cite id="wolverson2020-code/c09-combination/src/main.rs#L41-L79" /%}.
-2. Build the second input on a map of its own. The demo’s: cellular automata {% cite id="wolverson2020-code/c09-combination/src/main.rs#L82-L97" /%}.
+2. Build the second input on a map of its own. The demo’s: cellular automata {% cite id="wolverson2020-code/c09-combination/src/main.rs#L82-L114" /%}.
 3. Copy the left half of the result from the first map and the right half from the second, column for column. Nothing joins them {% cite id="wolverson2020-code/c09-combination/src/main.rs#L100-L114" /%}.
 
 - **Talk’s example:** a fortress on the left that breaks out into an underworld of caves on the right {% cite id="wolverson2020-talk/transcript#s181" /%}{% cite id="wolverson2020-talk/transcript#s182" /%}{% cite id="wolverson2020-talk/transcript#s183" /%}{% cite id="wolverson2020-talk/transcript#s184" /%}{% cite id="wolverson2020-talk/transcript#s185" /%}.
@@ -1920,7 +1920,7 @@ Stage `exit`. The talk’s demos: `c18-ending-right`, `c19-ending-dijkstra`.
 Then the route from the start to the exit is found {% cite id="wolverson2020-code/c18-ending-right/src/main.rs#L111" /%}{% cite id="wolverson2020-code/c19-ending-dijkstra/src/main.rs#L103" /%}.
 
 - **Talk says,** of `farthest`: the least accessible part of the map, for when you really dislike your player {% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}.
-- **Talk says,** with a start in the middle: a really bad idea for an exit, and a great way to hide something {% cite id="wolverson2020-talk/transcript#s251" /%}{% cite id="wolverson2020-talk/transcript#s252" /%}{% cite id="wolverson2020-talk/transcript#s253" /%}{% cite id="wolverson2020-talk/transcript#s254" /%}{% cite id="wolverson2020-talk/transcript#s255" /%}{% cite id="wolverson2020-talk/transcript#s256" /%}.
+- **Talk says,** with a start in the middle: a really bad idea for an exit, and a great way to hide something {% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}{% cite id="wolverson2020-talk/transcript#s251" /%}{% cite id="wolverson2020-talk/transcript#s252" /%}{% cite id="wolverson2020-talk/transcript#s253" /%}{% cite id="wolverson2020-talk/transcript#s254" /%}{% cite id="wolverson2020-talk/transcript#s255" /%}{% cite id="wolverson2020-talk/transcript#s256" /%}.
 {% /part %}
 
 {% part title="Step through it" %}
@@ -2025,7 +2025,7 @@ Stage `hot-path`. The talk’s demo: `c20-hot-path`.
 {% part title="The rule" %}
 1. Find the route from the start to the exit {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L111" /%}.
 2. Make a Dijkstra map from every tile of the route at once: a tile’s value is its distance from the route {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L133-L139" /%}{% cite id="wolverson2020-talk/transcript#s260" /%}{% cite id="wolverson2020-talk/transcript#s261" /%}.
-3. **Hot path:** the tiles under a set distance. The demo: 10 {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L140-L144" /%}.
+3. **Hot path:** the tiles under a set distance. The demo: 10 {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L133-L144" /%}{% cite id="wolverson2020-talk/transcript#s260" /%}{% cite id="wolverson2020-talk/transcript#s261" /%}{% cite id="wolverson2020-talk/transcript#s262" /%}.
 4. **Cull,** optional: tiles at a second distance or farther become wall. The demo: 15 {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L147-L152" /%}.
 
 {% figure src="assets/rules/hot-path-bands-light.png" dark="assets/rules/hot-path-bands-dark.png" alt="A patch of floor crossed by a route that runs along the lower left, turns up, then runs right. Every tile carries its walking distance from the route, from 0 on the route to 6 in the far corner. Tiles at 1 are tinted as the hot path, and tiles at 4 or more are drawn as wall." caption="Each tile’s number is its walking distance from the route (0). Drawn with a hot path under 2 and a cull from 4, where the demo uses 10 and 15: 1 is hot path, 2 and 3 stay floor, 4 and up become wall." /%}
@@ -2118,7 +2118,7 @@ Stage `hot-rooms`. The talk’s demo: `c21-hot-rooms`.
 {% part title="The rule" %}
 1. Find the route from the start to the exit {% cite id="wolverson2020-code/c21-hot-rooms/src/main.rs#L131" /%}.
 2. A room is on the route when a step of the route falls inside it {% cite id="wolverson2020-code/c21-hot-rooms/src/main.rs#L132-L141" /%}.
-3. Highlight the rooms on the route, and gray the rest {% cite id="wolverson2020-code/c21-hot-rooms/src/main.rs#L142-L154" /%}.
+3. Highlight the rooms on the route, and gray the rest {% cite id="wolverson2020-code/c21-hot-rooms/src/main.rs#L131-L154" /%}.
 
 - **Talk says,** of the gray rooms: cull them for a room-to-room game, or hide bonus things in them {% cite id="wolverson2020-talk/transcript#s269" /%}{% cite id="wolverson2020-talk/transcript#s270" /%}{% cite id="wolverson2020-talk/transcript#s271" /%}.
 - **Talk says,** of the rooms on the route: order a story along them, since the player will probably pass through them in order {% cite id="wolverson2020-talk/transcript#s274" /%}{% cite id="wolverson2020-talk/transcript#s275" /%}{% cite id="wolverson2020-talk/transcript#s276" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}.

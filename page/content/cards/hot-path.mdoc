@@ -6,7 +6,7 @@ Everything close to the best route through a map, though not necessarily on it [
 ## The rule
 1. Find the route from the start to the exit [[c20:111]].
 2. Make a Dijkstra map from every tile of the route at once: a tile’s value is its distance from the route [[c20:133-139 t:260-261]].
-3. **Hot path:** the tiles under a set distance. The demo: 10 [[c20:140-144]].
+3. **Hot path:** the tiles under a set distance. The demo: 10 [[c20:133-144 t:260-262]].
 4. **Cull,** optional: tiles at a second distance or farther become wall. The demo: 15 [[c20:147-152]].
 
 @@diagram hot-path-bands alt="A patch of floor crossed by a route that runs along the lower left, turns up, then runs right. Every tile carries its walking distance from the route, from 0 on the route to 6 in the far corner. Tiles at 1 are tinted as the hot path, and tiles at 4 or more are drawn as wall." caption="Each tile’s number is its walking distance from the route (0). Drawn with a hot path under 2 and a cull from 4, where the demo uses 10 and 15: 1 is hot path, 2 and 3 stay floor, 4 and up become wall." key="0:route 1:hot 4+:wall"

@@ -10,7 +10,7 @@ Fire particles at a small open seed. Each digs the last solid tile it crossed be
    2. move it until it stands on open floor [[c05:53-80]];
    3. dig the last solid tile it stood on [[c05:53-82]].
 
-The talk’s three versions differ in step 2 [[t:103-104 t:111-112 t:115-116]]:
+The talk gives three versions: the simple one, a central attractor, and the attractor with a symmetry applied [[t:103-104 t:111-112 t:115-116]]. In its demos they differ in step 2 [[own]]:
 
 {% table label="How a particle travels, by version" rowheads=true %}
 * Version
@@ -58,7 +58,7 @@ Stop when 1 / this of the map is open. All three demos: a third [[c05:43 c06:43 
 ## What it produces, measured
 @@measured
 
-- **Talk says:** the simple version is very winding, and guaranteed to be contiguous [[t:109]].
+- **Talk says:** the simple version is very winding, and guaranteed to be contiguous [[t:103-109]].
 - **Walk:** both hold. {{c05.regions.max}} region on every seed; {{c05.dead_ends.median}} dead ends at the median, vs cellular automata’s {{c03.dead_ends.median}} [[run:c05.regions.max c05.dead_ends.median c03.dead_ends.median]].
 - **Attractor, symmetric:** not contiguous. {{c06.regions.median}} and {{c07.regions.median}} regions at the median; never fewer than {{c06.regions.min}} and {{c07.regions.min}} [[run:c06.regions.median c07.regions.median c06.regions.min c07.regions.min]].
   - **Why:** their particles follow a Bresenham line to the center [[c06:56-60 c07:56-60]]. A diagonal step on that line leaves the dug tile touching the cave only at a corner, and walking is four-way [[own]].
