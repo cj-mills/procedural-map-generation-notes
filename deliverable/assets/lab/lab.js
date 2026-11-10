@@ -17,6 +17,7 @@ let table; // the core's stage table: every stage and its parameters, by stage n
 let theLab; // the page's lab, once it has mounted
 const cards = []; // each mounted card: its root and its load()
 let pending; // a recipe sent to a card that hasn't mounted yet: its figure and the recipe
+let ids = 0; // for the controls' ids, unique on the page whichever mount makes them
 
 // What the page calls things, and the recipes it can load by name. The build replaces this line
 // (build.mjs, from page/gen.mjs): traits [{ key, label, digits, to, extra }], fails { key: label },
@@ -113,10 +114,12 @@ export async function mount(root, { params, fallback, report }) {
   const stepLabel = h('span', { class: 'mlab-n' });
   const stepText = h('span');
   const stepBox = h('p', { class: 'mlab-step', 'aria-live': 'polite' }, stepLabel, stepText);
+  // A step's references follow the drawing and its controls: beside the text they took the map's room on a phone.
+  const stepRefs = h('p', { class: 'mlab-note mlab-refs' });
   const playBtn = btn('Play', () => (st.timer ? stop() : play()), '');
   const transport = h('div', { class: 'mlab-transport', role: 'group', 'aria-label': 'Step through the build' },
-    btn('⏮', () => go(0), 'q', 'First step'), btn('◀', () => go(st.frame - 1), 'q', 'Step back'), btn('▶', () => go(st.frame + 1), 'q', 'Step forward'), btn('⏭', () => go(Infinity), 'q', 'The finished map'), playBtn);
-  const stepArea = h('div', { class: 'mlab-steps' }, stepBox, transport, scrub);
+    btn('⏮', () => go(0), 'q mlab-end', 'First step'), btn('◀', () => go(st.frame - 1), 'q', 'Step back'), btn('▶', () => go(st.frame + 1), 'q', 'Step forward'), btn('⏭', () => go(Infinity), 'q mlab-end', 'The finished map'), playBtn, scrub);
+  const stepArea = h('div', { class: 'mlab-steps' }, stepBox, transport);
   const stagePanel = h('div', { class: 'mlab-stage' });
   const walkBox = h('div', { class: 'mlab-walk', hidden: true });
   const readout = h('dl', { class: 'mlab-readout' });
@@ -138,7 +141,7 @@ export async function mount(root, { params, fallback, report }) {
   const cliLine = h('code', {}, 'map-lab build recipe.json');
   const fit = h('div', { class: 'mlab-fit', 'data-fit': true }, demoBtns, pipe, errorBox, h('div', { class: 'mlab-view' }, canvas, legend), stepArea, stagePanel, walkBox);
   const limitProbe = h('div', { class: 'mlab-limit' });
-  root.append(h('div', { class: 'mlab' }, limitProbe, fit, readout,
+  root.append(h('div', { class: 'mlab' }, limitProbe, fit, stepRefs, readout,
     h('div', { class: 'mlab-foot' },
       isLab && [walkBtn, fixBtn, walkWhy, measureBtn],
       h('span', { class: 'mlab-spacer' }),
@@ -243,6 +246,8 @@ export async function mount(root, { params, fallback, report }) {
     const p = written(note_key(st.lab.frame_note(st.frame)));
     stepText.replaceChildren(...(p ? p.cloneNode(true).childNodes : []));
     for (const v of stepText.querySelectorAll('.step-value')) v.textContent = count(st.lab.frame_arg(st.frame));
+    const refs = [...stepText.querySelectorAll('.refs')];
+    stepRefs.replaceChildren(...(refs.length ? ['This step’s sources: ', ...refs] : []));
     // Each chip's bar shows how far the build is through that stage.
     const done = new Map(), all = new Map();
     st.stageOf.forEach((k, n) => (all.set(k, (all.get(k) ?? 0) + 1), n <= st.frame && done.set(k, (done.get(k) ?? 0) + 1)));
@@ -348,7 +353,7 @@ export async function mount(root, { params, fallback, report }) {
     for (let k = 0; k + 2 < path.length; k += 2) arr = arr[path[k]].inputs[path[k + 1]];
     return [arr, path.at(-1)];
   }
-  let debounce = 0, ids = 0;
+  let debounce = 0;
   function renderStage() {
     const stages = flat(st.recipe.pipeline);
     st.sel = Math.max(0, Math.min(st.sel, stages.length - 1));
@@ -370,14 +375,14 @@ export async function mount(root, { params, fallback, report }) {
     const [arr, i] = listOf(cur.path);
     const move = (d) => { [arr[i], arr[i + d]] = [arr[i + d], arr[i]]; st.sel = flat(st.recipe.pipeline).findIndex((f) => f.s === cur.s); rebuild(); };
     const title = names.titles[cur.s.stage];
+    const act = (label, name, off, fn) => h('button', { type: 'button', class: 'q', disabled: off, title: name, 'aria-label': name, onclick: fn }, label);
+    // The stage's name links to what each of its controls does, in its technique's card.
     stagePanel.replaceChildren(...[
-      h('p', { class: 'mlab-head' }, `Stage ${st.sel + 1}: `, h('a', { href: `#${cur.s.stage}` }, title ?? h('code', {}, cur.s.stage))),
-      ...rows,
-      h('p', { class: 'mlab-note' }, rows.length ? h('a', { href: `#${cur.s.stage}-controls` }, 'What each control does') : 'This stage has no controls.'),
-      isLab && h('div', { class: 'mlab-acts' },
-        h('button', { type: 'button', class: 'q', disabled: i === 0, onclick: () => move(-1) }, '← Earlier'),
-        h('button', { type: 'button', class: 'q', disabled: i === arr.length - 1, onclick: () => move(1) }, 'Later →'),
-        h('button', { type: 'button', class: 'q', disabled: arr.length === 1, onclick: () => { arr.splice(i, 1); st.sel = Math.max(0, st.sel - 1); rebuild(); } }, 'Remove')),
+      h('div', { class: 'mlab-head' },
+        h('p', {}, `Stage ${st.sel + 1}: `, h('a', { href: `#${cur.s.stage}${rows.length ? '-controls' : ''}` }, title ?? h('code', {}, cur.s.stage))),
+        isLab && [act('←', 'Move this stage earlier', i === 0, () => move(-1)), act('→', 'Move this stage later', i === arr.length - 1, () => move(1)),
+          act('Remove', 'Remove this stage', arr.length === 1, () => { arr.splice(i, 1); st.sel = Math.max(0, st.sel - 1); rebuild(); })]),
+      rows.length ? h('div', { class: `mlab-ctls${rows.length > 3 ? ' mlab-many' : ''}` }, rows) : h('p', { class: 'mlab-note' }, 'This stage has no controls.'),
     ].filter(Boolean));
   }
 
@@ -599,6 +604,14 @@ style.textContent = `
 .mlab-stage { grid-area: stage; }
 .mlab-walk { grid-area: steps; display: grid; gap: var(--space-2xs); }
 .is-walking > :is(.mlab-pipe, .mlab-demos, .mlab-steps, .mlab-stage, .mlab-error), .is-walking .mlab-legend { display: none; }
+/* Narrow: the scrubber stands in for the first and last buttons, and a stage with many controls sets them two to a row, by number. */
+@container (inline-size < 44rem) {
+  .mlab-end { display: none; }
+  .mlab-many { grid-template-columns: 1fr 1fr; }
+  .mlab-many .mlab-ctl { grid-template-columns: auto minmax(0, 1fr); }
+  .mlab-many input[type="range"] { display: none; }
+  .mlab-many input[type="number"] { inline-size: 100%; }
+}
 @container (inline-size >= 44rem) {
   .mlab-fit { grid-template-columns: minmax(0, 1.95fr) minmax(14rem, 1fr); grid-template-rows: auto auto auto auto 1fr; grid-template-areas: "demos demos" "pipe pipe" "error error" "view steps" "view stage"; }
   .mlab-walk { grid-row: 4 / span 2; }
@@ -640,8 +653,12 @@ style.textContent = `
 .mlab-n { display: block; color: var(--color-muted); font-weight: 600; }
 .mlab-transport button { min-inline-size: 2.25rem; }
 .mlab input[type="range"] { inline-size: 100%; min-inline-size: 0; margin: 0; }
+.mlab-transport input[type="range"] { flex: 1 1 6rem; inline-size: auto; }
+.mlab-refs:empty, .mlab:has(.is-walking) .mlab-refs { display: none; }
 .mlab-stage { display: grid; gap: var(--space-3xs); }
-.mlab-head { font-weight: 600; }
+.mlab-head { display: flex; flex-wrap: wrap; gap: var(--space-3xs) var(--space-2xs); align-items: center; }
+.mlab-head p { flex: 1; font-weight: 600; }
+.mlab-ctls { display: grid; gap: var(--space-3xs) var(--space-2xs); }
 .mlab-ctl { display: grid; grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr) auto; gap: var(--space-2xs); align-items: center; }
 .mlab-ctl > :last-child:nth-child(2) { grid-column: 2 / -1; justify-self: start; }
 .mlab-note, .mlab-readout small { color: var(--color-muted); }

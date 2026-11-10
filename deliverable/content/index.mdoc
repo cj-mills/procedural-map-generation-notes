@@ -1,6 +1,8 @@
 ---
 trace: christianjmills/procedural-map-generation-techniques-notes
 ---
+## The lab
+
 {% interactive id="lab" caption="The talk’s last pipeline, cellular → cull → start → exit → hot-path, on seed 7. Change the pipeline, a control or the seed; step through the build; then walk the map to its exit." params={mode: "lab", recipe: {format: "map-lab-recipe/1", seed: 7, width: 80, height: 50, pipeline: [{stage: "cellular", wall_percent: 55, iterations: 10}, {stage: "cull", from: "center", mode: "remove"}, {stage: "start", at: "left"}, {stage: "exit", at: "right"}, {stage: "hot-path", radius: 10, cull: 15}]}} %}
 {% steps %}
 {% step src="assets/steps/c20-0011-light.png" dark="assets/steps/c20-0011-dark.png" alt="Caves, hot path cull, seed 7: the map at step 11 of 18." key="cellular.iterate" at=11 of=18 %}

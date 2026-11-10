@@ -1,7 +1,7 @@
 {
   "format": "0.1",
   "id": "procedural-map-generation-techniques-notes",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "title": "Procedural map generation: an interactive lab built on Herbert Wolverson’s talk",
   "summary": "Build a map from the techniques of Herbert Wolverson’s talk, measure it over 200 seeds, and walk it to its exit.",
   "pageType": "post",
@@ -31,6 +31,11 @@
       "date": "2026-11-09",
       "version": "0.4.0",
       "note": "Rebuilt as a map lab covering every technique of the talk: each one a stage of a pipeline you can edit, step through, measure and walk, on one deterministic core, with its traits measured over 200 seeds and checked against the talk’s own code. The cave section’s text is not carried over."
+    },
+    {
+      "date": "2026-11-09",
+      "version": "0.4.1",
+      "note": "On a phone the map keeps its full width: a step’s references now follow the drawing and its controls, and the controls take less room. The lab has a heading, so the contents list it."
     }
   ],
   "testedAgainst": [
