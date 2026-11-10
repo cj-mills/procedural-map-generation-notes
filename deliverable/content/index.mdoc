@@ -25,7 +25,10 @@ Tiles at the cull distance or farther from the route become wall. The talk’s d
 On the command line: `map-lab build recipes/c20-hot-path.json --seed 7`.
 {% /interactive %}
 
-This is a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, and more algorithms that fix the maps and find out whether they are usable {% cite id="wolverson2020-talk/transcript#s3" /%}{% cite id="wolverson2020-talk/transcript#s4" /%}{% cite id="wolverson2020-talk/transcript#s5" /%}{% cite id="wolverson2020-talk/transcript#s6" /%}{% cite id="wolverson2020-talk/transcript#s7" /%}{% cite id="wolverson2020-talk/transcript#s8" /%}{% cite id="wolverson2020-talk/transcript#s9" /%}. A recipe is a pipeline of those techniques and a seed, and the same recipe always builds the same map {% own /%}. The lab above builds one a step at a time. Below, each technique has a card: its rule, its controls, what it produces over 200 seeds, the seeds where it fails, and how our version compares with the talk’s own code {% own /%}.
+- **What this is:** a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, then algorithms that fix them and find out whether they are usable {% cite id="wolverson2020-talk/transcript#s3" /%}{% cite id="wolverson2020-talk/transcript#s4" /%}{% cite id="wolverson2020-talk/transcript#s5" /%}{% cite id="wolverson2020-talk/transcript#s6" /%}{% cite id="wolverson2020-talk/transcript#s7" /%}{% cite id="wolverson2020-talk/transcript#s8" /%}{% cite id="wolverson2020-talk/transcript#s9" /%}.
+- **A recipe:** a pipeline of those techniques and a seed. Same recipe, same map {% own /%}.
+- **The lab,** above: builds a recipe a step at a time. Edit it, measure it over 200 seeds, walk it {% own /%}.
+- **Each card,** below: the rule · its controls · what it produces over 200 seeds · the seeds where it fails · our version checked against the talk’s code {% own /%}.
 
 ## Which technique for which map
 
@@ -350,7 +353,7 @@ Every seed gives 1 region and 0 dead ends {% own-run values="c01.regions.max c01
 {% /part %}
 
 {% part title="Where it fails" %}
-None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.rooms" /%}.
+No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.rooms" /%}.
 
 Its attempts are a fixed 20, and its corridors one for each room after the first {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L20-L21" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L78" /%}.
 {% /part %}
@@ -459,7 +462,7 @@ Of 240 attempts, 18 place a room at the median {% own-run values="c02.rooms.medi
 {% /part %}
 
 {% part title="Where it fails" %}
-None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.bsp" /%}.
+No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.bsp" /%}.
 {% /part %}
 
 {% part title="What it combines with" %}
@@ -556,8 +559,25 @@ The rule says nothing about joining the caves up {% own /%}. A map has 17 region
 {% part title="Where it fails" %}
 Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.cellular" /%}:
 
-- **Not one region**: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjowfQ), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoyfQ), and 197 more in the data file; or `map-lab build recipes/c03-cellular.json --seed 0`.
-- **No path**: no walk from start to exit (the map’s own, or the standard probe’s). **72 of 200 seeds.** The talk’s own code: 54 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjowfQ), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxMn0), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxM30), and 69 more in the data file; or `map-lab build recipes/c03-cellular.json --seed 0`.
+{% table label="Where it fails: Cellular automata" rowheads=true %}
+* Failure
+* Demo
+* Seeds failing, of 200
+* The talk’s code, of 200
+* Watch it fail on
+---
+* [Not one region](#what-counts-as-failing)
+* Cellular automata (c03)
+* 200
+* 200
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjowfQ), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoyfQ), 197 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* Cellular automata (c03)
+* 72
+* 54
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjowfQ), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxMn0), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxM30), 69 more in the data file
+{% /table %}
 {% /part %}
 
 {% part title="What it combines with" %}
@@ -658,7 +678,7 @@ The talk says this map is guaranteed to be contiguous {% cite id="wolverson2020-
 {% /part %}
 
 {% part title="Where it fails" %}
-None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.drunkard" /%}.
+No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.drunkard" /%}.
 
 The demo’s loop of diggers has no cap but the open share it waits for {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L25-L48" /%}.
 {% /part %}
@@ -678,52 +698,71 @@ Our stage against the talk’s own code, each run on seeds 0 to 199 and [measure
 {% /card %}
 
 {% card title="Diffusion-limited aggregation" id="dla" kind="Generator" %}
-Particles are fired at a small open seed, and each digs the last solid tile it crossed before it reached open floor {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-slides/pdf#p13" /%}.
+Fire particles at a small open seed. Each digs the last solid tile it crossed before it reached open floor {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-slides/pdf#p13" /%}.
 
 Stage `dla`. The talk’s demos: `c05-dla`, `c06-dla-attractor`, `c07-dla-symmetry`.
 
 {% part title="The rule" %}
-```text
-dig a small seed at the center of a solid map
-while less than a share of the map is open:
-    start a particle on a random tile
-    move it until it stands on open floor:
-        a random step at a time (walk), or straight at the center (attractor)
-    dig the last solid tile it stood on, and with symmetry its mirror image
-```
+1. **Seed:** dig a plus of five tiles at the center of a solid map {% cite id="wolverson2020-code/c05-dla/src/main.rs#L19-L40" /%}{% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}.
+2. **Until a third of the map is open** {% cite id="wolverson2020-code/c05-dla/src/main.rs#L43" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}:
+   1. start a particle on a random tile {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L52" /%};
+   2. move it until it stands on open floor {% cite id="wolverson2020-code/c05-dla/src/main.rs#L53-L80" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%};
+   3. dig the last solid tile it stood on {% cite id="wolverson2020-code/c05-dla/src/main.rs#L53-L82" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}.
 
-The talk shows three versions: a simple one, a central attractor, and the attractor with a symmetry applied {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}. The demo of the simple version moves its particle one random step at a time {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55-L80" /%}.
+The talk’s three versions differ in step 2 {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}:
+
+{% table label="How a particle travels, by version" rowheads=true %}
+* Version
+* The particle moves
+* It digs
+---
+* `walk` (c05)
+* one random step at a time {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55-L80" /%}
+* the last solid tile {% cite id="wolverson2020-code/c05-dla/src/main.rs#L82" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}
+---
+* `attractor` (c06)
+* along a straight line to the center {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L56-L66" /%}
+* the last solid tile {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L68" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}
+---
+* `symmetric` (c07)
+* as the attractor {% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L56-L67" /%}
+* that tile and its mirror image across the middle column {% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L69-L77" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}
+{% /table %}
+
+{% figure src="assets/rules/dla-walk-light.png" dark="assets/rules/dla-walk-dark.png" alt="A solid map with a plus of five open tiles at its center. A particle starts at the top left and takes five steps, across and down, to the tile left of the plus; the last solid tile it stood on, touching the plus, is dug." caption="Walk: the particle (large square) wanders a step at a time (small squares). It digs the last solid tile it stood on before open floor (outlined)." /%}
+
+{% figure src="assets/rules/dla-attractor-light.png" dark="assets/rules/dla-attractor-dark.png" alt="The same map. A particle starts at the top right corner and follows a straight line toward the center; the last solid tile on the line, touching the plus, is dug." caption="Attractor: the particle follows a straight line to the center and digs the last solid tile on it." /%}
 {% /part %}
 
 {% part title="Step through it" %}
 {% interactive id="lab" caption="Step through DLA, walking, DLA, attractor, DLA, symmetric: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "dla", demos: ["c05-dla", "c06-dla-attractor", "c07-dla-symmetry"]} %}
 {% steps %}
 {% step src="assets/steps/c05-0001-light.png" dark="assets/steps/c05-0001-dark.png" alt="DLA, walking, seed 1: the map at step 1 of 1644." key="dla.seed" at=1 of=1644 %}
-A plus of five open tiles at the center of a solid map: the target seed that the particles are fired at {% cite id="wolverson2020-code/c05-dla/src/main.rs#L19-L40" /%}{% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}.
+**Seed:** a plus of five open tiles at the center of a solid map, the target the particles are fired at {% cite id="wolverson2020-code/c05-dla/src/main.rs#L19-L40" /%}{% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}.
 {% /step %}
 {% step src="assets/steps/c05-0002-light.png" dark="assets/steps/c05-0002-dark.png" alt="DLA, walking, seed 1: the map at step 2 of 1644." key="dla.particle" at=2 of=1644 %}
-A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. This is particle {% value %}1{% /value %}.
+**Walk:** from a random tile, one random step at a time, until it steps onto open floor. Digs the solid tile it stepped from {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. Particle {% value %}1{% /value %}.
 {% /step %}
 {% step src="assets/steps/c05-0412-light.png" dark="assets/steps/c05-0412-dark.png" alt="DLA, walking, seed 1: the map at step 412 of 1644." key="dla.particle" at=412 of=1644 %}
-A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. This is particle {% value %}411{% /value %}.
+**Walk:** from a random tile, one random step at a time, until it steps onto open floor. Digs the solid tile it stepped from {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. Particle {% value %}411{% /value %}.
 {% /step %}
 {% step src="assets/steps/c05-0823-light.png" dark="assets/steps/c05-0823-dark.png" alt="DLA, walking, seed 1: the map at step 823 of 1644." key="dla.particle" at=823 of=1644 %}
-A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. This is particle {% value %}822{% /value %}.
+**Walk:** from a random tile, one random step at a time, until it steps onto open floor. Digs the solid tile it stepped from {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. Particle {% value %}822{% /value %}.
 {% /step %}
 {% step src="assets/steps/c05-1644-light.png" dark="assets/steps/c05-1644-dark.png" alt="DLA, walking, seed 1: the map at step 1644 of 1644." key="dla.particle" at=1644 of=1644 %}
-A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. This is particle {% value %}1,643{% /value %}.
+**Walk:** from a random tile, one random step at a time, until it steps onto open floor. Digs the solid tile it stepped from {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. Particle {% value %}1,643{% /value %}.
 {% /step %}
 {% step src="assets/steps/c06-0002-light.png" dark="assets/steps/c06-0002-dark.png" alt="DLA, attractor, seed 1: the map at step 2 of 1656." key="dla.particle#c06-dla-attractor" at=2 of=1656 %}
-A particle starts on a random tile and travels in a straight line toward the center. The last solid tile it stood on before open floor is dug {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L49-L68" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. This is particle {% value %}1{% /value %}.
+**Attractor:** from a random tile, straight toward the center. Digs the last solid tile it stood on before open floor {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L49-L68" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. Particle {% value %}1{% /value %}.
 {% /step %}
 {% step src="assets/steps/c06-1656-light.png" dark="assets/steps/c06-1656-dark.png" alt="DLA, attractor, seed 1: the map at step 1656 of 1656." key="dla.particle#c06-dla-attractor" at=1656 of=1656 %}
-A particle starts on a random tile and travels in a straight line toward the center. The last solid tile it stood on before open floor is dug {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L49-L68" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. This is particle {% value %}1,655{% /value %}.
+**Attractor:** from a random tile, straight toward the center. Digs the last solid tile it stood on before open floor {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L49-L68" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. Particle {% value %}1,655{% /value %}.
 {% /step %}
 {% step src="assets/steps/c07-0002-light.png" dark="assets/steps/c07-0002-dark.png" alt="DLA, symmetric, seed 1: the map at step 2 of 820." key="dla.particle#c07-dla-symmetry" at=2 of=820 %}
-A particle travels straight toward the center, and the tile it digs is dug again at its mirror image across the map’s middle column {% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L49-L77" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. This is particle {% value %}1{% /value %}.
+**Symmetric:** straight toward the center, as the attractor. The tile it digs is dug again at its mirror image across the middle column {% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L49-L77" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. Particle {% value %}1{% /value %}.
 {% /step %}
 {% step src="assets/steps/c07-0820-light.png" dark="assets/steps/c07-0820-dark.png" alt="DLA, symmetric, seed 1: the map at step 820 of 820." key="dla.particle#c07-dla-symmetry" at=820 of=820 %}
-A particle travels straight toward the center, and the tile it digs is dug again at its mirror image across the map’s middle column {% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L49-L77" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. This is particle {% value %}819{% /value %}.
+**Symmetric:** straight toward the center, as the attractor. The tile it digs is dug again at its mirror image across the middle column {% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L49-L77" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. Particle {% value %}819{% /value %}.
 {% /step %}
 {% /steps %}
 
@@ -732,8 +771,8 @@ On the command line: `map-lab build recipes/c05-dla.json`, `map-lab build recipe
 {% /part %}
 
 {% part title="Controls" %}
-- `mode` (`walk`, `attractor`, `symmetric`; the talk’s: `walk` in `c05`, `attractor` in `c06`, `symmetric` in `c07`) {% own /%}. How a particle travels. `walk` steps at random, `attractor` follows a line to the center, and `symmetric` does that and digs each tile’s mirror image too {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55-L80" /%}{% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L56-L68" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L56-L77" /%}.
-- `floor_divisor` (1 to 20; the talk’s: `3`) {% own /%}. Particles keep coming until one over this number of the map’s tiles is open: a third, in all three demos {% cite id="wolverson2020-code/c05-dla/src/main.rs#L43" /%}{% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L43" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L43" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}.
+- `mode` (`walk`, `attractor`, `symmetric`; the talk’s: `walk` in `c05`, `attractor` in `c06`, `symmetric` in `c07`) {% own /%}. How a particle travels: `walk`, a random step at a time; `attractor`, a line to the center; `symmetric`, the same, digging each tile’s mirror image too {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55-L80" /%}{% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L56-L68" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L56-L77" /%}.
+- `floor_divisor` (1 to 20; the talk’s: `3`) {% own /%}. Stop when 1 / this of the map is open. All three demos: a third {% cite id="wolverson2020-code/c05-dla/src/main.rs#L43" /%}{% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L43" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L43" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}.
 {% /part %}
 
 {% part title="What it produces, measured" %}
@@ -777,24 +816,55 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 * {% now trait="path" digits=0 /%}
 {% /table %}
 
-The talk calls the simple version’s map very winding, and guaranteed to be contiguous {% cite id="wolverson2020-talk/transcript#s109" /%}. The walking version is both: 1 region on every seed, and 113 dead ends at the median against cellular automata’s 67 {% own-run values="c05.regions.max c05.dead_ends.median c03.dead_ends.median" /%}. The attractor and the symmetric version are not contiguous: 26 and 25 regions at the median, and never fewer than 13 and 5 {% own-run values="c06.regions.median c07.regions.median c06.regions.min c07.regions.min" /%}. Their particles follow a Bresenham line to the center {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L56-L60" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L56-L60" /%}. Such a line can step diagonally, so a dug tile can touch the cave only at a corner, and walking is four-way {% own /%}.
+- **Talk says:** the simple version is very winding, and guaranteed to be contiguous {% cite id="wolverson2020-talk/transcript#s109" /%}.
+- **Walk:** both hold. 1 region on every seed; 113 dead ends at the median, vs cellular automata’s 67 {% own-run values="c05.regions.max c05.dead_ends.median c03.dead_ends.median" /%}.
+- **Attractor, symmetric:** not contiguous. 26 and 25 regions at the median; never fewer than 13 and 5 {% own-run values="c06.regions.median c07.regions.median c06.regions.min c07.regions.min" /%}.
+  - **Why:** their particles follow a Bresenham line to the center {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L56-L60" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L56-L60" /%}. A diagonal step on that line leaves the dug tile touching the cave only at a corner, and walking is four-way {% own /%}.
 {% /part %}
 
 {% part title="Where it fails" %}
 Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.dla" /%}:
 
-- **Not one region** `c06`: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6Mn0), and 197 more in the data file; or `map-lab build recipes/c06-dla-attractor.json --seed 0`.
-- **No path** `c06`: no walk from start to exit (the map’s own, or the standard probe’s). **44 of 200 seeds.** The talk’s own code: 52 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 8](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6OH0), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTJ9), and 41 more in the data file; or `map-lab build recipes/c06-dla-attractor.json --seed 1`.
-- **Not one region** `c07`: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6Mn0), and 197 more in the data file; or `map-lab build recipes/c07-dla-symmetry.json --seed 0`.
-- **No path** `c07`: no walk from start to exit (the map’s own, or the standard probe’s). **29 of 200 seeds.** The talk’s own code: 19 of 200. Watch it fail on [seed 15](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTV9), [seed 19](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTl9), [seed 20](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MjB9), and 26 more in the data file; or `map-lab build recipes/c07-dla-symmetry.json --seed 15`.
+{% table label="Where it fails: Diffusion-limited aggregation" rowheads=true %}
+* Failure
+* Demo
+* Seeds failing, of 200
+* The talk’s code, of 200
+* Watch it fail on
+---
+* [Not one region](#what-counts-as-failing)
+* DLA, attractor (c06)
+* 200
+* 200
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6Mn0), 197 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* DLA, attractor (c06)
+* 44
+* 52
+* [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 8](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6OH0), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTJ9), 41 more in the data file
+---
+* [Not one region](#what-counts-as-failing)
+* DLA, symmetric (c07)
+* 200
+* 200
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6Mn0), 197 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* DLA, symmetric (c07)
+* 29
+* 19
+* [seed 15](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTV9), [seed 19](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTl9), [seed 20](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MjB9), 26 more in the data file
+{% /table %}
 
-The simple version’s walk has no cap in the talk’s code {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55-L80" /%}. Ours has one, which 0 of these seeds reach {% own-run values="c05.fails.guard-hit" /%}.
+- **No cap in the talk’s code:** the simple version’s walk runs until it finds open floor {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55-L80" /%}.
+- **Ours has a cap:** 0 of these seeds reach it {% own-run values="c05.fails.guard-hit" /%}.
 {% /part %}
 
 {% part title="What it combines with" %}
 None of the talk’s demos runs it with another stage {% own /%}.
 
-The talk also fires particles at a finished map, which its slide calls DLA for erosion {% cite id="wolverson2020-talk/transcript#s191" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}{% cite id="wolverson2020-talk/transcript#s193" /%}{% cite id="wolverson2020-slides/pdf#p21" /%}. That is the [erosion](#dla-erode) card.
+- **Erosion:** the talk also fires particles at a finished map, which its slide calls DLA for erosion {% cite id="wolverson2020-talk/transcript#s191" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}{% cite id="wolverson2020-talk/transcript#s193" /%}{% cite id="wolverson2020-slides/pdf#p21" /%}. See [erosion by aggregation](#dla-erode).
 {% /part %}
 
 {% part title="Checked against the talk’s code" %}
@@ -891,8 +961,25 @@ Walls seal each cell: a map has 16 regions at the median, and the probe finds no
 {% part title="Where it fails" %}
 Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.voronoi" /%}:
 
-- **Not one region**: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjJ9), and 197 more in the data file; or `map-lab build recipes/c08a-voronoi.json --seed 0`.
-- **No path**: no walk from start to exit (the map’s own, or the standard probe’s). **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjJ9), and 197 more in the data file; or `map-lab build recipes/c08a-voronoi.json --seed 0`.
+{% table label="Where it fails: Voronoi cells" rowheads=true %}
+* Failure
+* Demo
+* Seeds failing, of 200
+* The talk’s code, of 200
+* Watch it fail on
+---
+* [Not one region](#what-counts-as-failing)
+* Voronoi cells (c08a)
+* 200
+* 200
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjJ9), 197 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* Voronoi cells (c08a)
+* 200
+* 200
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjJ9), 197 more in the data file
+{% /table %}
 
 These are failures only for a map meant to be walked whole; sealed cells are what the wall rule is for {% own /%}.
 {% /part %}
@@ -1061,14 +1148,61 @@ The overworld’s land is not one piece: 4 regions at the median, with water bet
 {% part title="Where it fails" %}
 Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.noise" /%}:
 
-- **Not one region** `c11`: the walkable tiles form more than one region. **197 of 200 seeds.** The talk’s own code: 197 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjJ9), and 194 more in the data file; or `map-lab build recipes/c11-overworld.json --seed 0`.
-- **No path** `c11`: no walk from start to exit (the map’s own, or the standard probe’s). **114 of 200 seeds.** The talk’s own code: 137 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjB9), [seed 5](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjV9), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjZ9), and 111 more in the data file; or `map-lab build recipes/c11-overworld.json --seed 0`.
-- **Not one region** `c12`: the walkable tiles form more than one region. **61 of 200 seeds.** The talk’s own code: 56 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MX0), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6M30), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6Nn0), and 58 more in the data file; or `map-lab build recipes/c12-noisezoom.json --seed 1`.
-- **No path** `c12`: no walk from start to exit (the map’s own, or the standard probe’s). **44 of 200 seeds.** The talk’s own code: 36 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MX0), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6M30), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6Nn0), and 41 more in the data file; or `map-lab build recipes/c12-noisezoom.json --seed 1`.
-- **Short path** `c12`: start and exit fewer than a quarter of the map’s width apart, in steps. **59 of 200 seeds.** The talk’s own code: 52 of 200. Watch it fail on [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6NH0), [seed 11](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MTF9), [seed 15](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MTV9), and 56 more in the data file; or `map-lab build recipes/c12-noisezoom.json --seed 4`.
-- **Not one region** `c13`: the walkable tiles form more than one region. **128 of 200 seeds.** The talk’s own code: 125 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyfQ), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozfQ), and 125 more in the data file; or `map-lab build recipes/c13-double-noise.json --seed 1`.
-- **No path** `c13`: no walk from start to exit (the map’s own, or the standard probe’s). **86 of 200 seeds.** The talk’s own code: 84 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyfQ), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozfQ), and 83 more in the data file; or `map-lab build recipes/c13-double-noise.json --seed 1`.
-- **Short path** `c13`: start and exit fewer than a quarter of the map’s width apart, in steps. **14 of 200 seeds.** The talk’s own code: 12 of 200. Watch it fail on [seed 27](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyN30), [seed 35](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozNX0), [seed 59](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjo1OX0), and 11 more in the data file; or `map-lab build recipes/c13-double-noise.json --seed 27`.
+{% table label="Where it fails: Noise" rowheads=true %}
+* Failure
+* Demo
+* Seeds failing, of 200
+* The talk’s code, of 200
+* Watch it fail on
+---
+* [Not one region](#what-counts-as-failing)
+* Noise: overworld (c11)
+* 197
+* 197
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjJ9), 194 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* Noise: overworld (c11)
+* 114
+* 137
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjB9), [seed 5](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjV9), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjZ9), 111 more in the data file
+---
+* [Not one region](#what-counts-as-failing)
+* Noise: zoom (c12)
+* 61
+* 56
+* [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MX0), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6M30), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6Nn0), 58 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* Noise: zoom (c12)
+* 44
+* 36
+* [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MX0), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6M30), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6Nn0), 41 more in the data file
+---
+* [Short path](#what-counts-as-failing)
+* Noise: zoom (c12)
+* 59
+* 52
+* [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6NH0), [seed 11](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MTF9), [seed 15](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MTV9), 56 more in the data file
+---
+* [Not one region](#what-counts-as-failing)
+* Noise: double (c13)
+* 128
+* 125
+* [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyfQ), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozfQ), 125 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* Noise: double (c13)
+* 86
+* 84
+* [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyfQ), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozfQ), 83 more in the data file
+---
+* [Short path](#what-counts-as-failing)
+* Noise: double (c13)
+* 14
+* 12
+* [seed 27](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyN30), [seed 35](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozNX0), [seed 59](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjo1OX0), 11 more in the data file
+{% /table %}
 
 Our criteria are written for maps to be walked across. An overworld isn’t one until something decides where a traveler can go {% own /%}.
 {% /part %}
@@ -1176,7 +1310,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Where it fails" %}
-None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.dla-erode" /%}.
+No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.dla-erode" /%}.
 
 The demo’s walk has no cap {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L100-L128" /%}. Ours has one, which 0 of these seeds reach {% own-run values="c08.fails.guard-hit" /%}.
 {% /part %}
@@ -1273,8 +1407,25 @@ The cave half brings its pockets with it: 11 regions at the median {% own-run va
 {% part title="Where it fails" %}
 Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.combine" /%}:
 
-- **Not one region**: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6Mn0), and 197 more in the data file; or `map-lab build recipes/c09-combination.json --seed 0`.
-- **No path**: no walk from start to exit (the map’s own, or the standard probe’s). **47 of 200 seeds.** The talk’s own code: 50 of 200. Watch it fail on [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6M30), [seed 5](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6NX0), [seed 11](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MTF9), and 44 more in the data file; or `map-lab build recipes/c09-combination.json --seed 3`.
+{% table label="Where it fails: Combining two maps" rowheads=true %}
+* Failure
+* Demo
+* Seeds failing, of 200
+* The talk’s code, of 200
+* Watch it fail on
+---
+* [Not one region](#what-counts-as-failing)
+* BSP + caves + spine (c09)
+* 200
+* 200
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6Mn0), 197 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* BSP + caves + spine (c09)
+* 47
+* 50
+* [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6M30), [seed 5](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6NX0), [seed 11](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MTF9), 44 more in the data file
+{% /table %}
 {% /part %}
 
 {% part title="What it combines with" %}
@@ -1380,10 +1531,37 @@ Treasure and traps count as walkable, so a vault changes none of the traits its 
 {% part title="Where it fails" %}
 Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.prefab" /%}:
 
-- **No place for the prefab** `c14`: a prefab stage found no place for its prefab (the talk’s loop would run forever). **10 of 200 seeds.** The talk’s own code was still looking after 10 seconds on 18 of 200. Watch it fail on [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjR9), [seed 71](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjcxfQ), [seed 81](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjgxfQ), and 7 more in the data file; or `map-lab build recipes/c14-not-a-trap.json --seed 4`.
-- **No place for the prefab** `c15`: a prefab stage found no place for its prefab (the talk’s loop would run forever). **130 of 200 seeds.** The talk’s own code was still looking after 10 seconds on 142 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0), [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6NH0), and 127 more in the data file; or `map-lab build recipes/c15-still-not-a-trap.json --seed 0`.
-- **Not one region** `c15`: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6Mn0), and 197 more in the data file; or `map-lab build recipes/c15-still-not-a-trap.json --seed 0`.
-- **No path** `c15`: no walk from start to exit (the map’s own, or the standard probe’s). **72 of 200 seeds.** The talk’s own code: 52 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MTJ9), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MTN9), and 69 more in the data file; or `map-lab build recipes/c15-still-not-a-trap.json --seed 0`.
+{% table label="Where it fails: Prefabs" rowheads=true %}
+* Failure
+* Demo
+* Seeds failing, of 200
+* The talk’s code, of 200
+* Watch it fail on
+---
+* [No place for the prefab](#what-counts-as-failing)
+* Vault in a room (c14)
+* 10
+* 18, still looking after 10 seconds
+* [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjR9), [seed 71](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjcxfQ), [seed 81](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjgxfQ), 7 more in the data file
+---
+* [No place for the prefab](#what-counts-as-failing)
+* Vault on open floor (c15)
+* 130
+* 142, still looking after 10 seconds
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0), [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6NH0), 127 more in the data file
+---
+* [Not one region](#what-counts-as-failing)
+* Vault on open floor (c15)
+* 200
+* 200
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6Mn0), 197 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* Vault on open floor (c15)
+* 72
+* 52
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MTJ9), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MTN9), 69 more in the data file
+{% /table %}
 
 Both of the talk’s placement loops end only when the prefab has been placed {% cite id="wolverson2020-code/c14-not-a-trap/src/main.rs#L104-L124" /%}{% cite id="wolverson2020-code/c15-still-not-a-trap/src/main.rs#L41-L67" /%}. On a map with no room big enough, or no clear patch of floor the right size, they never end; ours stops and records the seed {% own /%}.
 {% /part %}
@@ -1482,8 +1660,25 @@ Marking changes no tile, so this is the cave map’s own row {% own /%}. With `r
 {% part title="Where it fails" %}
 Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.cull" /%}:
 
-- **Not one region**: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjJ9), and 197 more in the data file; or `map-lab build recipes/c16-unreachable.json --seed 0`.
-- **No path**: no walk from start to exit (the map’s own, or the standard probe’s). **72 of 200 seeds.** The talk’s own code: 54 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjB9), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjEyfQ), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjEzfQ), and 69 more in the data file; or `map-lab build recipes/c16-unreachable.json --seed 0`.
+{% table label="Where it fails: Culling what can’t be reached" rowheads=true %}
+* Failure
+* Demo
+* Seeds failing, of 200
+* The talk’s code, of 200
+* Watch it fail on
+---
+* [Not one region](#what-counts-as-failing)
+* Caves, unreachable marked (c16)
+* 200
+* 200
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjJ9), 197 more in the data file
+---
+* [No path](#what-counts-as-failing)
+* Caves, unreachable marked (c16)
+* 72
+* 54
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjB9), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjEyfQ), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjEzfQ), 69 more in the data file
+{% /table %}
 
 These are the cave map’s failures, which marking leaves in place {% own /%}.
 {% /part %}
@@ -1577,7 +1772,7 @@ A start changes no tile, so these are the culled caves’ traits {% own /%}.
 {% /part %}
 
 {% part title="Where it fails" %}
-None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.start" /%}.
+No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.start" /%}.
 {% /part %}
 
 {% part title="What it combines with" %}
@@ -1678,7 +1873,7 @@ From the left edge to the right, the route is 102 steps at the median. From the 
 {% /part %}
 
 {% part title="Where it fails" %}
-None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.exit" /%}.
+No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.exit" /%}.
 
 Take the cull out and it does fail. In a recipe of our own, the same pipeline without its cull, the exit lands in a cave the start can’t reach on 72 of 200 seeds {% own-run values="nocull.fails.exit-unreachable" /%}. [Seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InN0YXJ0IiwiYXQiOiJsZWZ0In0seyJzdGFnZSI6ImV4aXQiLCJhdCI6InJpZ2h0In1dLCJzZWVkIjowfQ) is one.
 {% /part %}
@@ -1773,7 +1968,7 @@ The cull at 15 keeps about half the floor: a share of 0.311 at the median agains
 {% /part %}
 
 {% part title="Where it fails" %}
-None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.hot-path" /%}.
+No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.hot-path" /%}.
 {% /part %}
 
 {% part title="What it combines with" %}
@@ -1863,7 +2058,7 @@ With 50 attempts the map places 21 rooms at the median, and its route is 180.5 s
 {% /part %}
 
 {% part title="Where it fails" %}
-None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.hot-rooms" /%}.
+No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.hot-rooms" /%}.
 {% /part %}
 
 {% part title="What it combines with" %}

@@ -29,16 +29,16 @@ The map starts solid [[c04:17-19 t:87 g]].
 A digger steps in a random direction and digs the tile it lands on, again and again, until it steps off the map or runs out of steps [[c04:54-76 t:90-95 g]]. The first starts at the center and each later one on a random open tile [[c04:21-22 c04:25-47 t:95-96 g]]. This is digger {n}.
 
 ## dla.seed
-A plus of five open tiles at the center of a solid map: the target seed that the particles are fired at [[c05:19-40 t:103-105 g]].
+**Seed:** a plus of five open tiles at the center of a solid map, the target the particles are fired at [[c05:19-40 t:103-105 g]].
 
 ## dla.particle
-A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug [[c05:49-82 t:104-108 g]]. This is particle {n}.
+**Walk:** from a random tile, one random step at a time, until it steps onto open floor. Digs the solid tile it stepped from [[c05:49-82 t:104-108 g]]. Particle {n}.
 
 ## dla.particle#c06-dla-attractor
-A particle starts on a random tile and travels in a straight line toward the center. The last solid tile it stood on before open floor is dug [[c06:49-68 t:111-112 g]]. This is particle {n}.
+**Attractor:** from a random tile, straight toward the center. Digs the last solid tile it stood on before open floor [[c06:49-68 t:111-112 g]]. Particle {n}.
 
 ## dla.particle#c07-dla-symmetry
-A particle travels straight toward the center, and the tile it digs is dug again at its mirror image across the map’s middle column [[c07:49-77 t:115-116 g]]. This is particle {n}.
+**Symmetric:** straight toward the center, as the attractor. The tile it digs is dug again at its mirror image across the middle column [[c07:49-77 t:115-116 g]]. Particle {n}.
 
 ## dla-erode.start
 Erosion starts from a finished map: in the talk’s demo, random rooms joined by corridors [[c08:21-83 t:191-192]].

@@ -1,43 +1,80 @@
 ---
 title: Diffusion-limited aggregation
 ---
-Particles are fired at a small open seed, and each digs the last solid tile it crossed before it reached open floor [[t:103-108 s:13]].
+Fire particles at a small open seed. Each digs the last solid tile it crossed before it reached open floor [[t:103-108 s:13]].
 
 ## The rule
-```text
-dig a small seed at the center of a solid map
-while less than a share of the map is open:
-    start a particle on a random tile
-    move it until it stands on open floor:
-        a random step at a time (walk), or straight at the center (attractor)
-    dig the last solid tile it stood on, and with symmetry its mirror image
-```
+1. **Seed:** dig a plus of five tiles at the center of a solid map [[c05:19-40 t:103-104 g]].
+2. **Until a third of the map is open** [[c05:43 g]]:
+   1. start a particle on a random tile [[c05:49-52]];
+   2. move it until it stands on open floor [[c05:53-80 g]];
+   3. dig the last solid tile it stood on [[c05:53-82 g]].
 
-The talk shows three versions: a simple one, a central attractor, and the attractor with a symmetry applied [[t:103-104 t:111-112 t:115-116]]. The demo of the simple version moves its particle one random step at a time [[c05:55-80]].
+The talk’s three versions differ in step 2 [[t:103-104 t:111-112 t:115-116]]:
+
+{% table label="How a particle travels, by version" rowheads=true %}
+* Version
+* The particle moves
+* It digs
+---
+* `walk` (c05)
+* one random step at a time [[c05:55-80]]
+* the last solid tile [[c05:82 g]]
+---
+* `attractor` (c06)
+* along a straight line to the center [[c06:56-66]]
+* the last solid tile [[c06:68 g]]
+---
+* `symmetric` (c07)
+* as the attractor [[c07:56-67]]
+* that tile and its mirror image across the middle column [[c07:69-77 g]]
+{% /table %}
+
+@@diagram dla-walk alt="A solid map with a plus of five open tiles at its center. A particle starts at the top left and takes five steps, across and down, to the tile left of the plus; the last solid tile it stood on, touching the plus, is dug." caption="Walk: the particle (large square) wanders a step at a time (small squares). It digs the last solid tile it stood on before open floor (outlined)."
+###########
+#o*########
+##**#.#####
+###+...####
+#####.#####
+###########
+###########
+
+@@diagram dla-attractor alt="The same map. A particle starts at the top right corner and follows a straight line toward the center; the last solid tile on the line, touching the plus, is dug." caption="Attractor: the particle follows a straight line to the center and digs the last solid tile on it."
+##########o
+########**#
+#####.+*###
+####...####
+#####.#####
+###########
+###########
 
 ## Step through it
 @@steps limit=5 mid=2
 
 ## Controls
 @@control mode
-How a particle travels. `walk` steps at random, `attractor` follows a line to the center, and `symmetric` does that and digs each tile’s mirror image too [[c05:55-80 c06:56-68 c07:56-77]].
+How a particle travels: `walk`, a random step at a time; `attractor`, a line to the center; `symmetric`, the same, digging each tile’s mirror image too [[c05:55-80 c06:56-68 c07:56-77]].
 @@control floor_divisor
-Particles keep coming until one over this number of the map’s tiles is open: a third, in all three demos [[c05:43 c06:43 c07:43 g]].
+Stop when 1 / this of the map is open. All three demos: a third [[c05:43 c06:43 c07:43 g]].
 
 ## What it produces, measured
 @@measured
 
-The talk calls the simple version’s map very winding, and guaranteed to be contiguous [[t:109]]. The walking version is both: {{c05.regions.max}} region on every seed, and {{c05.dead_ends.median}} dead ends at the median against cellular automata’s {{c03.dead_ends.median}} [[run:c05.regions.max c05.dead_ends.median c03.dead_ends.median]]. The attractor and the symmetric version are not contiguous: {{c06.regions.median}} and {{c07.regions.median}} regions at the median, and never fewer than {{c06.regions.min}} and {{c07.regions.min}} [[run:c06.regions.median c07.regions.median c06.regions.min c07.regions.min]]. Their particles follow a Bresenham line to the center [[c06:56-60 c07:56-60]]. Such a line can step diagonally, so a dug tile can touch the cave only at a corner, and walking is four-way [[own]].
+- **Talk says:** the simple version is very winding, and guaranteed to be contiguous [[t:109]].
+- **Walk:** both hold. {{c05.regions.max}} region on every seed; {{c05.dead_ends.median}} dead ends at the median, vs cellular automata’s {{c03.dead_ends.median}} [[run:c05.regions.max c05.dead_ends.median c03.dead_ends.median]].
+- **Attractor, symmetric:** not contiguous. {{c06.regions.median}} and {{c07.regions.median}} regions at the median; never fewer than {{c06.regions.min}} and {{c07.regions.min}} [[run:c06.regions.median c07.regions.median c06.regions.min c07.regions.min]].
+  - **Why:** their particles follow a Bresenham line to the center [[c06:56-60 c07:56-60]]. A diagonal step on that line leaves the dug tile touching the cave only at a corner, and walking is four-way [[own]].
 
 ## Where it fails
 @@fails
 
-The simple version’s walk has no cap in the talk’s code [[c05:55-80]]. Ours has one, which {{c05.fails.guard-hit}} of these seeds reach [[run:c05.fails.guard-hit]].
+- **No cap in the talk’s code:** the simple version’s walk runs until it finds open floor [[c05:55-80]].
+- **Ours has a cap:** {{c05.fails.guard-hit}} of these seeds reach it [[run:c05.fails.guard-hit]].
 
 ## What it combines with
 @@combines
 
-The talk also fires particles at a finished map, which its slide calls DLA for erosion [[t:191-193 s:21]]. That is the [erosion](#dla-erode) card.
+- **Erosion:** the talk also fires particles at a finished map, which its slide calls DLA for erosion [[t:191-193 s:21]]. See [erosion by aggregation](#dla-erode).
 
 ## Checked against the talk’s code
 @@checked

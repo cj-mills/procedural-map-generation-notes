@@ -89,6 +89,7 @@ export function generate() {
     return [stage, { stage, title: meta.title, extras: JSON.parse(meta.extras ?? '[]'), parts: sections(text.slice(m[0].length)) }];
   }));
   const figures = new Map(); // name -> { recipe, seed, frame }
+  const diagrams = new Map(); // name -> the rows of a rule's diagram, a character a tile (lib.mjs, diagram())
   const blocks = new Map(); // every generated table and list the page states as measured, by its value's name
   const usedKeys = new Set();
   const names = { traits: [...TRAITS, ...EXTRA_TRAITS].map((t) => ({ ...t, to: SCALE[t.key] })), fails: Object.fromEntries(Object.entries(FAIL_NAMES).map(([k, v]) => [k, v.toLowerCase()])) };
@@ -198,26 +199,24 @@ export function generate() {
     blocks.set(`table.measured.${card.stage}`, rows.join('\n'));
     return `Seeds 0 to ${last}, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.${card.stage}" /%}.\n\n${rows.join('\n')}`;
   }
+  /** A card's failing seeds, as a table: a row a failure a demo. The criteria's wording is in "What counts as failing". */
   function fails(card) {
-    const items = [];
-    for (const { d, file } of demosOf(card.stage)) {
-      const who = demosOf(card.stage).length > 1 ? ` \`${short(d.id)}\`` : '';
+    const rows = [`{% table label="${attr(`Where it fails: ${card.title}`)}" rowheads=true %}`, '* Failure', '* Demo', `* Seeds failing, of ${N}`, `* The talk’s code, of ${N}`, '* Watch it fail on'];
+    let any = false;
+    for (const { d } of demosOf(card.stage)) {
       const un = faith[d.id].unfinished;
       for (const [f, seeds] of failuresOf(d)) {
+        any = true;
         // Where the talk's loop has no end, its code fails by never finishing: the harness stops waiting after 10 seconds.
-        const talk = f === 'prefab-no-place' && un ? ` The talk’s own code was still looking after 10 seconds on ${un[1]} of ${N}.`
-          : faith[d.id].failureRates?.[f] ? ` The talk’s own code: ${value(`${short(d.id)}.talkfails.${f}`)} of ${N}.` : '';
-        const links = seeds.slice(0, 3).map((s) => `[seed ${s}](${recipeLink(d.recipe, s)})`).join(', ');
-        const more = seeds.length > 3 ? `, and ${seeds.length - 3} more in the data file` : '';
-        items.push(`- **${FAIL_NAMES[f]}**${who}: ${curly(traits.failures[f])}. **${seeds.length} of ${N} seeds.**${talk} Watch it fail on ${links}${more}; or \`map-lab build ${file} --seed ${seeds[0]}\`.`);
+        const talk = f === 'prefab-no-place' && un ? `${un[1]}, still looking after 10 seconds` : faith[d.id].failureRates?.[f] ? value(`${short(d.id)}.talkfails.${f}`) : '–';
+        const links = seeds.slice(0, 3).map((x) => `[seed ${x}](${recipeLink(d.recipe, x)})`).join(', ');
+        rows.push('---', `* [${FAIL_NAMES[f]}](#what-counts-as-failing)`, `* ${SHORT[d.id]} (${short(d.id)})`, `* ${seeds.length}`, `* ${talk}`, `* ${links}${seeds.length > 3 ? `, ${seeds.length - 3} more in the data file` : ''}`);
       }
     }
-    const none = `None of seeds 0 to ${last} fails any of [our criteria](#what-counts-as-failing)`;
-    const list = items.length ? items.join('\n') : null;
-    blocks.set(`list.fails.${card.stage}`, list ?? none);
-    return list
-      ? `Seeds 0 to ${last} of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.${card.stage}" /%}:\n\n${list}`
-      : `${none} {% own-run values="list.fails.${card.stage}" /%}.`;
+    rows.push('{% /table %}');
+    const none = `No seed from 0 to ${last} fails any of [our criteria](#what-counts-as-failing)`;
+    blocks.set(`list.fails.${card.stage}`, any ? rows.join('\n') : none);
+    return any ? `Seeds 0 to ${last} of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.${card.stage}" /%}:\n\n${rows.join('\n')}` : `${none} {% own-run values="list.fails.${card.stage}" /%}.`;
   }
   function combines(card) {
     const list = traits.demos.filter((d) => { const st = flatStages(d.recipe.pipeline); return st.includes(card.stage) && new Set(st).size > 1; })
@@ -255,6 +254,15 @@ export function generate() {
           const text = [];
           while (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].startsWith('@@')) text.push(lines[++i].trim());
           out.push(control(c, m[2].trim(), text.join(' ')));
+        } else if (m[1] === 'diagram') {
+          // @@diagram <name> alt="…" caption="…", then its rows, a character a tile, to the next blank line.
+          const [, name, alt, caption] = /^(\S+)\s+alt="([^"]*)"\s+caption="([^"]*)"$/.exec(m[2].trim()) ?? [];
+          if (!name) throw new Error(`cards/${stage}.mdoc: @@diagram takes a name, alt="…" and caption="…"`);
+          const drawn = [];
+          while (i + 1 < lines.length && lines[i + 1].trim()) drawn.push(lines[++i]);
+          if (!drawn.length || drawn.some((r) => r.length !== drawn[0].length)) throw new Error(`cards/${stage}.mdoc: the rows of diagram ${name} are not one width`);
+          diagrams.set(name, drawn);
+          out.push(`{% figure src="assets/rules/${name}-light.png" dark="assets/rules/${name}-dark.png" alt="${attr(alt)}" caption="${attr(caption)}" /%}`);
         } else if (m[1] === 'measured') out.push(measured(c));
         else if (m[1] === 'fails') out.push(fails(c));
         else if (m[1] === 'combines') out.push(combines(c));
@@ -372,7 +380,7 @@ export function generate() {
       ...Object.entries(OWN).map(([id, o]) => ({ id, label: o.label, recipe: cleanRecipe(o.recipe), own: true })),
     ],
   };
-  return { page, figures, blocks, data };
+  return { page, figures, diagrams, blocks, data };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

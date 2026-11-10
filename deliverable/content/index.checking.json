@@ -1,12 +1,12 @@
 {
  "format": "slib-checking@1",
  "source": "index.mdoc",
- "source_sha256": "738e36bd54fefe2df622c6e00aa33f34bc16369bf17bd5d7c2466ec9b93713fe",
- "checked": "2026-11-09",
+ "source_sha256": "0ec8b577a3a5dd253533a0892e4e0abc41a3e86b7848c41d9c526be5b8752169",
+ "checked": "2026-11-10",
  "claims": {
-  "cited": 182,
-  "verified": 182,
-  "own": 166,
+  "cited": 192,
+  "verified": 163,
+  "own": 167,
   "own_run": 74
  },
  "verifiers": [
@@ -18,5 +18,122 @@
   }
  ],
  "last_verified": "2026-11-09",
- "open": []
+ "open": [
+  {
+   "claim": 7,
+   "state": "unverified"
+  },
+  {
+   "claim": 105,
+   "state": "unverified"
+  },
+  {
+   "claim": 106,
+   "state": "unverified"
+  },
+  {
+   "claim": 107,
+   "state": "unverified"
+  },
+  {
+   "claim": 108,
+   "state": "unverified"
+  },
+  {
+   "claim": 109,
+   "state": "unverified"
+  },
+  {
+   "claim": 110,
+   "state": "unverified"
+  },
+  {
+   "claim": 111,
+   "state": "unverified"
+  },
+  {
+   "claim": 112,
+   "state": "unverified"
+  },
+  {
+   "claim": 113,
+   "state": "unverified"
+  },
+  {
+   "claim": 114,
+   "state": "unverified"
+  },
+  {
+   "claim": 115,
+   "state": "unverified"
+  },
+  {
+   "claim": 116,
+   "state": "unverified"
+  },
+  {
+   "claim": 117,
+   "state": "unverified"
+  },
+  {
+   "claim": 118,
+   "state": "unverified"
+  },
+  {
+   "claim": 119,
+   "state": "unverified"
+  },
+  {
+   "claim": 120,
+   "state": "unverified"
+  },
+  {
+   "claim": 121,
+   "state": "unverified"
+  },
+  {
+   "claim": 122,
+   "state": "unverified"
+  },
+  {
+   "claim": 123,
+   "state": "unverified"
+  },
+  {
+   "claim": 124,
+   "state": "unverified"
+  },
+  {
+   "claim": 125,
+   "state": "unverified"
+  },
+  {
+   "claim": 126,
+   "state": "unverified"
+  },
+  {
+   "claim": 128,
+   "state": "unverified"
+  },
+  {
+   "claim": 130,
+   "state": "unverified"
+  },
+  {
+   "claim": 132,
+   "state": "unverified"
+  },
+  {
+   "claim": 135,
+   "state": "unverified"
+  },
+  {
+   "claim": 138,
+   "state": "unverified"
+  },
+  {
+   "claim": 141,
+   "state": "unverified"
+  }
+ ]
 }

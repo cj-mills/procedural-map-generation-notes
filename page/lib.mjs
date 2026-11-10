@@ -226,6 +226,27 @@ export function figure(b, at, theme) {
   return png(w * S, h * S, rgb);
 }
 
+/** A rule's diagram: a few tiles drawn large from rows of characters, for one theme.
+ *  `#` solid, `.` open, `o` where a particle starts, `*` a tile it passes, `+` the tile it digs,
+ *  `x` a tile it rejects. The marks differ in size as well as color, so they read without color. */
+export function diagram(rows, theme) {
+  const P = palette(theme), T = 24, w = rows[0].length, h = rows.length;
+  const line = P.tiles[4]; // between tiles: the muted wall tone
+  const rgb = Buffer.alloc(w * T * h * T * 3);
+  const fill = (x, y, color, inset) => {
+    for (let py = y * T + inset; py < (y + 1) * T - inset; py++) for (let px = x * T + inset; px < (x + 1) * T - inset; px++) rgb.set(color, (py * w * T + px) * 3);
+  };
+  const kinds = { '#': [P.tiles[0]], '.': [P.tiles[1]], 'o': [P.tiles[0], P.marks[3], 4], '*': [P.tiles[0], P.marks[7], 8], '+': [P.tiles[1], P.marks[1], 3], 'x': [P.tiles[0], P.marks[2], 6] };
+  rows.forEach((row, y) => [...row].forEach((ch, x) => {
+    const kind = kinds[ch];
+    if (!kind) throw new Error(`a rule's diagram has no tile "${ch}"`);
+    fill(x, y, line, 0);
+    fill(x, y, kind[0], 1);
+    if (kind[1]) fill(x, y, kind[1], kind[2]);
+  }));
+  return png(w * T, h * T, rgb);
+}
+
 /** Which frames of a run a step list shows: of the frames in `among`, each kind of step's first and
  *  last, thinned to `limit`, then `mid` more from the middles of the longest runs between them. */
 export function pickFrames(frames, among, limit, mid = 0) {

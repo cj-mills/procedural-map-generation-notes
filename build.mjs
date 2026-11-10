@@ -30,7 +30,7 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { applyCitations } from './apply-citations.mjs';
 import { PAGE, generate } from './page/gen.mjs';
-import { NEW_TINT, build, figure, siteTokens, tokens, value } from './page/lib.mjs';
+import { NEW_TINT, build, diagram, figure, siteTokens, tokens, value } from './page/lib.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = join(here, 'deliverable');
@@ -54,7 +54,7 @@ if (publishArgs.includes('--r2')) {
 }
 
 // 1. The page is what the generator writes.
-const { page: fresh, figures, blocks, data } = generate();
+const { page: fresh, figures, diagrams, blocks, data } = generate();
 const page = readFileSync(PAGE);
 if (page.toString('utf8') !== fresh) throw new Error('deliverable/content/index.mdoc is not what page/gen.mjs writes: run `node page/gen.mjs`, then trace it again');
 
@@ -161,7 +161,14 @@ for (const [name, { recipe, seed, frame }] of figures) {
     manifest.provenance.push({ asset: `assets/steps/${name}-${theme}.png`, generator: `build.mjs, from the map lab core in lab/: step ${frame + 1} of the recipe ${JSON.stringify(recipe.pipeline)} on seed ${seed}, drawn in the site’s ${theme} figure colors` });
   }
 }
-console.log(`drew ${figures.size} step figures, each for both themes`);
+mkdirSync(join(bundle, 'assets/rules'), { recursive: true });
+for (const [name, rows] of diagrams) {
+  for (const theme of ['light', 'dark']) {
+    writeFileSync(join(bundle, `assets/rules/${name}-${theme}.png`), diagram(rows, theme));
+    manifest.provenance.push({ asset: `assets/rules/${name}-${theme}.png`, generator: `build.mjs, from the diagram’s rows in page/content/, drawn in the site’s ${theme} figure colors` });
+  }
+}
+console.log(`drew ${figures.size} step figures and ${diagrams.size} rule diagrams, each for both themes`);
 
 // 7. The measurement data and the recipe schema, for agents and anyone who wants the numbers.
 for (const [from, to] of [['lab/data/traits.json', 'traits.json'], ['lab/data/faithfulness.json', 'faithfulness.json'], ['lab/schema/recipe.schema.json', 'recipe.schema.json']]) copyFileSync(join(here, from), join(bundle, 'assets/lab', to));
