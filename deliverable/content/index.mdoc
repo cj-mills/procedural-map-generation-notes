@@ -275,7 +275,7 @@ sort the rooms left to right
 join each room to the one before it with an L-shaped corridor
 ```
 
-The talk starts here because anyone who has followed a roguelike tutorial has seen it {% cite id="wolverson2020-talk/transcript#s45" /%}{% cite id="wolverson2020-talk/transcript#s46" /%}{% cite id="wolverson2020-talk/transcript#s59" /%}{% cite id="wolverson2020-talk/transcript#s60" /%}. Its demo sorts the rooms by their left edge and joins each to the one before it, center to center {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L57" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L69" /%}.
+The talk’s first technique is one that anyone who has done a roguelike development tutorial has seen {% cite id="wolverson2020-talk/transcript#s45" /%}{% cite id="wolverson2020-talk/transcript#s46" /%}. Its demo sorts the rooms by their left edge and joins each to the one before it, center to center {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L57" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L69" /%}.
 {% /part %}
 
 {% part title="Step through it" %}
@@ -497,7 +497,7 @@ The talk gives the rule in three cases: no neighbors, a wall; one to four, empty
 {% interactive id="lab" caption="Step through Cellular automata: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "cellular", demos: ["c03-cellular"]} %}
 {% steps %}
 {% step src="assets/steps/c03-0001-light.png" dark="assets/steps/c03-0001-dark.png" alt="Cellular automata, seed 1: the map at step 1 of 11." key="cellular.noise" at=1 of=11 %}
-Every tile, the map’s edge included, starts as wall with a {% value %}55{% /value %}% chance and as floor otherwise {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L19-L27" /%}.
+Every tile, the map’s edge included, starts as wall with a {% value %}55{% /value %}% chance and as floor otherwise {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L19-L29" /%}.
 {% /step %}
 {% step src="assets/steps/c03-0002-light.png" dark="assets/steps/c03-0002-dark.png" alt="Cellular automata, seed 1: the map at step 2 of 11." key="cellular.iterate" at=2 of=11 %}
 Every tile inside the map’s outer ring counts the walls among its eight neighbors, in a copy of the map, so all tiles change at once {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L57-L59" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L42-L47" /%}{% cite id="wolverson2020-talk/transcript#s79" /%}{% cite id="wolverson2020-talk/transcript#s80" /%}. With five or more, or none, it becomes wall; with one to four, floor {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L61-L66" /%}{% cite id="wolverson2020-talk/transcript#s81" /%}{% cite id="wolverson2020-talk/transcript#s82" /%}. This is pass {% value %}1{% /value %}.

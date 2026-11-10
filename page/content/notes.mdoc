@@ -17,7 +17,7 @@ The demo starts its list with one rectangle inside the map’s edge and that rec
 An attempt picks any rectangle on the list and tries a room near its top-left corner [[c02:43-44 c02:127-133]]. The room is carved only if every tile within two of it is still solid and inside the map’s outer ring, and then the rectangle it came from is quartered again [[c02:139-169 c02:46-50]]. It is room {n}.
 
 ## cellular.noise
-Every tile, the map’s edge included, starts as wall with a {n}% chance and as floor otherwise [[c03:19-27]].
+Every tile, the map’s edge included, starts as wall with a {n}% chance and as floor otherwise [[c03:19-29]].
 
 ## cellular.iterate
 Every tile inside the map’s outer ring counts the walls among its eight neighbors, in a copy of the map, so all tiles change at once [[c03:57-59 c03:42-47 t:79-80]]. With five or more, or none, it becomes wall; with one to four, floor [[c03:61-66 t:81-82]]. This is pass {n}.
