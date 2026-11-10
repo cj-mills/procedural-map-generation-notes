@@ -1,0 +1,13 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "An exit without a cull",
+  "note": "Not one of the talk's demos: the talk's c18-ending-right with its cull stage taken out, to show what the cull is for. The exit can land in a cave the start can't reach.",
+  "seed": 0,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    { "stage": "cellular", "wall_percent": 55, "iterations": 10 },
+    { "stage": "start", "at": "left" },
+    { "stage": "exit", "at": "right" }
+  ]
+}

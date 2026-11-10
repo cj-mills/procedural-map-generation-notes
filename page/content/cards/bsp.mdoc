@@ -1,0 +1,39 @@
+---
+title: Binary space partition rooms
+---
+Rooms placed in ever-smaller parts of the map, so they come out better spaced than random rooms [[t:61-64 s:7]].
+
+## The rule
+```text
+start a list with one rectangle and its four quarters
+repeat for a fixed number of attempts:
+    pick any rectangle on the list
+    try a room near its top-left corner
+    if it fits: carve it, and add that rectangle's four quarters to the list
+sort and join the rooms, as random rooms are
+```
+
+The talk describes halving the map, then each half, until a piece is about the size of a room [[t:66-68]]. Its demo is looser: it cuts into quarters, keeps every rectangle it has cut on its list, and quarters a rectangle again each time a room lands in it [[c02:87-111 c02:43-50]].
+
+## Step through it
+@@steps limit=6
+
+## Controls
+@@control attempts
+How many times a rectangle is picked and a room tried. The demo’s counter goes up on every attempt, whether or not the room fits [[c02:42-53]].
+
+## What it produces, measured
+@@measured
+
+Of 240 attempts, {{c02.rooms.median}} place a room at the median [[run:c02.rooms.median]]. The talk says of its animation that there are no rejections [[t:71]]. The demo records a frame only for a room that fits, so the attempts that fail are never shown [[c02:44-52]]. Against random rooms it places {{c02.rooms.median}} rooms to {{c01.rooms.median}} and opens {{c02.floor_share.median}} of the map to {{c01.floor_share.median}} [[run:c02.rooms.median c01.rooms.median c02.floor_share.median c01.floor_share.median]].
+
+## Where it fails
+@@fails
+
+## What it combines with
+@@combines
+
+The talk uses it as the left half of its combined map: a fortress that breaks out into caves [[t:181-185]].
+
+## Checked against the talk’s code
+@@checked

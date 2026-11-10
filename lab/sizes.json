@@ -13,13 +13,13 @@
     "gzipped": 1500
   },
   "wasm": {
-    "bytes": 81696,
-    "gzipped": 36209
+    "bytes": 81716,
+    "gzipped": 36212
   },
   "glue": {
     "bytes": 16216,
     "gzipped": 3082
   },
-  "totalGzipped": 39291,
-  "headroom": 11909
+  "totalGzipped": 39294,
+  "headroom": 11906
 }

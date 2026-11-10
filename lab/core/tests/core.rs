@@ -64,7 +64,7 @@ fn maps_and_levels_match_the_golden_hashes() {
         n += 1;
     }
     assert_eq!(n, all.len() * 5);
-    assert_eq!(all.len(), 23);
+    assert_eq!(all.len(), 24);
 }
 
 #[test]

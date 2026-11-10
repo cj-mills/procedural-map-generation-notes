@@ -1,0 +1,44 @@
+---
+title: Random rooms
+---
+Scatter rectangles over a solid map, keep the ones that don’t overlap, and join them with corridors [[t:47-51 s:5]].
+
+## The rule
+```text
+repeat for a fixed number of attempts:
+    pick a random rectangle
+    carve it as a room, unless it comes within a tile of an earlier room
+sort the rooms left to right
+join each room to the one before it with an L-shaped corridor
+```
+
+The talk starts here because anyone who has followed a roguelike tutorial has seen it [[t:45-46 t:59-60]]. Its demo sorts the rooms by their left edge and joins each to the one before it, center to center [[c01:57 c01:67-69]].
+
+## Step through it
+@@steps limit=6
+
+## Controls
+@@control attempts
+How many rectangles are tried. The demo’s loop runs a fixed 20 times, and a rectangle that overlaps is discarded without another try [[c01:20-21 c01:35-37 c01:48-52]].
+@@control min_size
+The smallest value a room’s width and height are drawn from [[c01:25-26]]. A room covers one tile more than the value each way, because the rectangle type the demo uses includes both of its ends [[own]].
+@@control max_size
+The largest such value. The demo writes it as an upper end of 10, which its random call leaves out [[own]].
+
+## What it produces, measured
+@@measured
+
+Every seed gives {{c01.regions.max}} region and {{c01.dead_ends.max}} dead ends [[run:c01.regions.max c01.dead_ends.max]]: each room is joined to the one before it, and a corridor ends inside a room [[own]]. Of 20 attempts, {{c01.rooms.median}} place a room at the median, and never fewer than {{c01.rooms.min}} [[run:c01.rooms.median c01.rooms.min]].
+
+## Where it fails
+@@fails
+
+Its loops all run a fixed number of times, so it always finishes [[c01:20-21 c01:67-69]].
+
+## What it combines with
+@@combines
+
+The talk erodes this map with particles, and places a prefab in one of its rooms [[t:191-193 t:203-205]].
+
+## Checked against the talk’s code
+@@checked

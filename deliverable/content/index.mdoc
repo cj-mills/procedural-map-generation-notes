@@ -1,57 +1,2089 @@
 ---
 trace: christianjmills/procedural-map-generation-techniques-notes
 ---
-Fill a grid with random rock, then apply one rule to every tile, again and again {% ref source="this" path="assets/caves.js" lines="52-56" /%}. The talk's slide puts the recipe in three steps: make a random map, apply cell life rules to each tile, repeat {% cite id="wolverson2020-slides/pdf#p9" /%}. Herbert Wolverson's talk on procedural map generation introduces cellular automata as a way to evolve an ordered, natural-looking map from complete chaos {% cite id="wolverson2020-talk/transcript#s73" /%}{% cite id="wolverson2020-talk/transcript#s74" /%}. Unlike some of the talk's other techniques, this one really does start from noise: half the map walls and half floors, picked at random, with no way through {% cite id="wolverson2020-talk/transcript#s74" /%}{% cite id="wolverson2020-talk/transcript#s75" /%}{% cite id="wolverson2020-talk/transcript#s76" /%}. The talk likens it to Conway's Game of Life {% cite id="wolverson2020-talk/transcript#s77" /%}{% cite id="wolverson2020-talk/transcript#s78" /%}{% cite id="wolverson2020-slides/pdf#p9" /%}. This page builds that loop and lets you step through it.
+{% interactive id="lab" caption="The talk’s last pipeline, cellular → cull → start → exit → hot-path, on seed 7. Change the pipeline, a control or the seed; step through the build; then walk the map to its exit." params={mode: "lab", recipe: {format: "map-lab-recipe/1", seed: 7, width: 80, height: 50, pipeline: [{stage: "cellular", wall_percent: 55, iterations: 10}, {stage: "cull", from: "center", mode: "remove"}, {stage: "start", at: "left"}, {stage: "exit", at: "right"}, {stage: "hot-path", radius: 10, cull: 15}]}} %}
+{% steps %}
+{% step src="assets/steps/c20-0011-light.png" dark="assets/steps/c20-0011-dark.png" alt="Caves, hot path cull, seed 7: the map at step 11 of 18." key="cellular.iterate" at=11 of=18 %}
+Every tile inside the map’s outer ring counts the walls among its eight neighbors, in a copy of the map, so all tiles change at once {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L57-L59" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L42-L47" /%}{% cite id="wolverson2020-talk/transcript#s79" /%}{% cite id="wolverson2020-talk/transcript#s80" /%}. With five or more, or none, it becomes wall; with one to four, floor {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L61-L66" /%}{% cite id="wolverson2020-talk/transcript#s81" /%}{% cite id="wolverson2020-talk/transcript#s82" /%}. This is pass {% value %}10{% /value %}.
+{% /step %}
+{% step src="assets/steps/c20-0013-light.png" dark="assets/steps/c20-0013-dark.png" alt="Caves, hot path cull, seed 7: the map at step 13 of 18." key="cull.removed" at=13 of=18 %}
+Open tiles the central tile can’t walk to are turned to wall {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L55-L65" /%}{% cite id="wolverson2020-talk/transcript#s230" /%}. Tiles removed: {% value %}31{% /value %}.
+{% /step %}
+{% step src="assets/steps/c20-0015-light.png" dark="assets/steps/c20-0015-dark.png" alt="Caves, hot path cull, seed 7: the map at step 15 of 18." key="start.placed" at=15 of=18 %}
+The start goes on the open tile nearest that point in a straight line {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L71-L86" /%}{% cite id="wolverson2020-talk/transcript#s242" /%}{% cite id="wolverson2020-talk/transcript#s243" /%}.
+{% /step %}
+{% step src="assets/steps/c20-0016-light.png" dark="assets/steps/c20-0016-dark.png" alt="Caves, hot path cull, seed 7: the map at step 16 of 18." key="exit.placed" at=16 of=18 %}
+The exit goes on the open tile nearest the middle of the right edge, and the route from the start to it is found {% cite id="wolverson2020-code/c18-ending-right/src/main.rs#L93-L111" /%}{% cite id="wolverson2020-talk/transcript#s247" /%}{% cite id="wolverson2020-talk/transcript#s248" /%}. Steps on the shortest route: {% value %}99{% /value %}.
+{% /step %}
+{% step src="assets/steps/c20-0018-light.png" dark="assets/steps/c20-0018-dark.png" alt="Caves, hot path cull, seed 7: the map at step 18 of 18." key="hot-path.culled" at=18 of=18 %}
+Every tile at the cull distance or farther from the route becomes wall. The talk’s demo culls at 15, wider than the 10 of its hot path {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L140-L152" /%}{% cite id="wolverson2020-talk/transcript#s263" /%}{% cite id="wolverson2020-talk/transcript#s264" /%}. The cull distance: {% value %}15{% /value %}.
+{% /step %}
+{% /steps %}
 
-## The rule
-
-Each pass works from a copy of the map: it visits every tile that isn't on the edge and counts its neighbours, diagonals included {% cite id="wolverson2020-talk/transcript#s79" /%}{% cite id="wolverson2020-talk/transcript#s80" /%}. A tile with no neighbours becomes a wall, one with one to four becomes empty, and one with five or more becomes a wall {% cite id="wolverson2020-talk/transcript#s80" /%}{% cite id="wolverson2020-talk/transcript#s81" /%}{% cite id="wolverson2020-talk/transcript#s82" /%}. Wolverson adds that you can and should tweak these rules to suit your game {% cite id="wolverson2020-talk/transcript#s82" /%}{% cite id="wolverson2020-talk/transcript#s83" /%}.
-
-The neighbours counted are walls, as the talk's code shows further down. This page's version states the same rule in terms of rock: a tile becomes rock if more than four of its eight neighbours are rock, or if none of them are, and open floor otherwise. Each generation reads the previous grid and writes a new one, so every tile sees the same moment {% ref source="this" path="assets/caves.js" lines="40-50" /%}:
-
-```javascript
-export function step(grid, width, height) {
-  const out = grid.slice();
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const n = rockNeighbours(grid, width, x, y);
-      out[y * width + x] = n > 4 || n === 0 ? 1 : 0;
-    }
-  }
-  return out;
-}
-```
-
-The first half of the rule does the smoothing. A tile in a mostly rocky neighbourhood fills in and a tile in a mostly open one clears, so the noise clumps into solid walls and open space {% own /%}. The second half, rock when no neighbour is rock, puts single-tile pillars in the middle of wide-open areas {% own /%}.
-
-The rule ignores a tile's own state: only its neighbours count {% ref source="this" path="assets/caves.js" lines="30-38" /%}.
-
-## Try it
-
-{% interactive id="caves" caption="An 80 × 50 cave map. Change the starting rock, step through the generations, or try another seed." %}
-{% figure src="assets/caves-fallback.png" alt="Three 80 by 50 tile maps side by side, all from seed 1 with 55% starting rock. Left, generation 0: evenly scattered noise. Middle, generation 3: the noise has clumped into connected open areas bounded by rock. Right, generation 10: smoother caves with a few single-tile pillars in the open areas." caption="Without JavaScript: seed 1 with 55% starting rock, at generations 0, 3 and 10." /%}
-
-At seed 1 with 55% starting rock, 41.6% of the map is open at generation 0, 48.8% after three generations and 52.1% after ten {% own-run values="open.g0 open.g3 open.g10" /%}. The outer ring is always rock, which counts toward the starting share {% ref source="this" path="assets/caves.js" lines="17-28" /%}.
+On the command line: `map-lab build recipes/c20-hot-path.json --seed 7`.
 {% /interactive %}
 
-The talk then shows these steps animated: the random soup quickly turns into a far more natural-looking structure that can be made into a useful map {% cite id="wolverson2020-talk/transcript#s83" /%}{% cite id="wolverson2020-talk/transcript#s84" /%}{% cite id="wolverson2020-slides/pdf#p10" /%}. Wolverson calls it a really simple, really fast algorithm that gives the same result every time from the same seed {% cite id="wolverson2020-talk/transcript#s85" /%}{% cite id="wolverson2020-talk/transcript#s86" /%}.
+This is a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, and more algorithms that fix the maps and find out whether they are usable {% cite id="wolverson2020-talk/transcript#s6" /%}{% cite id="wolverson2020-talk/transcript#s7" /%}{% cite id="wolverson2020-talk/transcript#s8" /%}{% cite id="wolverson2020-talk/transcript#s9" /%}. A recipe is a pipeline of those techniques and a seed, and the same recipe always builds the same map {% own /%}. The lab above builds one a step at a time. Below, each technique has a card: its rule, its controls, what it produces over 200 seeds, the seeds where it fails, and how our version compares with the talk’s own code {% own /%}.
 
-## It never settles
+## Which technique for which map
 
-Step past the third generation and the caves' overall shape holds, but tiles never stop flipping. At 55% starting rock, about 1,040 of the 4,000 tiles still change between generations 9 and 10, averaged over seeds 1 to 50 {% own-run values="churn.g10" /%}. Without the "none are rock" half of the rule, far fewer flip: at seed 1, 200 tiles change at generation 10 {% own-run values="churn.nozero.seed1" /%}. The talk's demo runs a fixed ten iterations {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L31-L34" /%}, so when to stop is a choice, not something the rule decides {% own /%}.
+Each row is a criterion of our own over the measured traits, and the demos listed are the ones the data says meet it {% own-run values="table.guide" /%}.
 
-The starting share decides whether the caves connect. Over the same 50 seeds after ten generations, the largest open region, counting tiles joined edge to edge, holds 98% of the floor at 55% starting rock. At 60% it holds 63%, spread over about 10 regions. At 65% it holds 31%, over about 15 {% own-run values="largest.55 largest.60 regions.60 largest.65 regions.65" /%}.
+{% table label="Which technique meets which need" rowheads=true %}
+* If the map needs
+* Our criterion
+* The talk’s demos that meet it, each with its median
+---
+* One connected map on every seed
+* One region on all 200 seeds
+* [Random rooms](#rooms) 1, [BSP rooms](#bsp) 1, [Drunkard’s walk](#drunkard) 1, [DLA, walking](#dla) 1, [Rooms, eroded](#dla-erode) 1, [Vault in a room](#prefab) 1, [Caves, culled](#start) 1, [Caves, exit at right](#exit) 1, [Caves, exit farthest](#exit) 1, [Caves, hot path cull](#hot-path) 1, [Rooms, hot rooms](#hot-rooms) 1
+---
+* No dead ends
+* No dead end on any of the 200 seeds
+* [Random rooms](#rooms) 0, [BSP rooms](#bsp) 0, [Vault in a room](#prefab) 0, [Rooms, hot rooms](#hot-rooms) 0
+---
+* Many dead ends, to hide things in
+* One region on every seed, and the three highest median dead ends
+* [DLA, walking](#dla) 113, [Caves, culled](#start) 60, [Caves, exit at right](#exit) 60
+---
+* Tight passages
+* The three highest median corridor ratios, among maps of floor and wall
+* [DLA, walking](#dla) 0.217, [Random rooms](#rooms) 0.190, [Vault in a room](#prefab) 0.190
+---
+* Open ground
+* The three highest median floor shares, among maps of floor and wall
+* [Voronoi cells](#voronoi) 0.836, [Cellular automata](#cellular) 0.637, [Vault on open floor](#prefab) 0.637
+---
+* A long walk from start to exit
+* A path on every seed, and the three longest median paths
+* [Rooms, hot rooms](#hot-rooms) 180.5, [BSP rooms](#bsp) 160, [Random rooms](#rooms) 149
+---
+* Culling before it can be played
+* More than one region on every seed
+* [Cellular automata](#cellular) 17, [DLA, attractor](#dla) 26, [DLA, symmetric](#dla) 25, [Voronoi cells](#voronoi) 16, [BSP + caves + spine](#combine) 11, [Vault on open floor](#prefab) 17, [Caves, unreachable marked](#cull) 17
+{% /table %}
 
-## Reading the talk's code
+The talk’s 22 demos, each built on seeds 0 to 199. A cell’s number is the median, and its mark shows where 8 of 10 seeds fall {% own-run values="table.comparison" /%}. The traits are [our own definitions](#our-definitions).
 
-The talk's demo runs the same loop on an 80 × 50 map: random tiles, 55% of them `.`, then ten iterations, each one recorded as a frame {% cite id="wolverson2020-code/backend/src/lib.rs#L3-L4" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L17-L34" /%}. Its rule is written in terms of `.` tiles: count the `.` neighbours; a tile with none becomes `.`, a tile with fewer than five becomes `#`, and any other tile becomes `.` {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L40-L54" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L56-L70" /%}.
+{% table label="The talk’s 22 demos compared" rowheads=true sort=true key=true %}
+* Demo
+* [Floor share](#our-definitions)
+* [Regions](#our-definitions)
+* [Dead ends](#our-definitions)
+* [Corridor ratio](#our-definitions)
+* [Path](#our-definitions)
+* Seeds failing, of 200
+---
+* Generators
+---
+* [Random rooms](#rooms) (c01)
+* 0.162 {% mark p10=0.127 median=0.162 p90=0.192 min=0.096 max=0.243 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 0 {% mark p10=0 median=0 p90=0 min=0 max=0 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.190 {% mark p10=0.146 median=0.19 p90=0.247 min=0.094 max=0.322 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 149 {% mark p10=112.7 median=149 p90=191.1 min=76 max=257 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [BSP rooms](#bsp) (c02)
+* 0.233 {% mark p10=0.194 median=0.233 p90=0.273 min=0.158 max=0.303 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 0 {% mark p10=0 median=0 p90=0 min=0 max=0 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.143 {% mark p10=0.101 median=0.143 p90=0.182 min=0.072 max=0.227 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 160 {% mark p10=129.9 median=160 p90=197.1 min=78 max=260 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [Cellular automata](#cellular) (c03)
+* 0.637 {% mark p10=0.608 median=0.637 p90=0.665 min=0.559 max=0.698 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 17 {% mark p10=11 median=17 p90=23 min=6 max=32 n=200 unit="seeds" to=60 trait="regions" /%}
+* 67 {% mark p10=57 median=67 p90=83 min=48 max=103 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.131 {% mark p10=0.116 median=0.131 p90=0.149 min=0.101 max=0.175 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 102 {% mark p10=93 median=102 p90=112 min=85 max=139 n=128 unit="seeds" to=290 trait="path" /%}
+* not one region 200, no path 72
+---
+* [Drunkard’s walk](#drunkard) (c04)
+* 0.338 {% mark p10=0.334 median=0.338 p90=0.345 min=0.333 max=0.355 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 24 {% mark p10=17 median=24 p90=32 min=9 max=42 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.053 {% mark p10=0.037 median=0.053 p90=0.075 min=0.025 max=0.096 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 73.5 {% mark p10=58.9 median=73.5 p90=94 min=47 max=109 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [DLA, walking](#dla) (c05)
+* 0.333 {% mark p10=0.333 median=0.333 p90=0.333 min=0.333 max=0.333 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 113 {% mark p10=102 median=113 p90=125 min=84 max=136 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.217 {% mark p10=0.196 median=0.217 p90=0.242 min=0.176 max=0.272 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 88 {% mark p10=79 median=88 p90=95 min=71 max=105 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [DLA, attractor](#dla) (c06)
+* 0.333 {% mark p10=0.333 median=0.333 p90=0.333 min=0.333 max=0.333 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 26 {% mark p10=19 median=26 p90=34 min=13 max=53 n=200 unit="seeds" to=60 trait="regions" /%}
+* 63 {% mark p10=55 median=63 p90=75 min=43 max=89 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.120 {% mark p10=0.103 median=0.12 p90=0.136 min=0.089 max=0.158 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 60 {% mark p10=56 median=60 p90=66 min=53 max=71 n=156 unit="seeds" to=290 trait="path" /%}
+* not one region 200, no path 44
+---
+* [DLA, symmetric](#dla) (c07)
+* 0.333 {% mark p10=0.333 median=0.333 p90=0.334 min=0.333 max=0.334 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 25 {% mark p10=17 median=25 p90=35 min=5 max=55 n=200 unit="seeds" to=60 trait="regions" /%}
+* 64 {% mark p10=50 median=64 p90=80 min=44 max=98 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.120 {% mark p10=0.098 median=0.12 p90=0.147 min=0.083 max=0.181 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 58 {% mark p10=54 median=58 p90=64 min=48 max=72 n=171 unit="seeds" to=290 trait="path" /%}
+* not one region 200, no path 29
+---
+* [Voronoi cells](#voronoi) (c08a)
+* 0.836 {% mark p10=0.829 median=0.836 p90=0.842 min=0.822 max=0.848 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 16 {% mark p10=16 median=16 p90=17 min=15 max=19 n=200 unit="seeds" to=60 trait="regions" /%}
+* 15 {% mark p10=12 median=15 p90=20 min=7 max=26 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.005 {% mark p10=0.004 median=0.005 p90=0.007 min=0.002 max=0.012 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* –
+* not one region 200, no path 200
+---
+* [Noise: height map](#noise) (c10)
+* 1.000 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 0 {% mark p10=0 median=0 p90=0 min=0 max=0 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.000 {% mark p10=0 median=0 p90=0 min=0 max=0 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 79 {% mark p10=79 median=79 p90=79 min=79 max=79 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [Noise: overworld](#noise) (c11)
+* 0.377 {% mark p10=0.32 median=0.377 p90=0.435 min=0.238 max=0.503 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 4 {% mark p10=2 median=4 p90=7 min=1 max=12 n=200 unit="seeds" to=60 trait="regions" /%}
+* 12 {% mark p10=7 median=12 p90=17 min=4 max=32 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.014 {% mark p10=0.007 median=0.014 p90=0.029 min=0.003 max=0.051 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 91 {% mark p10=79.5 median=91 p90=113.5 min=67 max=156 n=86 unit="seeds" to=290 trait="path" /%}
+* not one region 197, no path 114
+---
+* [Noise: zoom](#noise) (c12)
+* 0.132 {% mark p10=0 median=0.132 p90=0.846 min=0 max=0.886 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=2 min=1 max=4 n=200 unit="seeds" to=60 trait="regions" /%}
+* 2 {% mark p10=0 median=2 p90=4 min=0 max=6 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.013 {% mark p10=0 median=0.013 p90=0.4 min=0 max=0.4 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 64.5 {% mark p10=0 median=64.5 p90=93 min=0 max=108 n=156 unit="seeds" to=290 trait="path" /%}
+* not one region 61, no path 44, short path 59
+---
+* [Noise: double](#noise) (c13)
+* 0.352 {% mark p10=0.059 median=0.352 p90=0.898 min=0 max=0.954 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 2 {% mark p10=1 median=2 p90=5 min=1 max=8 n=200 unit="seeds" to=60 trait="regions" /%}
+* 2 {% mark p10=0.9 median=2 p90=4 min=0 max=7 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.002 {% mark p10=0 median=0.002 p90=0.023 min=0 max=0.4 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 81 {% mark p10=18 median=81 p90=99 min=0 max=127 n=114 unit="seeds" to=290 trait="path" /%}
+* not one region 128, no path 86, short path 14
+---
+* Shaping and combining
+---
+* [Rooms, eroded](#dla-erode) (c08)
+* 0.287 {% mark p10=0.252 median=0.287 p90=0.317 min=0.221 max=0.368 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 51 {% mark p10=39 median=51 p90=62 min=28 max=77 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.085 {% mark p10=0.062 median=0.085 p90=0.111 min=0.039 max=0.139 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 121.5 {% mark p10=88 median=121.5 p90=156.1 min=59 max=186 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [BSP + caves + spine](#combine) (c09)
+* 0.439 {% mark p10=0.401 median=0.439 p90=0.477 min=0.367 max=0.512 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 11 {% mark p10=6 median=11 p90=17 min=3 max=25 n=200 unit="seeds" to=60 trait="regions" /%}
+* 39 {% mark p10=30 median=39 p90=50 min=20 max=64 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.139 {% mark p10=0.116 median=0.139 p90=0.163 min=0.089 max=0.194 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 125 {% mark p10=107.2 median=125 p90=150.8 min=94 max=229 n=153 unit="seeds" to=290 trait="path" /%}
+* not one region 200, no path 47
+---
+* [Vault in a room](#prefab) (c14)
+* 0.162 {% mark p10=0.127 median=0.162 p90=0.192 min=0.096 max=0.243 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 0 {% mark p10=0 median=0 p90=0 min=0 max=0 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.190 {% mark p10=0.146 median=0.19 p90=0.247 min=0.094 max=0.322 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 149 {% mark p10=112.7 median=149 p90=191.1 min=76 max=257 n=200 unit="seeds" to=290 trait="path" /%}
+* no place for the prefab 10
+---
+* [Vault on open floor](#prefab) (c15)
+* 0.637 {% mark p10=0.608 median=0.637 p90=0.665 min=0.559 max=0.698 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 17 {% mark p10=11 median=17 p90=23 min=6 max=32 n=200 unit="seeds" to=60 trait="regions" /%}
+* 67 {% mark p10=57 median=67 p90=83 min=48 max=103 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.131 {% mark p10=0.116 median=0.131 p90=0.149 min=0.101 max=0.175 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 102 {% mark p10=93 median=102 p90=112 min=85 max=139 n=128 unit="seeds" to=290 trait="path" /%}
+* no place for the prefab 130, not one region 200, no path 72
+---
+* Analysis and placement
+---
+* [Caves, unreachable marked](#cull) (c16)
+* 0.637 {% mark p10=0.608 median=0.637 p90=0.665 min=0.559 max=0.698 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 17 {% mark p10=11 median=17 p90=23 min=6 max=32 n=200 unit="seeds" to=60 trait="regions" /%}
+* 67 {% mark p10=57 median=67 p90=83 min=48 max=103 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.131 {% mark p10=0.116 median=0.131 p90=0.149 min=0.101 max=0.175 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 102 {% mark p10=93 median=102 p90=112 min=85 max=139 n=128 unit="seeds" to=290 trait="path" /%}
+* not one region 200, no path 72
+---
+* [Caves, culled](#start) (c17)
+* 0.627 {% mark p10=0.59 median=0.627 p90=0.66 min=0.424 max=0.694 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 60 {% mark p10=51 median=60 p90=74 min=36 max=86 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.124 {% mark p10=0.108 median=0.124 p90=0.141 min=0.092 max=0.163 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 102 {% mark p10=92 median=102 p90=113.1 min=72 max=146 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [Caves, exit at right](#exit) (c18)
+* 0.627 {% mark p10=0.59 median=0.627 p90=0.66 min=0.424 max=0.694 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 60 {% mark p10=51 median=60 p90=74 min=36 max=86 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.124 {% mark p10=0.108 median=0.124 p90=0.141 min=0.092 max=0.163 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 102 {% mark p10=92 median=102 p90=113.1 min=72 max=146 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [Caves, exit farthest](#exit) (c19)
+* 0.627 {% mark p10=0.59 median=0.627 p90=0.66 min=0.424 max=0.694 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 60 {% mark p10=51 median=60 p90=74 min=36 max=86 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.124 {% mark p10=0.108 median=0.124 p90=0.141 min=0.092 max=0.163 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 71 {% mark p10=64 median=71 p90=88.1 min=63 max=138 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [Caves, hot path cull](#hot-path) (c20)
+* 0.311 {% mark p10=0.278 median=0.311 p90=0.339 min=0.209 max=0.377 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 53.5 {% mark p10=43 median=53.5 p90=62 min=34 max=79 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.130 {% mark p10=0.107 median=0.13 p90=0.152 min=0.078 max=0.189 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 102 {% mark p10=92 median=102 p90=113.1 min=72 max=146 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+---
+* [Rooms, hot rooms](#hot-rooms) (c21)
+* 0.248 {% mark p10=0.212 median=0.248 p90=0.279 min=0.189 max=0.308 n=200 unit="seeds" to=1 trait="floor_share" /%}
+* 1 {% mark p10=1 median=1 p90=1 min=1 max=1 n=200 unit="seeds" to=60 trait="regions" /%}
+* 0 {% mark p10=0 median=0 p90=0 min=0 max=0 n=200 unit="seeds" to=140 trait="dead_ends" /%}
+* 0.158 {% mark p10=0.121 median=0.158 p90=0.197 min=0.089 max=0.256 n=200 unit="seeds" to=0.4 trait="corridor_ratio" /%}
+* 180.5 {% mark p10=148 median=180.5 p90=222.3 min=116 max=284 n=200 unit="seeds" to=290 trait="path" /%}
+* none
+{% /table %}
 
-That looks like the opposite of the talk's rule until you check which glyph is the wall {% own /%}. A new map is all `.` {% cite id="wolverson2020-code/backend/src/lib.rs#L12-L16" /%}, the shared map code lets a tile lead only to neighbours that are not `.` {% cite id="wolverson2020-code/backend/src/lib.rs#L47-L68" /%}, and the demo labels its first frame "Random Noise - 55% Walls" {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L19-L29" /%}. So `.` is the wall and `#` is the floor, and the demo's rule is the talk's rule {% own /%}.
+## Generators
 
-{% callout type="note" title="Where this version differs" %}
-The talk's demo rolls every tile at random, the outer ring included, and then only ever updates interior tiles, so the outer ring keeps its random roll {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L17-L34" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L56-L70" /%}. This version makes the outer ring rock before the first generation, so the caves are always closed {% ref source="this" path="assets/caves.js" lines="17-28" /%}.
+Each of these starts a new map {% own /%}.
+
+{% card title="Random rooms" id="rooms" kind="Generator" %}
+Scatter rectangles over a solid map, keep the ones that don’t overlap, and join them with corridors {% cite id="wolverson2020-talk/transcript#s47" /%}{% cite id="wolverson2020-talk/transcript#s48" /%}{% cite id="wolverson2020-talk/transcript#s49" /%}{% cite id="wolverson2020-talk/transcript#s50" /%}{% cite id="wolverson2020-talk/transcript#s51" /%}{% cite id="wolverson2020-slides/pdf#p5" /%}.
+
+Stage `rooms`. The talk’s demo: `c01-rooms`.
+
+{% part title="The rule" %}
+```text
+repeat for a fixed number of attempts:
+    pick a random rectangle
+    carve it as a room, unless it comes within a tile of an earlier room
+sort the rooms left to right
+join each room to the one before it with an L-shaped corridor
+```
+
+The talk starts here because anyone who has followed a roguelike tutorial has seen it {% cite id="wolverson2020-talk/transcript#s45" /%}{% cite id="wolverson2020-talk/transcript#s46" /%}{% cite id="wolverson2020-talk/transcript#s59" /%}{% cite id="wolverson2020-talk/transcript#s60" /%}. Its demo sorts the rooms by their left edge and joins each to the one before it, center to center {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L57" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L69" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Random rooms: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "rooms", demos: ["c01-rooms"]} %}
+{% steps %}
+{% step src="assets/steps/c01-0001-light.png" dark="assets/steps/c01-0001-dark.png" alt="Random rooms, seed 1: the map at step 1 of 30." key="rooms.add" at=1 of=30 %}
+A random rectangle that comes within a tile of no room placed so far is carved as a room {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L22-L27" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L30-L37" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L41-L43" /%}. It is room {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c01-0008-light.png" dark="assets/steps/c01-0008-dark.png" alt="Random rooms, seed 1: the map at step 8 of 30." key="rooms.discard" at=8 of=30 %}
+This rectangle comes within a tile of a room already placed, so it is thrown away {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L30-L37" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L48-L52" /%}{% cite id="wolverson2020-talk/transcript#s54" /%}{% cite id="wolverson2020-talk/transcript#s55" /%}. Rooms placed so far: {% value %}7{% /value %}.
+{% /step %}
+{% step src="assets/steps/c01-0014-light.png" dark="assets/steps/c01-0014-dark.png" alt="Random rooms, seed 1: the map at step 14 of 30." key="rooms.add" at=14 of=30 %}
+A random rectangle that comes within a tile of no room placed so far is carved as a room {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L22-L27" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L30-L37" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L41-L43" /%}. It is room {% value %}10{% /value %}.
+{% /step %}
+{% step src="assets/steps/c01-0021-light.png" dark="assets/steps/c01-0021-dark.png" alt="Random rooms, seed 1: the map at step 21 of 30." key="rooms.sort" at=21 of=30 %}
+The rooms are sorted by their left edge, the order they will be joined in {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L57" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L69" /%}. Rooms to join: {% value %}10{% /value %}.
+{% /step %}
+{% step src="assets/steps/c01-0022-light.png" dark="assets/steps/c01-0022-dark.png" alt="Random rooms, seed 1: the map at step 22 of 30." key="rooms.corridor" at=22 of=30 %}
+A corridor joins this room’s center to the center of the room before it: one run across and one up or down, in an order a coin flip picks {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L76" /%}{% cite id="wolverson2020-talk/transcript#s57" /%}{% cite id="wolverson2020-talk/transcript#s58" /%}. It is corridor {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c01-0030-light.png" dark="assets/steps/c01-0030-dark.png" alt="Random rooms, seed 1: the map at step 30 of 30." key="rooms.corridor" at=30 of=30 %}
+A corridor joins this room’s center to the center of the room before it: one run across and one up or down, in an order a coin flip picks {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L76" /%}{% cite id="wolverson2020-talk/transcript#s57" /%}{% cite id="wolverson2020-talk/transcript#s58" /%}. It is corridor {% value %}9{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c01-rooms.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `attempts` (1 to 500; the talk’s: `20`). How many rectangles are tried. The demo’s loop runs a fixed 20 times, and a rectangle that overlaps is discarded without another try {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L20-L21" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L35-L37" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L48-L52" /%}.
+- `min_size` (1 to 30; the talk’s: `2`). The smallest value a room’s width and height are drawn from {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L25-L26" /%}. A room covers one tile more than the value each way, because the rectangle type the demo uses includes both of its ends {% own /%}.
+- `max_size` (1 to 30; the talk’s: `9`). The largest such value. The demo writes it as an upper end of 10, which its random call leaves out {% own /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.rooms" /%}.
+
+{% table label="Measured traits: Random rooms" rowheads=true key=true %}
+* Trait
+* Random rooms (c01)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.162, 0.127 to 0.192 {% mark p10=0.127 median=0.162 p90=0.192 unit="seeds" to=1 trait="floor_share" series="c01-rooms" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c01-rooms" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 0, 0 to 0 {% mark p10=0 median=0 p90=0 unit="seeds" to=140 trait="dead_ends" series="c01-rooms" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.190, 0.146 to 0.247 {% mark p10=0.146 median=0.19 p90=0.247 unit="seeds" to=0.4 trait="corridor_ratio" series="c01-rooms" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 149, 112.7 to 191.1 {% mark p10=112.7 median=149 p90=191.1 unit="seeds" to=290 trait="path" series="c01-rooms" /%}
+* {% now trait="path" digits=0 /%}
+---
+* [Rooms placed](#our-definitions)
+* 13, 11 to 15 {% mark p10=11 median=13 p90=15 unit="seeds" to=30 trait="rooms" series="c01-rooms" /%}
+* {% now trait="rooms" digits=0 /%}
+{% /table %}
+
+Every seed gives 1 region and 0 dead ends {% own-run values="c01.regions.max c01.dead_ends.max" /%}: each room is joined to the one before it, and a corridor ends inside a room {% own /%}. Of 20 attempts, 13 place a room at the median, and never fewer than 8 {% own-run values="c01.rooms.median c01.rooms.min" /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.rooms" /%}.
+
+Its loops all run a fixed number of times, so it always finishes {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L20-L21" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L69" /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [rooms → dla-erode](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6ImRsYS1lcm9kZSIsIml0ZXJhdGlvbnMiOjUwMH1dLCJzZWVkIjoxfQ) `c08`: rooms eroded by aggregation
+- [rooms → prefab](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjF9) `c14`: a prefab vault in a room that fits it
+- [rooms → start → exit → hot-rooms](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6NTAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InN0YXJ0IiwiYXQiOiJsZWZ0In0seyJzdGFnZSI6ImV4aXQiLCJhdCI6InJpZ2h0In0seyJzdGFnZSI6ImhvdC1yb29tcyJ9XSwic2VlZCI6MX0) `c21`: rooms on the path
+
+The talk erodes this map with particles, and places a prefab in one of its rooms {% cite id="wolverson2020-talk/transcript#s191" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}{% cite id="wolverson2020-talk/transcript#s193" /%}{% cite id="wolverson2020-talk/transcript#s203" /%}{% cite id="wolverson2020-talk/transcript#s204" /%}{% cite id="wolverson2020-talk/transcript#s205" /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.rooms" /%}:
+
+- `c01-rooms`: 9 of 9 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Binary space partition rooms" id="bsp" kind="Generator" %}
+Rooms placed in ever-smaller parts of the map, so they come out better spaced than random rooms {% cite id="wolverson2020-talk/transcript#s61" /%}{% cite id="wolverson2020-talk/transcript#s62" /%}{% cite id="wolverson2020-talk/transcript#s63" /%}{% cite id="wolverson2020-talk/transcript#s64" /%}{% cite id="wolverson2020-slides/pdf#p7" /%}.
+
+Stage `bsp`. The talk’s demo: `c02-bsprooms`.
+
+{% part title="The rule" %}
+```text
+start a list with one rectangle and its four quarters
+repeat for a fixed number of attempts:
+    pick any rectangle on the list
+    try a room near its top-left corner
+    if it fits: carve it, and add that rectangle's four quarters to the list
+sort and join the rooms, as random rooms are
+```
+
+The talk describes halving the map, then each half, until a piece is about the size of a room {% cite id="wolverson2020-talk/transcript#s66" /%}{% cite id="wolverson2020-talk/transcript#s67" /%}{% cite id="wolverson2020-talk/transcript#s68" /%}. Its demo is looser: it cuts into quarters, keeps every rectangle it has cut on its list, and quarters a rectangle again each time a room lands in it {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L87-L111" /%}{% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L43-L50" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through BSP rooms: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "bsp", demos: ["c02-bsprooms"]} %}
+{% steps %}
+{% step src="assets/steps/c02-0001-light.png" dark="assets/steps/c02-0001-dark.png" alt="BSP rooms, seed 1: the map at step 1 of 45." key="bsp.subdivide" at=1 of=45 %}
+The demo starts its list with one rectangle inside the map’s edge and that rectangle’s four quarters {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L24-L29" /%}{% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L87-L111" /%}. Quarters shown so far: {% value %}0{% /value %}.
+{% /step %}
+{% step src="assets/steps/c02-0006-light.png" dark="assets/steps/c02-0006-dark.png" alt="BSP rooms, seed 1: the map at step 6 of 45." key="bsp.add" at=6 of=45 %}
+An attempt picks any rectangle on the list and tries a room near its top-left corner {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L43-L44" /%}{% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L127-L133" /%}. The room is carved only if every tile within two of it is still solid and inside the map’s outer ring, and then the rectangle it came from is quartered again {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L139-L169" /%}{% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L46-L50" /%}. It is room {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c02-0025-light.png" dark="assets/steps/c02-0025-dark.png" alt="BSP rooms, seed 1: the map at step 25 of 45." key="bsp.add" at=25 of=45 %}
+An attempt picks any rectangle on the list and tries a room near its top-left corner {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L43-L44" /%}{% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L127-L133" /%}. The room is carved only if every tile within two of it is still solid and inside the map’s outer ring, and then the rectangle it came from is quartered again {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L139-L169" /%}{% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L46-L50" /%}. It is room {% value %}20{% /value %}.
+{% /step %}
+{% step src="assets/steps/c02-0026-light.png" dark="assets/steps/c02-0026-dark.png" alt="BSP rooms, seed 1: the map at step 26 of 45." key="rooms.sort" at=26 of=45 %}
+The rooms are sorted by their left edge, the order they will be joined in {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L57" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L69" /%}. Rooms to join: {% value %}20{% /value %}.
+{% /step %}
+{% step src="assets/steps/c02-0027-light.png" dark="assets/steps/c02-0027-dark.png" alt="BSP rooms, seed 1: the map at step 27 of 45." key="rooms.corridor" at=27 of=45 %}
+A corridor joins this room’s center to the center of the room before it: one run across and one up or down, in an order a coin flip picks {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L76" /%}{% cite id="wolverson2020-talk/transcript#s57" /%}{% cite id="wolverson2020-talk/transcript#s58" /%}. It is corridor {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c02-0045-light.png" dark="assets/steps/c02-0045-dark.png" alt="BSP rooms, seed 1: the map at step 45 of 45." key="rooms.corridor" at=45 of=45 %}
+A corridor joins this room’s center to the center of the room before it: one run across and one up or down, in an order a coin flip picks {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L76" /%}{% cite id="wolverson2020-talk/transcript#s57" /%}{% cite id="wolverson2020-talk/transcript#s58" /%}. It is corridor {% value %}19{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c02-bsprooms.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `attempts` (1 to 5,000; the talk’s: `240`). How many times a rectangle is picked and a room tried. The demo’s counter goes up on every attempt, whether or not the room fits {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L42-L53" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.bsp" /%}.
+
+{% table label="Measured traits: Binary space partition rooms" rowheads=true key=true %}
+* Trait
+* BSP rooms (c02)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.233, 0.194 to 0.273 {% mark p10=0.194 median=0.233 p90=0.273 unit="seeds" to=1 trait="floor_share" series="c02-bsprooms" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c02-bsprooms" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 0, 0 to 0 {% mark p10=0 median=0 p90=0 unit="seeds" to=140 trait="dead_ends" series="c02-bsprooms" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.143, 0.101 to 0.182 {% mark p10=0.101 median=0.143 p90=0.182 unit="seeds" to=0.4 trait="corridor_ratio" series="c02-bsprooms" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 160, 129.9 to 197.1 {% mark p10=129.9 median=160 p90=197.1 unit="seeds" to=290 trait="path" series="c02-bsprooms" /%}
+* {% now trait="path" digits=0 /%}
+---
+* [Rooms placed](#our-definitions)
+* 18, 15 to 22 {% mark p10=15 median=18 p90=22 unit="seeds" to=30 trait="rooms" series="c02-bsprooms" /%}
+* {% now trait="rooms" digits=0 /%}
+{% /table %}
+
+Of 240 attempts, 18 place a room at the median {% own-run values="c02.rooms.median" /%}. The talk says of its animation that there are no rejections {% cite id="wolverson2020-talk/transcript#s71" /%}. The demo records a frame only for a room that fits, so the attempts that fail are never shown {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L44-L52" /%}. Against random rooms it places 18 rooms to 13 and opens 0.233 of the map to 0.162 {% own-run values="c02.rooms.median c01.rooms.median c02.floor_share.median c01.floor_share.median" /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.bsp" /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [combine(bsp / cellular) → prefab](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MX0) `c09`: two maps combined, with a prefab
+
+The talk uses it as the left half of its combined map: a fortress that breaks out into caves {% cite id="wolverson2020-talk/transcript#s181" /%}{% cite id="wolverson2020-talk/transcript#s182" /%}{% cite id="wolverson2020-talk/transcript#s183" /%}{% cite id="wolverson2020-talk/transcript#s184" /%}{% cite id="wolverson2020-talk/transcript#s185" /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.bsp" /%}:
+
+- `c02-bsprooms`: 9 of 9 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Cellular automata" id="cellular" kind="Generator" %}
+Random noise, smoothed by one counting rule again and again, until it looks like caves {% cite id="wolverson2020-talk/transcript#s73" /%}{% cite id="wolverson2020-talk/transcript#s74" /%}{% cite id="wolverson2020-slides/pdf#p9" /%}.
+
+Stage `cellular`. The talk’s demo: `c03-cellular`.
+
+{% part title="The rule" %}
+```text
+fill the map with random wall and floor
+repeat for every pass, for all tiles inside the edge at once:
+    walls = how many of the tile's eight neighbors are wall
+    the tile becomes wall if walls is 0, or 5 or more
+    otherwise it becomes floor
+```
+
+The talk gives the rule in three cases: no neighbors, a wall; one to four, empty; five or more, a wall {% cite id="wolverson2020-talk/transcript#s80" /%}{% cite id="wolverson2020-talk/transcript#s81" /%}{% cite id="wolverson2020-talk/transcript#s82" /%}. The neighbors its demo counts are walls, and a tile’s own state plays no part in what it becomes {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L42-L47" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L60-L67" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Cellular automata: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "cellular", demos: ["c03-cellular"]} %}
+{% steps %}
+{% step src="assets/steps/c03-0001-light.png" dark="assets/steps/c03-0001-dark.png" alt="Cellular automata, seed 1: the map at step 1 of 11." key="cellular.noise" at=1 of=11 %}
+Every tile, the map’s edge included, starts as wall with a {% value %}55{% /value %}% chance and as floor otherwise {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L19-L27" /%}.
+{% /step %}
+{% step src="assets/steps/c03-0002-light.png" dark="assets/steps/c03-0002-dark.png" alt="Cellular automata, seed 1: the map at step 2 of 11." key="cellular.iterate" at=2 of=11 %}
+Every tile inside the map’s outer ring counts the walls among its eight neighbors, in a copy of the map, so all tiles change at once {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L57-L59" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L42-L47" /%}{% cite id="wolverson2020-talk/transcript#s79" /%}{% cite id="wolverson2020-talk/transcript#s80" /%}. With five or more, or none, it becomes wall; with one to four, floor {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L61-L66" /%}{% cite id="wolverson2020-talk/transcript#s81" /%}{% cite id="wolverson2020-talk/transcript#s82" /%}. This is pass {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c03-0006-light.png" dark="assets/steps/c03-0006-dark.png" alt="Cellular automata, seed 1: the map at step 6 of 11." key="cellular.iterate" at=6 of=11 %}
+Every tile inside the map’s outer ring counts the walls among its eight neighbors, in a copy of the map, so all tiles change at once {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L57-L59" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L42-L47" /%}{% cite id="wolverson2020-talk/transcript#s79" /%}{% cite id="wolverson2020-talk/transcript#s80" /%}. With five or more, or none, it becomes wall; with one to four, floor {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L61-L66" /%}{% cite id="wolverson2020-talk/transcript#s81" /%}{% cite id="wolverson2020-talk/transcript#s82" /%}. This is pass {% value %}5{% /value %}.
+{% /step %}
+{% step src="assets/steps/c03-0011-light.png" dark="assets/steps/c03-0011-dark.png" alt="Cellular automata, seed 1: the map at step 11 of 11." key="cellular.iterate" at=11 of=11 %}
+Every tile inside the map’s outer ring counts the walls among its eight neighbors, in a copy of the map, so all tiles change at once {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L57-L59" /%}{% cite id="wolverson2020-code/c03-cellular/src/main.rs#L42-L47" /%}{% cite id="wolverson2020-talk/transcript#s79" /%}{% cite id="wolverson2020-talk/transcript#s80" /%}. With five or more, or none, it becomes wall; with one to four, floor {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L61-L66" /%}{% cite id="wolverson2020-talk/transcript#s81" /%}{% cite id="wolverson2020-talk/transcript#s82" /%}. This is pass {% value %}10{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c03-cellular.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `wall_percent` (0 to 100; the talk’s: `55`). The chance each tile starts as wall {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L20-L23" /%}.
+- `iterations` (0 to 100; the talk’s: `10`). How many smoothing passes run {% cite id="wolverson2020-code/c03-cellular/src/main.rs#L31-L34" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.cellular" /%}.
+
+{% table label="Measured traits: Cellular automata" rowheads=true key=true %}
+* Trait
+* Cellular automata (c03)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.637, 0.608 to 0.665 {% mark p10=0.608 median=0.637 p90=0.665 unit="seeds" to=1 trait="floor_share" series="c03-cellular" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 17, 11 to 23 {% mark p10=11 median=17 p90=23 unit="seeds" to=60 trait="regions" series="c03-cellular" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 67, 57 to 83 {% mark p10=57 median=67 p90=83 unit="seeds" to=140 trait="dead_ends" series="c03-cellular" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.131, 0.116 to 0.149 {% mark p10=0.116 median=0.131 p90=0.149 unit="seeds" to=0.4 trait="corridor_ratio" series="c03-cellular" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 102, 93 to 112 (none on 72) {% mark p10=93 median=102 p90=112 unit="seeds" to=290 trait="path" series="c03-cellular" /%}
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+The rule says nothing about joining the caves up {% own /%}. A map has 17 regions at the median and never fewer than 6 {% own-run values="c03.regions.median c03.regions.min" /%}. The map has no start and exit of its own, so its path is measured between [our probe’s](#our-definitions) two points, and on 72 of 200 seeds they lie in different caves {% own-run values="c03.path.nulls" /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.cellular" /%}:
+
+- **Not one region**: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjowfQ), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoyfQ), and 197 more in the data file; or `map-lab build recipes/c03-cellular.json --seed 0`.
+- **No path**: no walk from start to exit (the map’s own, or the standard probe’s). **72 of 200 seeds.** The talk’s own code: 54 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjowfQ), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxMn0), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxM30), and 69 more in the data file; or `map-lab build recipes/c03-cellular.json --seed 0`.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [combine(bsp / cellular) → prefab](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MX0) `c09`: two maps combined, with a prefab
+- [cellular → prefab](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0) `c15`: a prefab vault wherever it fits
+- [cellular → cull](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjF9) `c16`: finding unreachable areas
+- [cellular → cull → start](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9XSwic2VlZCI6MX0) `c17`: a start on the left
+- [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9XSwic2VlZCI6MX0) `c18`: an exit on the right
+- [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoiY2VudGVyIn0seyJzdGFnZSI6ImV4aXQiLCJhdCI6ImZhcnRoZXN0In1dLCJzZWVkIjoxfQ) `c19`: the least accessible exit
+- [cellular → cull → start → exit → hot-path](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9LHsic3RhZ2UiOiJob3QtcGF0aCIsInJhZGl1cyI6MTAsImN1bGwiOjE1fV0sInNlZWQiOjF9) `c20`: the hot path
+
+The talk brings in its cull for exactly this map: chunks that can’t be reached {% cite id="wolverson2020-talk/transcript#s222" /%}{% cite id="wolverson2020-talk/transcript#s223" /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.cellular" /%}:
+
+- `c03-cellular`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Drunkard’s walk" id="drunkard" kind="Generator" %}
+A digger staggers at random through solid rock, and more follow until enough of the map is open {% cite id="wolverson2020-talk/transcript#s87" /%}{% cite id="wolverson2020-talk/transcript#s88" /%}{% cite id="wolverson2020-talk/transcript#s89" /%}{% cite id="wolverson2020-talk/transcript#s90" /%}{% cite id="wolverson2020-talk/transcript#s91" /%}{% cite id="wolverson2020-talk/transcript#s92" /%}{% cite id="wolverson2020-talk/transcript#s93" /%}{% cite id="wolverson2020-talk/transcript#s94" /%}{% cite id="wolverson2020-talk/transcript#s95" /%}{% cite id="wolverson2020-talk/transcript#s96" /%}{% cite id="wolverson2020-talk/transcript#s97" /%}{% cite id="wolverson2020-slides/pdf#p11" /%}.
+
+Stage `drunkard`. The talk’s demo: `c04-drunkard`.
+
+{% part title="The rule" %}
+```text
+start solid; the first digger starts at the center
+a digger steps in a random direction and digs where it lands,
+    until it leaves the map or runs out of steps
+while less than a share of the map is open:
+    start another digger on a random open tile
+```
+
+The talk has each new digger spawn somewhere within the open map, and stops when a third of the map is open {% cite id="wolverson2020-talk/transcript#s95" /%}{% cite id="wolverson2020-talk/transcript#s96" /%}{% cite id="wolverson2020-talk/transcript#s97" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Drunkard’s walk: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "drunkard", demos: ["c04-drunkard"]} %}
+{% steps %}
+{% step src="assets/steps/c04-0001-light.png" dark="assets/steps/c04-0001-dark.png" alt="Drunkard’s walk, seed 1: the map at step 1 of 53." key="drunkard.solid" at=1 of=53 %}
+The map starts solid {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L17-L19" /%}{% cite id="wolverson2020-talk/transcript#s87" /%}.
+{% /step %}
+{% step src="assets/steps/c04-0002-light.png" dark="assets/steps/c04-0002-dark.png" alt="Drunkard’s walk, seed 1: the map at step 2 of 53." key="drunkard.dig" at=2 of=53 %}
+A digger steps in a random direction and digs the tile it lands on, again and again, until it steps off the map or runs out of steps {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L58-L74" /%}{% cite id="wolverson2020-talk/transcript#s90" /%}{% cite id="wolverson2020-talk/transcript#s91" /%}{% cite id="wolverson2020-talk/transcript#s92" /%}{% cite id="wolverson2020-talk/transcript#s93" /%}{% cite id="wolverson2020-talk/transcript#s94" /%}{% cite id="wolverson2020-talk/transcript#s95" /%}. The first starts at the center and each later one on a random open tile {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L21-L22" /%}{% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L31-L38" /%}{% cite id="wolverson2020-talk/transcript#s95" /%}{% cite id="wolverson2020-talk/transcript#s96" /%}. This is digger {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c04-0027-light.png" dark="assets/steps/c04-0027-dark.png" alt="Drunkard’s walk, seed 1: the map at step 27 of 53." key="drunkard.dig" at=27 of=53 %}
+A digger steps in a random direction and digs the tile it lands on, again and again, until it steps off the map or runs out of steps {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L58-L74" /%}{% cite id="wolverson2020-talk/transcript#s90" /%}{% cite id="wolverson2020-talk/transcript#s91" /%}{% cite id="wolverson2020-talk/transcript#s92" /%}{% cite id="wolverson2020-talk/transcript#s93" /%}{% cite id="wolverson2020-talk/transcript#s94" /%}{% cite id="wolverson2020-talk/transcript#s95" /%}. The first starts at the center and each later one on a random open tile {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L21-L22" /%}{% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L31-L38" /%}{% cite id="wolverson2020-talk/transcript#s95" /%}{% cite id="wolverson2020-talk/transcript#s96" /%}. This is digger {% value %}26{% /value %}.
+{% /step %}
+{% step src="assets/steps/c04-0053-light.png" dark="assets/steps/c04-0053-dark.png" alt="Drunkard’s walk, seed 1: the map at step 53 of 53." key="drunkard.dig" at=53 of=53 %}
+A digger steps in a random direction and digs the tile it lands on, again and again, until it steps off the map or runs out of steps {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L58-L74" /%}{% cite id="wolverson2020-talk/transcript#s90" /%}{% cite id="wolverson2020-talk/transcript#s91" /%}{% cite id="wolverson2020-talk/transcript#s92" /%}{% cite id="wolverson2020-talk/transcript#s93" /%}{% cite id="wolverson2020-talk/transcript#s94" /%}{% cite id="wolverson2020-talk/transcript#s95" /%}. The first starts at the center and each later one on a random open tile {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L21-L22" /%}{% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L31-L38" /%}{% cite id="wolverson2020-talk/transcript#s95" /%}{% cite id="wolverson2020-talk/transcript#s96" /%}. This is digger {% value %}52{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c04-drunkard.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `lifetime` (1 to 100,000; the talk’s: `200`). How many steps a digger takes. The demo stops a digger once its step count is over 200 {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L71-L74" /%}.
+- `floor_divisor` (1 to 20; the talk’s: `3`). Diggers keep coming until one over this number of the map’s tiles is open: a third, in the demo {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L25" /%}{% cite id="wolverson2020-talk/transcript#s97" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.drunkard" /%}.
+
+{% table label="Measured traits: Drunkard’s walk" rowheads=true key=true %}
+* Trait
+* Drunkard’s walk (c04)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.338, 0.334 to 0.345 {% mark p10=0.334 median=0.338 p90=0.345 unit="seeds" to=1 trait="floor_share" series="c04-drunkard" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c04-drunkard" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 24, 17 to 32 {% mark p10=17 median=24 p90=32 unit="seeds" to=140 trait="dead_ends" series="c04-drunkard" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.053, 0.037 to 0.075 {% mark p10=0.037 median=0.053 p90=0.075 unit="seeds" to=0.4 trait="corridor_ratio" series="c04-drunkard" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 73.5, 58.9 to 94 {% mark p10=58.9 median=73.5 p90=94 unit="seeds" to=290 trait="path" series="c04-drunkard" /%}
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+The talk says this map is guaranteed to be contiguous {% cite id="wolverson2020-talk/transcript#s99" /%}{% cite id="wolverson2020-talk/transcript#s100" /%}. It is 1 region on every seed here {% own-run values="c04.regions.max" /%}. Its passages are wide: a corridor ratio of 0.053 at the median, against cellular automata’s 0.131 {% own-run values="c04.corridor_ratio.median c03.corridor_ratio.median" /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.drunkard" /%}.
+
+The demo’s loop of diggers has no cap but the open share it waits for {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L25" /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+None of the talk’s demos runs it with another stage {% own /%}.
+
+The talk suggests it for limestone caverns {% cite id="wolverson2020-talk/transcript#s100" /%}{% cite id="wolverson2020-talk/transcript#s101" /%}{% cite id="wolverson2020-talk/transcript#s102" /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.drunkard" /%}:
+
+- `c04-drunkard`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Diffusion-limited aggregation" id="dla" kind="Generator" %}
+Particles are fired at a small open seed, and each digs the last solid tile it crossed before it reached open floor {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}{% cite id="wolverson2020-slides/pdf#p13" /%}.
+
+Stage `dla`. The talk’s demos: `c05-dla`, `c06-dla-attractor`, `c07-dla-symmetry`.
+
+{% part title="The rule" %}
+```text
+dig a small seed at the center of a solid map
+while less than a share of the map is open:
+    start a particle on a random tile
+    move it until it stands on open floor:
+        a random step at a time (walk), or straight at the center (attractor)
+    dig the last solid tile it stood on, and with symmetry its mirror image
+```
+
+The talk shows three versions that differ in how a particle travels: a simple one, a central attractor, and the attractor with a symmetry {% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}. The demo of the simple version moves its particle one random step at a time {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55-L57" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through DLA, walking, DLA, attractor, DLA, symmetric: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "dla", demos: ["c05-dla", "c06-dla-attractor", "c07-dla-symmetry"]} %}
+{% steps %}
+{% step src="assets/steps/c05-0001-light.png" dark="assets/steps/c05-0001-dark.png" alt="DLA, walking, seed 1: the map at step 1 of 1644." key="dla.seed" at=1 of=1644 %}
+A plus of five open tiles at the center of a solid map: the seed that everything else sticks to {% cite id="wolverson2020-code/c05-dla/src/main.rs#L19-L40" /%}{% cite id="wolverson2020-talk/transcript#s103" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}.
+{% /step %}
+{% step src="assets/steps/c05-0002-light.png" dark="assets/steps/c05-0002-dark.png" alt="DLA, walking, seed 1: the map at step 2 of 1644." key="dla.particle" at=2 of=1644 %}
+A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L57" /%}{% cite id="wolverson2020-code/c05-dla/src/main.rs#L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}. This is particle {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c05-0412-light.png" dark="assets/steps/c05-0412-dark.png" alt="DLA, walking, seed 1: the map at step 412 of 1644." key="dla.particle" at=412 of=1644 %}
+A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L57" /%}{% cite id="wolverson2020-code/c05-dla/src/main.rs#L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}. This is particle {% value %}411{% /value %}.
+{% /step %}
+{% step src="assets/steps/c05-0823-light.png" dark="assets/steps/c05-0823-dark.png" alt="DLA, walking, seed 1: the map at step 823 of 1644." key="dla.particle" at=823 of=1644 %}
+A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L57" /%}{% cite id="wolverson2020-code/c05-dla/src/main.rs#L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}. This is particle {% value %}822{% /value %}.
+{% /step %}
+{% step src="assets/steps/c05-1644-light.png" dark="assets/steps/c05-1644-dark.png" alt="DLA, walking, seed 1: the map at step 1644 of 1644." key="dla.particle" at=1644 of=1644 %}
+A particle starts on a random tile and steps at random until it steps onto open floor. The solid tile it stepped from is dug {% cite id="wolverson2020-code/c05-dla/src/main.rs#L49-L57" /%}{% cite id="wolverson2020-code/c05-dla/src/main.rs#L82" /%}{% cite id="wolverson2020-talk/transcript#s104" /%}{% cite id="wolverson2020-talk/transcript#s105" /%}{% cite id="wolverson2020-talk/transcript#s106" /%}{% cite id="wolverson2020-talk/transcript#s107" /%}{% cite id="wolverson2020-talk/transcript#s108" /%}. This is particle {% value %}1,643{% /value %}.
+{% /step %}
+{% step src="assets/steps/c06-0002-light.png" dark="assets/steps/c06-0002-dark.png" alt="DLA, attractor, seed 1: the map at step 2 of 1656." key="dla.particle#c06-dla-attractor" at=2 of=1656 %}
+A particle starts on a random tile and travels in a straight line toward the center. The last solid tile it stood on before open floor is dug {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L49-L68" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}. This is particle {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c06-1656-light.png" dark="assets/steps/c06-1656-dark.png" alt="DLA, attractor, seed 1: the map at step 1656 of 1656." key="dla.particle#c06-dla-attractor" at=1656 of=1656 %}
+A particle starts on a random tile and travels in a straight line toward the center. The last solid tile it stood on before open floor is dug {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L49-L68" /%}{% cite id="wolverson2020-talk/transcript#s111" /%}{% cite id="wolverson2020-talk/transcript#s112" /%}. This is particle {% value %}1,655{% /value %}.
+{% /step %}
+{% step src="assets/steps/c07-0002-light.png" dark="assets/steps/c07-0002-dark.png" alt="DLA, symmetric, seed 1: the map at step 2 of 820." key="dla.particle#c07-dla-symmetry" at=2 of=820 %}
+A particle travels straight toward the center, and the tile it digs is dug again at its mirror image across the map’s middle column {% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L56-L77" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}. This is particle {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c07-0820-light.png" dark="assets/steps/c07-0820-dark.png" alt="DLA, symmetric, seed 1: the map at step 820 of 820." key="dla.particle#c07-dla-symmetry" at=820 of=820 %}
+A particle travels straight toward the center, and the tile it digs is dug again at its mirror image across the map’s middle column {% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L56-L77" /%}{% cite id="wolverson2020-talk/transcript#s115" /%}{% cite id="wolverson2020-talk/transcript#s116" /%}. This is particle {% value %}819{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c05-dla.json`, `map-lab build recipes/c06-dla-attractor.json`, `map-lab build recipes/c07-dla-symmetry.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `mode` (`walk`, `attractor`, `symmetric`; the talk’s: `walk` in `c05`, `attractor` in `c06`, `symmetric` in `c07`). How a particle travels. `walk` steps at random, `attractor` follows a line to the center, and `symmetric` does that and digs each tile’s mirror image too {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55-L57" /%}{% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L56-L60" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L69-L77" /%}.
+- `floor_divisor` (1 to 20; the talk’s: `3`). Particles keep coming until one over this number of the map’s tiles is open: a third, in all three demos {% cite id="wolverson2020-code/c05-dla/src/main.rs#L43" /%}{% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L43" /%}{% cite id="wolverson2020-code/c07-dla-symmetry/src/main.rs#L43" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.dla" /%}.
+
+{% table label="Measured traits: Diffusion-limited aggregation" rowheads=true key=true %}
+* Trait
+* DLA, walking (c05)
+* DLA, attractor (c06)
+* DLA, symmetric (c07)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.333, 0.333 to 0.333 {% mark p10=0.333 median=0.333 p90=0.333 unit="seeds" to=1 trait="floor_share" series="c05-dla" /%}
+* 0.333, 0.333 to 0.333 {% mark p10=0.333 median=0.333 p90=0.333 unit="seeds" to=1 trait="floor_share" series="c06-dla-attractor" /%}
+* 0.333, 0.333 to 0.334 {% mark p10=0.333 median=0.333 p90=0.334 unit="seeds" to=1 trait="floor_share" series="c07-dla-symmetry" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c05-dla" /%}
+* 26, 19 to 34 {% mark p10=19 median=26 p90=34 unit="seeds" to=60 trait="regions" series="c06-dla-attractor" /%}
+* 25, 17 to 35 {% mark p10=17 median=25 p90=35 unit="seeds" to=60 trait="regions" series="c07-dla-symmetry" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 113, 102 to 125 {% mark p10=102 median=113 p90=125 unit="seeds" to=140 trait="dead_ends" series="c05-dla" /%}
+* 63, 55 to 75 {% mark p10=55 median=63 p90=75 unit="seeds" to=140 trait="dead_ends" series="c06-dla-attractor" /%}
+* 64, 50 to 80 {% mark p10=50 median=64 p90=80 unit="seeds" to=140 trait="dead_ends" series="c07-dla-symmetry" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.217, 0.196 to 0.242 {% mark p10=0.196 median=0.217 p90=0.242 unit="seeds" to=0.4 trait="corridor_ratio" series="c05-dla" /%}
+* 0.120, 0.103 to 0.136 {% mark p10=0.103 median=0.12 p90=0.136 unit="seeds" to=0.4 trait="corridor_ratio" series="c06-dla-attractor" /%}
+* 0.120, 0.098 to 0.147 {% mark p10=0.098 median=0.12 p90=0.147 unit="seeds" to=0.4 trait="corridor_ratio" series="c07-dla-symmetry" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 88, 79 to 95 {% mark p10=79 median=88 p90=95 unit="seeds" to=290 trait="path" series="c05-dla" /%}
+* 60, 56 to 66 (none on 44) {% mark p10=56 median=60 p90=66 unit="seeds" to=290 trait="path" series="c06-dla-attractor" /%}
+* 58, 54 to 64 (none on 29) {% mark p10=54 median=58 p90=64 unit="seeds" to=290 trait="path" series="c07-dla-symmetry" /%}
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+The talk calls the simple version’s map very winding, and guaranteed to be contiguous {% cite id="wolverson2020-talk/transcript#s109" /%}. The walking version is both: 1 region on every seed, and 113 dead ends at the median against cellular automata’s 67 {% own-run values="c05.regions.max c05.dead_ends.median c03.dead_ends.median" /%}. The attractor and the symmetric version are not contiguous: 26 and 25 regions at the median, and never fewer than 13 and 5 {% own-run values="c06.regions.median c07.regions.median c06.regions.min c07.regions.min" /%}. Their particles follow a Bresenham line to the center {% cite id="wolverson2020-code/c06-dla-attractor/src/main.rs#L56-L60" /%}. Such a line can step diagonally, so a dug tile can touch the cave only at a corner, and walking is four-way {% own /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.dla" /%}:
+
+- **Not one region** `c06`: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6Mn0), and 197 more in the data file; or `map-lab build recipes/c06-dla-attractor.json --seed 0`.
+- **No path** `c06`: no walk from start to exit (the map’s own, or the standard probe’s). **44 of 200 seeds.** The talk’s own code: 52 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 8](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6OH0), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTJ9), and 41 more in the data file; or `map-lab build recipes/c06-dla-attractor.json --seed 1`.
+- **Not one region** `c07`: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6Mn0), and 197 more in the data file; or `map-lab build recipes/c07-dla-symmetry.json --seed 0`.
+- **No path** `c07`: no walk from start to exit (the map’s own, or the standard probe’s). **29 of 200 seeds.** The talk’s own code: 19 of 200. Watch it fail on [seed 15](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTV9), [seed 19](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTl9), [seed 20](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MjB9), and 26 more in the data file; or `map-lab build recipes/c07-dla-symmetry.json --seed 15`.
+
+The simple version’s walk has no cap in the talk’s code {% cite id="wolverson2020-code/c05-dla/src/main.rs#L55" /%}. Ours has one, which 0 of these seeds reach {% own-run values="c05.fails.guard-hit" /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+None of the talk’s demos runs it with another stage {% own /%}.
+
+The talk also fires particles at a finished map, which is [erosion](#dla-erode) {% cite id="wolverson2020-talk/transcript#s191" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}{% cite id="wolverson2020-talk/transcript#s193" /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.dla" /%}:
+
+- `c05-dla`: 8 of 8 traits consistent with the talk’s own code.
+- `c06-dla-attractor`: 8 of 8 traits consistent with the talk’s own code.
+- `c07-dla-symmetry`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Voronoi cells" id="voronoi" kind="Generator" %}
+Scatter seed points and give every tile to its nearest seed: the map falls into cells {% cite id="wolverson2020-talk/transcript#s121" /%}{% cite id="wolverson2020-talk/transcript#s122" /%}{% cite id="wolverson2020-talk/transcript#s123" /%}{% cite id="wolverson2020-talk/transcript#s124" /%}{% cite id="wolverson2020-talk/transcript#s125" /%}{% cite id="wolverson2020-talk/transcript#s126" /%}{% cite id="wolverson2020-slides/pdf#p15" /%}.
+
+Stage `voronoi`. The talk’s demo: `c08a-voronoi`.
+
+{% part title="The rule" %}
+```text
+scatter seed points over the map
+each tile joins its nearest seed, by a chosen measure of distance
+a tile is on an edge where its right or lower neighbor belongs to another seed
+edges become walls (the talk's demo), or roads (our rule)
+```
+
+The first use the talk gives for the cells is to find their edges and place walls there {% cite id="wolverson2020-talk/transcript#s137" /%}{% cite id="wolverson2020-talk/transcript#s138" /%}{% cite id="wolverson2020-slides/pdf#p16" /%}. Its demo draws the edges as `#`, the glyph its shared map code treats as open {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L106-L110" /%}{% cite id="wolverson2020-code/backend/src/lib.rs#L54-L65" /%}. We follow the talk’s words and make them walls {% own /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Voronoi cells, Roads (our rule): seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "voronoi", demos: ["c08a-voronoi", "roads"]} %}
+{% steps %}
+{% step src="assets/steps/c08a-0001-light.png" dark="assets/steps/c08a-0001-dark.png" alt="Voronoi cells, seed 1: the map at step 1 of 5." key="voronoi.seeds" at=1 of=5 %}
+Seed points are scattered at random inside the map’s outer ring {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L21-L26" /%}{% cite id="wolverson2020-talk/transcript#s121" /%}{% cite id="wolverson2020-talk/transcript#s122" /%}. Seeds: {% value %}16{% /value %}.
+{% /step %}
+{% step src="assets/steps/c08a-0002-light.png" dark="assets/steps/c08a-0002-dark.png" alt="Voronoi cells, seed 1: the map at step 2 of 5." key="voronoi.membership.pythagoras" at=2 of=5 %}
+Every tile joins its nearest seed, measured in a straight line, and the boundaries come out fairly smooth {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L36-L47" /%}{% cite id="wolverson2020-talk/transcript#s125" /%}{% cite id="wolverson2020-talk/transcript#s126" /%}{% cite id="wolverson2020-talk/transcript#s130" /%}.
+{% /step %}
+{% step src="assets/steps/c08a-0003-light.png" dark="assets/steps/c08a-0003-dark.png" alt="Voronoi cells, seed 1: the map at step 3 of 5." key="voronoi.membership.manhattan" at=3 of=5 %}
+The same with Manhattan distance, the blocks across plus the blocks down: the boundaries turn sharp-edged {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L57-L68" /%}{% cite id="wolverson2020-talk/transcript#s131" /%}{% cite id="wolverson2020-talk/transcript#s132" /%}{% cite id="wolverson2020-talk/transcript#s133" /%}.
+{% /step %}
+{% step src="assets/steps/c08a-0004-light.png" dark="assets/steps/c08a-0004-dark.png" alt="Voronoi cells, seed 1: the map at step 4 of 5." key="voronoi.membership.chebyshev" at=4 of=5 %}
+The same with Chebyshev distance, which the talk places somewhere between the other two {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L77-L88" /%}{% cite id="wolverson2020-talk/transcript#s134" /%}{% cite id="wolverson2020-talk/transcript#s135" /%}.
+{% /step %}
+{% step src="assets/steps/c08a-0005-light.png" dark="assets/steps/c08a-0005-dark.png" alt="Voronoi cells, seed 1: the map at step 5 of 5." key="voronoi.walls" at=5 of=5 %}
+A tile inside the map’s outer ring becomes a boundary wall when the tile to its right or the tile below it belongs to another seed {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L99-L113" /%}{% cite id="wolverson2020-talk/transcript#s137" /%}{% cite id="wolverson2020-talk/transcript#s138" /%}. Seeds: {% value %}16{% /value %}.
+{% /step %}
+{% step src="assets/steps/roads-0005-light.png" dark="assets/steps/roads-0005-dark.png" alt="Roads (our rule), seed 1: the map at step 5 of 5." key="voronoi.roads" at=5 of=5 %}
+Our own rule, for a use the talk describes without code: the boundaries become road and the cells solid, and a tile is road when its right, lower or lower-right neighbor belongs to another seed {% own /%}. Seeds: {% value %}16{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c08a-voronoi.json`, `map-lab build recipes/own/voronoi-roads.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `seeds` (1 to 200; the talk’s: `16`). How many seed points are scattered {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L21-L26" /%}.
+- `metric` (`pythagoras`, `manhattan`, `chebyshev`; the talk’s: `pythagoras`). The distance that decides a tile’s nearest seed. The demo shows all three and builds its walls from the straight-line one {% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L52-L53" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L69-L73" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L89-L93" /%}{% cite id="wolverson2020-code/c08a-voronoi/src/main.rs#L106-L107" /%}.
+- `edges` (`walls`, `roads`; the talk’s: `walls`). `walls` is the talk’s demo. `roads` is our own rule for the roads the talk describes: the edges become floor and the cells solid, and a tile is also on an edge when its lower-right neighbor belongs to another seed {% own /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.voronoi" /%}.
+
+{% table label="Measured traits: Voronoi cells" rowheads=true key=true %}
+* Trait
+* Voronoi cells (c08a)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.836, 0.829 to 0.842 {% mark p10=0.829 median=0.836 p90=0.842 unit="seeds" to=1 trait="floor_share" series="c08a-voronoi" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 16, 16 to 17 {% mark p10=16 median=16 p90=17 unit="seeds" to=60 trait="regions" series="c08a-voronoi" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 15, 12 to 20 {% mark p10=12 median=15 p90=20 unit="seeds" to=140 trait="dead_ends" series="c08a-voronoi" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.005, 0.004 to 0.007 {% mark p10=0.004 median=0.005 p90=0.007 unit="seeds" to=0.4 trait="corridor_ratio" series="c08a-voronoi" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* –
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+Walls seal each cell: a map has 16 regions at the median, and the probe finds no path on any of the 200 seeds {% own-run values="c08a.regions.median c08a.path.nulls" /%}. The talk’s uses for cells don’t need them joined: monsters spawned together in one cell, or kept apart in distant ones {% cite id="wolverson2020-talk/transcript#s139" /%}{% cite id="wolverson2020-talk/transcript#s140" /%}{% cite id="wolverson2020-talk/transcript#s141" /%}. Our roads are one region on 181 of 200 seeds and two on the other 19 {% own-run values="roads.regions.is1 roads.regions.is2" /%}. Without the lower-right neighbor, an edge that runs down and to the left touches itself only at corners, which seals a cell but can’t be walked {% own /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.voronoi" /%}:
+
+- **Not one region**: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjJ9), and 197 more in the data file; or `map-lab build recipes/c08a-voronoi.json --seed 0`.
+- **No path**: no walk from start to exit (the map’s own, or the standard probe’s). **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjJ9), and 197 more in the data file; or `map-lab build recipes/c08a-voronoi.json --seed 0`.
+
+These are failures only for a map meant to be walked whole; sealed cells are what the wall rule is for {% own /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+None of the talk’s demos runs it with another stage {% own /%}.
+
+The talk’s author used the edges as roads in a game and filled each cell with a kind of city block {% cite id="wolverson2020-talk/transcript#s142" /%}{% cite id="wolverson2020-talk/transcript#s143" /%}{% cite id="wolverson2020-talk/transcript#s144" /%}{% cite id="wolverson2020-talk/transcript#s145" /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.voronoi" /%}:
+
+- `c08a-voronoi`: 7 of 7 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Noise" id="noise" kind="Generator" %}
+Smooth random values from −1 to 1 at every point, most often read as altitude to make an overworld {% cite id="wolverson2020-talk/transcript#s149" /%}{% cite id="wolverson2020-talk/transcript#s150" /%}{% cite id="wolverson2020-talk/transcript#s151" /%}{% cite id="wolverson2020-talk/transcript#s162" /%}.
+
+Stage `noise`. The talk’s demos: `c10-perlin`, `c11-overworld`, `c12-noisezoom`, `c13-double-noise`.
+
+{% part title="The rule" %}
+```text
+for every tile: n = fractal noise at the tile's position, from -1 to 1
+height:    brightness = (n + 1) / 2
+overworld: water if n < 0, grass if n < 0.5, otherwise mountain
+zoom:      sample positions are multiplied by a scale that shrinks
+double:    a second, finer noise is mixed in as the scale shrinks
+```
+
+The demos use fractal simplex noise, the first one too, though it is named for Perlin {% cite id="wolverson2020-code/c10-perlin/src/main.rs#L14-L15" /%}. The talk gives the green band as altitudes from 0 to 0.75 {% cite id="wolverson2020-talk/transcript#s164" /%}{% cite id="wolverson2020-talk/transcript#s165" /%}. Its code draws mountain from 0.5, and 0.75 is there only in the water’s color {% cite id="wolverson2020-code/c11-overworld/src/main.rs#L31-L44" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Noise: height map, Noise: overworld, Noise: zoom, Noise: double: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "noise", demos: ["c10-perlin", "c11-overworld", "c12-noisezoom", "c13-double-noise"]} %}
+{% steps %}
+{% step src="assets/steps/c10-0001-light.png" dark="assets/steps/c10-0001-dark.png" alt="Noise: height map, seed 1: the map at step 1 of 5." key="noise.map" at=1 of=5 %}
+Fractal simplex noise is sampled once at every tile and drawn as brightness, from 0 to 1 {% cite id="wolverson2020-code/c10-perlin/src/main.rs#L14-L15" /%}{% cite id="wolverson2020-code/c10-perlin/src/main.rs#L21-L24" /%}.
+{% /step %}
+{% step src="assets/steps/c10-0002-light.png" dark="assets/steps/c10-0002-dark.png" alt="Noise: height map, seed 1: the map at step 2 of 5." key="noise.map" at=2 of=5 %}
+Fractal simplex noise is sampled once at every tile and drawn as brightness, from 0 to 1 {% cite id="wolverson2020-code/c10-perlin/src/main.rs#L14-L15" /%}{% cite id="wolverson2020-code/c10-perlin/src/main.rs#L21-L24" /%}.
+{% /step %}
+{% step src="assets/steps/c10-0003-light.png" dark="assets/steps/c10-0003-dark.png" alt="Noise: height map, seed 1: the map at step 3 of 5." key="noise.map" at=3 of=5 %}
+Fractal simplex noise is sampled once at every tile and drawn as brightness, from 0 to 1 {% cite id="wolverson2020-code/c10-perlin/src/main.rs#L14-L15" /%}{% cite id="wolverson2020-code/c10-perlin/src/main.rs#L21-L24" /%}.
+{% /step %}
+{% step src="assets/steps/c10-0004-light.png" dark="assets/steps/c10-0004-dark.png" alt="Noise: height map, seed 1: the map at step 4 of 5." key="noise.map" at=4 of=5 %}
+Fractal simplex noise is sampled once at every tile and drawn as brightness, from 0 to 1 {% cite id="wolverson2020-code/c10-perlin/src/main.rs#L14-L15" /%}{% cite id="wolverson2020-code/c10-perlin/src/main.rs#L21-L24" /%}.
+{% /step %}
+{% step src="assets/steps/c10-0005-light.png" dark="assets/steps/c10-0005-dark.png" alt="Noise: height map, seed 1: the map at step 5 of 5." key="noise.map" at=5 of=5 %}
+Fractal simplex noise is sampled once at every tile and drawn as brightness, from 0 to 1 {% cite id="wolverson2020-code/c10-perlin/src/main.rs#L14-L15" /%}{% cite id="wolverson2020-code/c10-perlin/src/main.rs#L21-L24" /%}.
+{% /step %}
+{% step src="assets/steps/c11-0001-light.png" dark="assets/steps/c11-0001-dark.png" alt="Noise: overworld, seed 1: the map at step 1 of 1." key="noise.map#c11-overworld" at=1 of=1 %}
+Noise is sampled once at every tile and read as altitude: below 0 is water, from 0 up to 0.5 grass, and 0.5 or more mountain {% cite id="wolverson2020-code/c11-overworld/src/main.rs#L28-L44" /%}.
+{% /step %}
+{% step src="assets/steps/c12-0001-light.png" dark="assets/steps/c12-0001-dark.png" alt="Noise: zoom, seed 1: the map at step 1 of 92." key="noise.zoomed-out" at=1 of=92 %}
+The whole noise at scale 1, cut into water, grass and mountain by altitude {% cite id="wolverson2020-code/c12-noisezoom/src/main.rs#L66-L76" /%}{% cite id="wolverson2020-code/c12-noisezoom/src/main.rs#L34-L47" /%}.
+{% /step %}
+{% step src="assets/steps/c12-0002-light.png" dark="assets/steps/c12-0002-dark.png" alt="Noise: zoom, seed 1: the map at step 2 of 92." key="noise.scale" at=2 of=92 %}
+Every tile’s sample position is multiplied by a scale that shrinks a hundredth at a time, so a smaller and smaller part of the same noise fills the map {% cite id="wolverson2020-code/c12-noisezoom/src/main.rs#L33" /%}{% cite id="wolverson2020-code/c12-noisezoom/src/main.rs#L77-L90" /%}{% cite id="wolverson2020-talk/transcript#s167" /%}. The scale, in hundredths: {% value %}100{% /value %}.
+{% /step %}
+{% step src="assets/steps/c12-0092-light.png" dark="assets/steps/c12-0092-dark.png" alt="Noise: zoom, seed 1: the map at step 92 of 92." key="noise.scale" at=92 of=92 %}
+Every tile’s sample position is multiplied by a scale that shrinks a hundredth at a time, so a smaller and smaller part of the same noise fills the map {% cite id="wolverson2020-code/c12-noisezoom/src/main.rs#L33" /%}{% cite id="wolverson2020-code/c12-noisezoom/src/main.rs#L77-L90" /%}{% cite id="wolverson2020-talk/transcript#s167" /%}. The scale, in hundredths: {% value %}10{% /value %}.
+{% /step %}
+{% step src="assets/steps/c13-0001-light.png" dark="assets/steps/c13-0001-dark.png" alt="Noise: double, seed 1: the map at step 1 of 94." key="noise.first" at=1 of=94 %}
+The first noise on its own, with the demo’s base settings {% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L23-L29" /%}{% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L78-L105" /%}.
+{% /step %}
+{% step src="assets/steps/c13-0002-light.png" dark="assets/steps/c13-0002-dark.png" alt="Noise: double, seed 1: the map at step 2 of 94." key="noise.second" at=2 of=94 %}
+The second noise on its own: another seed, half the octaves and gain, one more of lacunarity and four times the frequency {% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L31-L37" /%}{% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L108-L135" /%}. The talk calls it much more bumpy, and terrible as a continent {% cite id="wolverson2020-talk/transcript#s169" /%}{% cite id="wolverson2020-talk/transcript#s170" /%}{% cite id="wolverson2020-talk/transcript#s171" /%}.
+{% /step %}
+{% step src="assets/steps/c13-0003-light.png" dark="assets/steps/c13-0003-dark.png" alt="Noise: double, seed 1: the map at step 3 of 94." key="noise.zoomed-out#c13-double-noise" at=3 of=94 %}
+The two noises mixed at scale 1, where the first counts in full and the second is taken away at a quarter of its strength {% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L41-L44" /%}{% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L139-L149" /%}.
+{% /step %}
+{% step src="assets/steps/c13-0004-light.png" dark="assets/steps/c13-0004-dark.png" alt="Noise: double, seed 1: the map at step 4 of 94." key="noise.scale#c13-double-noise" at=4 of=94 %}
+As the scale shrinks, the first noise’s weight falls with it to a half and the second’s rises to a quarter, and both stay there from a scale of 0.5 down {% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L41-L44" /%}{% cite id="wolverson2020-talk/transcript#s171" /%}{% cite id="wolverson2020-talk/transcript#s172" /%}{% cite id="wolverson2020-talk/transcript#s173" /%}. The scale, in hundredths: {% value %}100{% /value %}.
+{% /step %}
+{% step src="assets/steps/c13-0094-light.png" dark="assets/steps/c13-0094-dark.png" alt="Noise: double, seed 1: the map at step 94 of 94." key="noise.scale#c13-double-noise" at=94 of=94 %}
+As the scale shrinks, the first noise’s weight falls with it to a half and the second’s rises to a quarter, and both stay there from a scale of 0.5 down {% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L41-L44" /%}{% cite id="wolverson2020-talk/transcript#s171" /%}{% cite id="wolverson2020-talk/transcript#s172" /%}{% cite id="wolverson2020-talk/transcript#s173" /%}. The scale, in hundredths: {% value %}10{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c10-perlin.json`, `map-lab build recipes/c11-overworld.json`, `map-lab build recipes/c12-noisezoom.json`, `map-lab build recipes/c13-double-noise.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `mode` (`overworld`, `height`, `zoom`, `double`; the talk’s: `height` in `c10`, `overworld` in `c11`, `zoom` in `c12`, `double` in `c13`). What is made of the noise: a `height` map in gray, an `overworld` of water, grass and mountain, a `zoom` into the overworld, or the zoom with two noises mixed, `double` {% cite id="wolverson2020-code/c10-perlin/src/main.rs#L23-L24" /%}{% cite id="wolverson2020-code/c11-overworld/src/main.rs#L31-L44" /%}{% cite id="wolverson2020-code/c12-noisezoom/src/main.rs#L77-L90" /%}{% cite id="wolverson2020-code/c13-double-noise/src/main.rs#L41-L44" /%}.
+- `octaves` (1 to 16; the talk’s: `1`, `10` in `c10`, `10` in `c11`, `3` in `c12`, `3` in `c13`). In the talk’s words, how many different gradients it is mixing in {% cite id="wolverson2020-talk/transcript#s154" /%}.
+- `gain` (0 to 4; the talk’s: `0.2`, `0.5` in `c10`, `0.1` in `c11`, `0.005` in `c12`, `0.005` in `c13`). In the talk’s words, how long the various gradients last {% cite id="wolverson2020-talk/transcript#s155" /%}. In our noise, each further layer’s strength is the one before it times this {% own /%}.
+- `lacunarity` (0 to 16; the talk’s: `1`, `5` in `c10`, `5` in `c11`, `4` in `c12`, `4` in `c13`). In the talk’s words, it adds in randomness {% cite id="wolverson2020-talk/transcript#s156" /%}{% cite id="wolverson2020-talk/transcript#s157" /%}{% cite id="wolverson2020-talk/transcript#s158" /%}. In our noise, each further layer’s frequency is the one before it times this {% own /%}.
+- `frequency` (0 to 64; the talk’s: `1`, `5` in `c10`, `2` in `c11`, `0.08` in `c12`, `0.08` in `c13`). In the talk’s words, how frequently each of the octaves peaks {% cite id="wolverson2020-talk/transcript#s159" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.noise" /%}.
+
+{% table label="Measured traits: Noise" rowheads=true key=true %}
+* Trait
+* Noise: height map (c10)
+* Noise: overworld (c11)
+* Noise: zoom (c12)
+* Noise: double (c13)
+* This map
+---
+* [Floor share](#our-definitions)
+* 1.000, 1.000 to 1.000 {% mark p10=1 median=1 p90=1 unit="seeds" to=1 trait="floor_share" series="c10-perlin" /%}
+* 0.377, 0.320 to 0.435 {% mark p10=0.32 median=0.377 p90=0.435 unit="seeds" to=1 trait="floor_share" series="c11-overworld" /%}
+* 0.132, 0.000 to 0.846 {% mark p10=0 median=0.132 p90=0.846 unit="seeds" to=1 trait="floor_share" series="c12-noisezoom" /%}
+* 0.352, 0.059 to 0.898 {% mark p10=0.059 median=0.352 p90=0.898 unit="seeds" to=1 trait="floor_share" series="c13-double-noise" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c10-perlin" /%}
+* 4, 2 to 7 {% mark p10=2 median=4 p90=7 unit="seeds" to=60 trait="regions" series="c11-overworld" /%}
+* 1, 1 to 2 {% mark p10=1 median=1 p90=2 unit="seeds" to=60 trait="regions" series="c12-noisezoom" /%}
+* 2, 1 to 5 {% mark p10=1 median=2 p90=5 unit="seeds" to=60 trait="regions" series="c13-double-noise" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 0, 0 to 0 {% mark p10=0 median=0 p90=0 unit="seeds" to=140 trait="dead_ends" series="c10-perlin" /%}
+* 12, 7 to 17 {% mark p10=7 median=12 p90=17 unit="seeds" to=140 trait="dead_ends" series="c11-overworld" /%}
+* 2, 0 to 4 {% mark p10=0 median=2 p90=4 unit="seeds" to=140 trait="dead_ends" series="c12-noisezoom" /%}
+* 2, 0.9 to 4 {% mark p10=0.9 median=2 p90=4 unit="seeds" to=140 trait="dead_ends" series="c13-double-noise" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.000, 0.000 to 0.000 {% mark p10=0 median=0 p90=0 unit="seeds" to=0.4 trait="corridor_ratio" series="c10-perlin" /%}
+* 0.014, 0.007 to 0.029 {% mark p10=0.007 median=0.014 p90=0.029 unit="seeds" to=0.4 trait="corridor_ratio" series="c11-overworld" /%}
+* 0.013, 0.000 to 1.000 {% mark p10=0 median=0.013 p90=0.4 unit="seeds" to=0.4 trait="corridor_ratio" series="c12-noisezoom" /%}
+* 0.002, 0.000 to 0.023 {% mark p10=0 median=0.002 p90=0.023 unit="seeds" to=0.4 trait="corridor_ratio" series="c13-double-noise" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 79, 79 to 79 {% mark p10=79 median=79 p90=79 unit="seeds" to=290 trait="path" series="c10-perlin" /%}
+* 91, 79.5 to 113.5 (none on 114) {% mark p10=79.5 median=91 p90=113.5 unit="seeds" to=290 trait="path" series="c11-overworld" /%}
+* 64.5, 0 to 93 (none on 44) {% mark p10=0 median=64.5 p90=93 unit="seeds" to=290 trait="path" series="c12-noisezoom" /%}
+* 81, 18 to 99 (none on 86) {% mark p10=18 median=81 p90=99 unit="seeds" to=290 trait="path" series="c13-double-noise" /%}
+* {% now trait="path" digits=0 /%}
+---
+* [Water](#our-definitions)
+* 0.000, 0.000 to 0.000 {% mark p10=0 median=0 p90=0 unit="seeds" to=1 trait="water" series="c10-perlin" /%}
+* 0.495, 0.437 to 0.574 {% mark p10=0.437 median=0.495 p90=0.574 unit="seeds" to=1 trait="water" series="c11-overworld" /%}
+* 0.679, 0.000 to 1.000 {% mark p10=0 median=0.679 p90=1 unit="seeds" to=1 trait="water" series="c12-noisezoom" /%}
+* 0.646, 0.032 to 0.941 {% mark p10=0.032 median=0.646 p90=0.941 unit="seeds" to=1 trait="water" series="c13-double-noise" /%}
+* {% now trait="water" digits=3 /%}
+---
+* [Grass](#our-definitions)
+* 0.000, 0.000 to 0.000 {% mark p10=0 median=0 p90=0 unit="seeds" to=1 trait="grass" series="c10-perlin" /%}
+* 0.377, 0.320 to 0.435 {% mark p10=0.32 median=0.377 p90=0.435 unit="seeds" to=1 trait="grass" series="c11-overworld" /%}
+* 0.132, 0.000 to 0.846 {% mark p10=0 median=0.132 p90=0.846 unit="seeds" to=1 trait="grass" series="c12-noisezoom" /%}
+* 0.352, 0.059 to 0.898 {% mark p10=0.059 median=0.352 p90=0.898 unit="seeds" to=1 trait="grass" series="c13-double-noise" /%}
+* {% now trait="grass" digits=3 /%}
+---
+* [Mountain](#our-definitions)
+* 0.000, 0.000 to 0.000 {% mark p10=0 median=0 p90=0 unit="seeds" to=1 trait="mountain" series="c10-perlin" /%}
+* 0.122, 0.073 to 0.176 {% mark p10=0.073 median=0.122 p90=0.176 unit="seeds" to=1 trait="mountain" series="c11-overworld" /%}
+* 0.023, 0.000 to 0.851 {% mark p10=0 median=0.023 p90=0.851 unit="seeds" to=1 trait="mountain" series="c12-noisezoom" /%}
+* 0.000, 0.000 to 0.102 {% mark p10=0 median=0 p90=0.102 unit="seeds" to=1 trait="mountain" series="c13-double-noise" /%}
+* {% now trait="mountain" digits=3 /%}
+{% /table %}
+
+The overworld’s land is not one piece: 4 regions at the median, with water between them {% own-run values="c11.regions.median" /%}. A map at the median is 0.495 water, 0.377 grass and 0.122 mountain {% own-run values="c11.water.median c11.grass.median c11.mountain.median" /%}. The zoom’s last frame is a small window of the noise, and what it holds varies widely: its floor share runs from 0.000 to 0.886 over the seeds {% own-run values="c12.floor_share.min c12.floor_share.max" /%}. The height map is all floor, so its numbers say only how big the map is {% own /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.noise" /%}:
+
+- **Not one region** `c11`: the walkable tiles form more than one region. **197 of 200 seeds.** The talk’s own code: 197 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjJ9), and 194 more in the data file; or `map-lab build recipes/c11-overworld.json --seed 0`.
+- **No path** `c11`: no walk from start to exit (the map’s own, or the standard probe’s). **114 of 200 seeds.** The talk’s own code: 137 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjB9), [seed 5](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjV9), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjZ9), and 111 more in the data file; or `map-lab build recipes/c11-overworld.json --seed 0`.
+- **Not one region** `c12`: the walkable tiles form more than one region. **61 of 200 seeds.** The talk’s own code: 56 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MX0), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6M30), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6Nn0), and 58 more in the data file; or `map-lab build recipes/c12-noisezoom.json --seed 1`.
+- **No path** `c12`: no walk from start to exit (the map’s own, or the standard probe’s). **44 of 200 seeds.** The talk’s own code: 36 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MX0), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6M30), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6Nn0), and 41 more in the data file; or `map-lab build recipes/c12-noisezoom.json --seed 1`.
+- **Short path** `c12`: start and exit fewer than a quarter of the map’s width apart, in steps. **59 of 200 seeds.** The talk’s own code: 52 of 200. Watch it fail on [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6NH0), [seed 11](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MTF9), [seed 15](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MTV9), and 56 more in the data file; or `map-lab build recipes/c12-noisezoom.json --seed 4`.
+- **Not one region** `c13`: the walkable tiles form more than one region. **128 of 200 seeds.** The talk’s own code: 125 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyfQ), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozfQ), and 125 more in the data file; or `map-lab build recipes/c13-double-noise.json --seed 1`.
+- **No path** `c13`: no walk from start to exit (the map’s own, or the standard probe’s). **86 of 200 seeds.** The talk’s own code: 84 of 200. Watch it fail on [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyfQ), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozfQ), and 83 more in the data file; or `map-lab build recipes/c13-double-noise.json --seed 1`.
+- **Short path** `c13`: start and exit fewer than a quarter of the map’s width apart, in steps. **14 of 200 seeds.** The talk’s own code: 12 of 200. Watch it fail on [seed 27](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyN30), [seed 35](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozNX0), [seed 59](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjo1OX0), and 11 more in the data file; or `map-lab build recipes/c13-double-noise.json --seed 27`.
+
+Our criteria are written for maps to be walked across. An overworld isn’t one until something decides where a traveler can go {% own /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+None of the talk’s demos runs it with another stage {% own /%}.
+
+In the questions after the talk, its author suggests mixing several noise maps together, or running an erosion simulation over one {% cite id="wolverson2020-talk/transcript#s313" /%}{% cite id="wolverson2020-talk/transcript#s314" /%}{% cite id="wolverson2020-talk/transcript#s322" /%}{% cite id="wolverson2020-talk/transcript#s323" /%}{% cite id="wolverson2020-talk/transcript#s324" /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.noise" /%}:
+
+- `c10-perlin`: 10 of 10 traits consistent with the talk’s own code.
+- `c11-overworld`: 10 of 10 traits consistent with the talk’s own code.
+- `c12-noisezoom`: 10 of 10 traits consistent with the talk’s own code.
+- `c13-double-noise`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+## Shaping and combining
+
+These change a map that another stage made, or join two {% own /%}.
+
+{% card title="Erosion by aggregation" id="dla-erode" kind="Shaping" %}
+Fire particles at a finished map and let them eat at its walls, so it looks more organic and keeps its structure {% cite id="wolverson2020-talk/transcript#s191" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}{% cite id="wolverson2020-talk/transcript#s193" /%}{% cite id="wolverson2020-talk/transcript#s194" /%}{% cite id="wolverson2020-talk/transcript#s195" /%}{% cite id="wolverson2020-talk/transcript#s196" /%}{% cite id="wolverson2020-talk/transcript#s197" /%}{% cite id="wolverson2020-slides/pdf#p21" /%}.
+
+Stage `dla-erode`. The talk’s demo: `c08-dla-erosion`.
+
+{% part title="The rule" %}
+```text
+start from a finished map
+repeat for a number of particles:
+    start a particle on a random open tile
+    step at random until it stands on rock
+    dig that tile
+```
+
+Each particle digs exactly one tile: the first rock its walk reaches from inside the open area {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L100-L128" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Rooms, eroded: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "dla-erode", demos: ["c08-dla-erosion"]} %}
+{% steps %}
+{% step src="assets/steps/c08-0030-light.png" dark="assets/steps/c08-0030-dark.png" alt="Rooms, eroded, seed 1: the map at step 30 of 531." at=30 of=531 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c08-0031-light.png" dark="assets/steps/c08-0031-dark.png" alt="Rooms, eroded, seed 1: the map at step 31 of 531." key="dla-erode.start" at=31 of=531 %}
+Erosion starts from a finished map: in the talk’s demo, random rooms joined by corridors {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L21" /%}{% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L64-L75" /%}{% cite id="wolverson2020-talk/transcript#s191" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}.
+{% /step %}
+{% step src="assets/steps/c08-0032-light.png" dark="assets/steps/c08-0032-dark.png" alt="Rooms, eroded, seed 1: the map at step 32 of 531." key="dla-erode.particle" at=32 of=531 %}
+A particle starts on a random open tile and steps at random until it stands on rock. That one tile of rock is dug {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L100-L128" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}{% cite id="wolverson2020-talk/transcript#s193" /%}. This is particle {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c08-0281-light.png" dark="assets/steps/c08-0281-dark.png" alt="Rooms, eroded, seed 1: the map at step 281 of 531." key="dla-erode.particle" at=281 of=531 %}
+A particle starts on a random open tile and steps at random until it stands on rock. That one tile of rock is dug {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L100-L128" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}{% cite id="wolverson2020-talk/transcript#s193" /%}. This is particle {% value %}250{% /value %}.
+{% /step %}
+{% step src="assets/steps/c08-0531-light.png" dark="assets/steps/c08-0531-dark.png" alt="Rooms, eroded, seed 1: the map at step 531 of 531." key="dla-erode.particle" at=531 of=531 %}
+A particle starts on a random open tile and steps at random until it stands on rock. That one tile of rock is dug {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L100-L128" /%}{% cite id="wolverson2020-talk/transcript#s192" /%}{% cite id="wolverson2020-talk/transcript#s193" /%}. This is particle {% value %}500{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c08-dla-erosion.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `iterations` (0 to 100,000; the talk’s: `500`). How many particles are fired, each digging one tile {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L86" /%}{% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L128" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.dla-erode" /%}.
+
+{% table label="Measured traits: Erosion by aggregation" rowheads=true key=true %}
+* Trait
+* Rooms, eroded (c08)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.287, 0.252 to 0.317 {% mark p10=0.252 median=0.287 p90=0.317 unit="seeds" to=1 trait="floor_share" series="c08-dla-erosion" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c08-dla-erosion" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 51, 39 to 62 {% mark p10=39 median=51 p90=62 unit="seeds" to=140 trait="dead_ends" series="c08-dla-erosion" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.085, 0.062 to 0.111 {% mark p10=0.062 median=0.085 p90=0.111 unit="seeds" to=0.4 trait="corridor_ratio" series="c08-dla-erosion" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 121.5, 88 to 156.1 {% mark p10=88 median=121.5 p90=156.1 unit="seeds" to=290 trait="path" series="c08-dla-erosion" /%}
+* {% now trait="path" digits=0 /%}
+---
+* [Rooms placed](#our-definitions)
+* 13, 11 to 15 {% mark p10=11 median=13 p90=15 unit="seeds" to=30 trait="rooms" series="c08-dla-erosion" /%}
+* {% now trait="rooms" digits=0 /%}
+{% /table %}
+
+500 particles lift the floor share from random rooms’ 0.162 to 0.287, and turn a map with no dead ends into one with 51 at the median {% own-run values="c01.floor_share.median c08.floor_share.median c08.dead_ends.median" /%}. Erosion only opens tiles next to open ones, and the map stays 1 region on every seed {% own-run values="c08.regions.max" /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.dla-erode" /%}.
+
+The demo’s walk has no cap {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L102" /%}. Ours has one, which 0 of these seeds reach {% own-run values="c08.fails.guard-hit" /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [rooms → dla-erode](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6ImRsYS1lcm9kZSIsIml0ZXJhdGlvbnMiOjUwMH1dLCJzZWVkIjoxfQ) `c08`: rooms eroded by aggregation
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.dla-erode" /%}:
+
+- `c08-dla-erosion`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Combining two maps" id="combine" kind="Shaping" %}
+Two maps, each from a pipeline of its own, joined into one: the talk’s point that a map rarely needs just one technique {% cite id="wolverson2020-talk/transcript#s179" /%}{% cite id="wolverson2020-talk/transcript#s180" /%}{% cite id="wolverson2020-slides/pdf#p20" /%}.
+
+Stage `combine`. The talk’s demo: `c09-combination`.
+
+{% part title="The rule" %}
+```text
+build the first input on a map of its own
+build the second input on a map of its own
+the result's left half is the first map's, and its right half the second's
+```
+
+The talk’s example is a fortress of rooms on the left that breaks out into caves on the right {% cite id="wolverson2020-talk/transcript#s181" /%}{% cite id="wolverson2020-talk/transcript#s182" /%}{% cite id="wolverson2020-talk/transcript#s183" /%}{% cite id="wolverson2020-talk/transcript#s184" /%}{% cite id="wolverson2020-talk/transcript#s185" /%}. Its demo copies the halves column for column and joins nothing {% cite id="wolverson2020-code/c09-combination/src/main.rs#L101-L114" /%}. The talk’s author then adds a prefab of fortifications down the middle {% cite id="wolverson2020-talk/transcript#s186" /%}{% cite id="wolverson2020-talk/transcript#s187" /%}{% cite id="wolverson2020-talk/transcript#s188" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through BSP + caves + spine: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "combine", demos: ["c09-combination"]} %}
+{% steps %}
+{% step src="assets/steps/c09-0001-light.png" dark="assets/steps/c09-0001-dark.png" alt="BSP + caves + spine, seed 1: the map at step 1 of 54." key="combine.input" at=1 of=54 %}
+Each input is built on a map of its own: in the talk’s demo, rooms in subdivided space, then a cellular automata map {% cite id="wolverson2020-code/c09-combination/src/main.rs#L76-L79" /%}{% cite id="wolverson2020-code/c09-combination/src/main.rs#L82-L97" /%}{% cite id="wolverson2020-talk/transcript#s181" /%}{% cite id="wolverson2020-talk/transcript#s182" /%}. This is input {% value %}1{% /value %}.
+{% /step %}
+{% step src="assets/steps/c09-0046-light.png" dark="assets/steps/c09-0046-dark.png" alt="BSP + caves + spine, seed 1: the map at step 46 of 54." at=46 of=54 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c09-0047-light.png" dark="assets/steps/c09-0047-dark.png" alt="BSP + caves + spine, seed 1: the map at step 47 of 54." key="combine.input" at=47 of=54 %}
+Each input is built on a map of its own: in the talk’s demo, rooms in subdivided space, then a cellular automata map {% cite id="wolverson2020-code/c09-combination/src/main.rs#L76-L79" /%}{% cite id="wolverson2020-code/c09-combination/src/main.rs#L82-L97" /%}{% cite id="wolverson2020-talk/transcript#s181" /%}{% cite id="wolverson2020-talk/transcript#s182" /%}. This is input {% value %}2{% /value %}.
+{% /step %}
+{% step src="assets/steps/c09-0052-light.png" dark="assets/steps/c09-0052-dark.png" alt="BSP + caves + spine, seed 1: the map at step 52 of 54." at=52 of=54 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c09-0053-light.png" dark="assets/steps/c09-0053-dark.png" alt="BSP + caves + spine, seed 1: the map at step 53 of 54." key="combine.halves" at=53 of=54 %}
+The left half of the map is copied from the first input and the right half from the second, column for column, and nothing joins them {% cite id="wolverson2020-code/c09-combination/src/main.rs#L101-L114" /%}{% cite id="wolverson2020-talk/transcript#s183" /%}{% cite id="wolverson2020-talk/transcript#s184" /%}{% cite id="wolverson2020-talk/transcript#s185" /%}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c09-combination.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+The stage’s two inputs are pipelines of their own. In the lab’s strip they are the left row and the right row, and a stage can be added to either {% own /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.combine" /%}.
+
+{% table label="Measured traits: Combining two maps" rowheads=true key=true %}
+* Trait
+* BSP + caves + spine (c09)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.439, 0.401 to 0.477 {% mark p10=0.401 median=0.439 p90=0.477 unit="seeds" to=1 trait="floor_share" series="c09-combination" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 11, 6 to 17 {% mark p10=6 median=11 p90=17 unit="seeds" to=60 trait="regions" series="c09-combination" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 39, 30 to 50 {% mark p10=30 median=39 p90=50 unit="seeds" to=140 trait="dead_ends" series="c09-combination" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.139, 0.116 to 0.163 {% mark p10=0.116 median=0.139 p90=0.163 unit="seeds" to=0.4 trait="corridor_ratio" series="c09-combination" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 125, 107.2 to 150.8 (none on 47) {% mark p10=107.2 median=125 p90=150.8 unit="seeds" to=290 trait="path" series="c09-combination" /%}
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+The cave half brings its pockets with it: 11 regions at the median {% own-run values="c09.regions.median" /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.combine" /%}:
+
+- **Not one region**: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6Mn0), and 197 more in the data file; or `map-lab build recipes/c09-combination.json --seed 0`.
+- **No path**: no walk from start to exit (the map’s own, or the standard probe’s). **47 of 200 seeds.** The talk’s own code: 50 of 200. Watch it fail on [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6M30), [seed 5](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6NX0), [seed 11](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MTF9), and 44 more in the data file; or `map-lab build recipes/c09-combination.json --seed 3`.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [combine(bsp / cellular) → prefab](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MX0) `c09`: two maps combined, with a prefab
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.combine" /%}:
+
+- `c09-combination`: 7 of 8 traits consistent with the talk’s own code. **Corridor ratio differs**: ours 0.139 on average, the talk’s 0.166.
+
+The corridor ratio differs because of the prefab down the middle: ours is a hall of our own design, standing in for the talk’s layout, which we don’t copy {% own /%}.
+{% /part %}
+
+{% /card %}
+
+{% card title="Prefabs" id="prefab" kind="Shaping" %}
+A piece of map designed by hand, dropped into a generated one {% cite id="wolverson2020-talk/transcript#s198" /%}{% cite id="wolverson2020-talk/transcript#s199" /%}{% cite id="wolverson2020-talk/transcript#s200" /%}{% cite id="wolverson2020-slides/pdf#p22" /%}.
+
+Stage `prefab`. The talk’s demos: `c14-not-a-trap`, `c15-still-not-a-trap`.
+
+{% part title="The rule" %}
+```text
+in a room:     pick random rooms until one is big enough; stamp it at the room's center
+on open floor: pick random spots until the whole prefab lies on floor; stamp it there
+down the middle: stamp it over the center columns of the map
+```
+
+With rooms, the talk’s way is to go through the room list for a room bigger than the prefab {% cite id="wolverson2020-talk/transcript#s203" /%}{% cite id="wolverson2020-talk/transcript#s204" /%}{% cite id="wolverson2020-talk/transcript#s205" /%}. On a map without rooms it picks random locations and looks whether the prefab will fit {% cite id="wolverson2020-talk/transcript#s205" /%}{% cite id="wolverson2020-talk/transcript#s206" /%}{% cite id="wolverson2020-talk/transcript#s207" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Vault in a room, Vault on open floor: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "prefab", demos: ["c14-not-a-trap", "c15-still-not-a-trap"]} %}
+{% steps %}
+{% step src="assets/steps/c14-0030-light.png" dark="assets/steps/c14-0030-dark.png" alt="Vault in a room, seed 1: the map at step 30 of 32." at=30 of=32 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c14-0031-light.png" dark="assets/steps/c14-0031-dark.png" alt="Vault in a room, seed 1: the map at step 31 of 32." key="prefab.show" at=31 of=32 %}
+The prefab on its own: two treasure tiles ringed by traps, inside a margin that is left as the map has it {% cite id="wolverson2020-code/c14-not-a-trap/src/main.rs#L149-L155" /%}{% cite id="wolverson2020-code/c14-not-a-trap/src/main.rs#L91-L95" /%}{% cite id="wolverson2020-talk/transcript#s200" /%}{% cite id="wolverson2020-talk/transcript#s201" /%}.
+{% /step %}
+{% step src="assets/steps/c14-0032-light.png" dark="assets/steps/c14-0032-dark.png" alt="Vault in a room, seed 1: the map at step 32 of 32." key="prefab.placed" at=32 of=32 %}
+The prefab is stamped where it fits: at the center of a room big enough for it, or on a patch of open floor {% cite id="wolverson2020-code/c14-not-a-trap/src/main.rs#L105-L121" /%}{% cite id="wolverson2020-code/c15-still-not-a-trap/src/main.rs#L42-L63" /%}{% cite id="wolverson2020-talk/transcript#s203" /%}{% cite id="wolverson2020-talk/transcript#s204" /%}{% cite id="wolverson2020-talk/transcript#s205" /%}{% cite id="wolverson2020-talk/transcript#s206" /%}.
+{% /step %}
+{% step src="assets/steps/c15-0013-light.png" dark="assets/steps/c15-0013-dark.png" alt="Vault on open floor, seed 1: the map at step 13 of 13." key="prefab.no-place" at=13 of=13 %}
+No place was found for the prefab. The talk’s loops end only when the prefab has been placed, so its code would still be looking {% cite id="wolverson2020-code/c14-not-a-trap/src/main.rs#L106-L124" /%}{% cite id="wolverson2020-code/c15-still-not-a-trap/src/main.rs#L41-L67" /%}. Ours stops and records the seed as a failure {% own /%}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c14-not-a-trap.json`, `map-lab build recipes/c15-still-not-a-trap.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `shape` (`vault`, `spine`; the talk’s: `vault`). `vault` is the talk’s treasure ringed by traps {% cite id="wolverson2020-code/c14-not-a-trap/src/main.rs#L149-L155" /%}{% cite id="wolverson2020-talk/transcript#s200" /%}{% cite id="wolverson2020-talk/transcript#s201" /%}. `spine` is our stand-in for the fortifications the talk’s combined map gets: a hall of our own design {% own /%}.
+- `place` (`room`, `open-area`, `center`; the talk’s: `room` in `c14`, `open-area` in `c15`). `room` puts it at the center of a random room that is big enough {% cite id="wolverson2020-code/c14-not-a-trap/src/main.rs#L105-L109" /%}, `open-area` wherever a random spot has floor under all of it {% cite id="wolverson2020-code/c15-still-not-a-trap/src/main.rs#L42-L50" /%}, and `center` down the middle of the map, as the combined map’s is {% cite id="wolverson2020-code/c09-combination/src/main.rs#L122-L124" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.prefab" /%}.
+
+{% table label="Measured traits: Prefabs" rowheads=true key=true %}
+* Trait
+* Vault in a room (c14)
+* Vault on open floor (c15)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.162, 0.127 to 0.192 {% mark p10=0.127 median=0.162 p90=0.192 unit="seeds" to=1 trait="floor_share" series="c14-not-a-trap" /%}
+* 0.637, 0.608 to 0.665 {% mark p10=0.608 median=0.637 p90=0.665 unit="seeds" to=1 trait="floor_share" series="c15-still-not-a-trap" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c14-not-a-trap" /%}
+* 17, 11 to 23 {% mark p10=11 median=17 p90=23 unit="seeds" to=60 trait="regions" series="c15-still-not-a-trap" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 0, 0 to 0 {% mark p10=0 median=0 p90=0 unit="seeds" to=140 trait="dead_ends" series="c14-not-a-trap" /%}
+* 67, 57 to 83 {% mark p10=57 median=67 p90=83 unit="seeds" to=140 trait="dead_ends" series="c15-still-not-a-trap" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.190, 0.146 to 0.247 {% mark p10=0.146 median=0.19 p90=0.247 unit="seeds" to=0.4 trait="corridor_ratio" series="c14-not-a-trap" /%}
+* 0.131, 0.116 to 0.149 {% mark p10=0.116 median=0.131 p90=0.149 unit="seeds" to=0.4 trait="corridor_ratio" series="c15-still-not-a-trap" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 149, 112.7 to 191.1 {% mark p10=112.7 median=149 p90=191.1 unit="seeds" to=290 trait="path" series="c14-not-a-trap" /%}
+* 102, 93 to 112 (none on 72) {% mark p10=93 median=102 p90=112 unit="seeds" to=290 trait="path" series="c15-still-not-a-trap" /%}
+* {% now trait="path" digits=0 /%}
+---
+* [Rooms placed](#our-definitions)
+* 13, 11 to 15 {% mark p10=11 median=13 p90=15 unit="seeds" to=30 trait="rooms" series="c14-not-a-trap" /%}
+* –
+* {% now trait="rooms" digits=0 /%}
+{% /table %}
+
+Treasure and traps count as walkable, so a vault changes none of the traits its map had {% own /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.prefab" /%}:
+
+- **No place for the prefab** `c14`: a prefab stage found no place for its prefab (the talk’s loop would run forever). **10 of 200 seeds.** The talk’s own code was still looking after 10 seconds on 18 of 200. Watch it fail on [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjR9), [seed 71](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjcxfQ), [seed 81](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjgxfQ), and 7 more in the data file; or `map-lab build recipes/c14-not-a-trap.json --seed 4`.
+- **No place for the prefab** `c15`: a prefab stage found no place for its prefab (the talk’s loop would run forever). **130 of 200 seeds.** The talk’s own code was still looking after 10 seconds on 142 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0), [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6NH0), and 127 more in the data file; or `map-lab build recipes/c15-still-not-a-trap.json --seed 0`.
+- **Not one region** `c15`: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6Mn0), and 197 more in the data file; or `map-lab build recipes/c15-still-not-a-trap.json --seed 0`.
+- **No path** `c15`: no walk from start to exit (the map’s own, or the standard probe’s). **72 of 200 seeds.** The talk’s own code: 52 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MTJ9), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MTN9), and 69 more in the data file; or `map-lab build recipes/c15-still-not-a-trap.json --seed 0`.
+
+Both of the talk’s placement loops end only when the prefab has been placed {% cite id="wolverson2020-code/c14-not-a-trap/src/main.rs#L106-L124" /%}{% cite id="wolverson2020-code/c15-still-not-a-trap/src/main.rs#L41-L67" /%}. On a map with no room big enough, or no clear patch of floor the right size, they never end; ours stops and records the seed {% own /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [combine(bsp / cellular) → prefab](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MX0) `c09`: two maps combined, with a prefab
+- [rooms → prefab](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjF9) `c14`: a prefab vault in a room that fits it
+- [cellular → prefab](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0) `c15`: a prefab vault wherever it fits
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.prefab" /%}:
+
+- `c14-not-a-trap`: 8 of 8 traits consistent with the talk’s own code.
+- `c15-still-not-a-trap`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+## Analysis and placement
+
+These read a map: what can be reached, where to start and end, and what lies near the way between. The talk builds them all on Dijkstra maps {% cite id="wolverson2020-talk/transcript#s209" /%}{% cite id="wolverson2020-talk/transcript#s210" /%}{% cite id="wolverson2020-talk/transcript#s211" /%}{% cite id="wolverson2020-talk/transcript#s212" /%}{% cite id="wolverson2020-talk/transcript#s213" /%}.
+
+{% card title="Culling what can’t be reached" id="cull" kind="Analysis" %}
+Find the parts of a map that can’t be reached, then delete them or put them to use {% cite id="wolverson2020-talk/transcript#s222" /%}{% cite id="wolverson2020-talk/transcript#s223" /%}{% cite id="wolverson2020-talk/transcript#s230" /%}{% cite id="wolverson2020-talk/transcript#s231" /%}{% cite id="wolverson2020-talk/transcript#s232" /%}{% cite id="wolverson2020-talk/transcript#s233" /%}{% cite id="wolverson2020-talk/transcript#s234" /%}{% cite id="wolverson2020-slides/pdf#p24" /%}.
+
+Stage `cull`. The talk’s demo: `c16-unreachable`.
+
+{% part title="The rule" %}
+```text
+find the open tile nearest the center
+flood outward from it, counting steps: a Dijkstra map
+every open tile the flood never reached is unreachable
+mark those tiles, or turn them to wall
+```
+
+The talk builds this on Dijkstra maps: from a starting point, every walkable tile gets the number of steps to it, and a tile left at the starting value can’t be reached {% cite id="wolverson2020-talk/transcript#s214" /%}{% cite id="wolverson2020-talk/transcript#s215" /%}{% cite id="wolverson2020-talk/transcript#s216" /%}{% cite id="wolverson2020-talk/transcript#s217" /%}{% cite id="wolverson2020-talk/transcript#s218" /%}{% cite id="wolverson2020-talk/transcript#s219" /%}{% cite id="wolverson2020-talk/transcript#s220" /%}{% cite id="wolverson2020-talk/transcript#s221" /%}{% cite id="wolverson2020-slides/pdf#p23" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Caves, unreachable marked: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "cull", demos: ["c16-unreachable"]} %}
+{% steps %}
+{% step src="assets/steps/c16-0011-light.png" dark="assets/steps/c16-0011-dark.png" alt="Caves, unreachable marked, seed 1: the map at step 11 of 13." at=11 of=13 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c16-0012-light.png" dark="assets/steps/c16-0012-dark.png" alt="Caves, unreachable marked, seed 1: the map at step 12 of 13." key="cull.center" at=12 of=13 %}
+The open tile nearest the center of the map is found {% cite id="wolverson2020-code/c16-unreachable/src/main.rs#L42-L54" /%}{% cite id="wolverson2020-talk/transcript#s224" /%}.
+{% /step %}
+{% step src="assets/steps/c16-0013-light.png" dark="assets/steps/c16-0013-dark.png" alt="Caves, unreachable marked, seed 1: the map at step 13 of 13." key="cull.marked" at=13 of=13 %}
+A Dijkstra map from that tile gives every tile it can walk to a distance. Open tiles left without one can’t be reached, and are marked {% cite id="wolverson2020-code/c16-unreachable/src/main.rs#L63-L69" /%}{% cite id="wolverson2020-talk/transcript#s225" /%}{% cite id="wolverson2020-talk/transcript#s226" /%}{% cite id="wolverson2020-talk/transcript#s227" /%}{% cite id="wolverson2020-talk/transcript#s228" /%}{% cite id="wolverson2020-talk/transcript#s229" /%}. Tiles marked: {% value %}14{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c16-unreachable.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `mode` (`remove`, `mark`; the talk’s: `mark`). `mark` shows the unreachable tiles and leaves them, as the talk’s first demo of it does {% cite id="wolverson2020-code/c16-unreachable/src/main.rs#L68-L69" /%}. `remove` turns them to wall, as its later demos do before they place anything {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L56-L65" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.cull" /%}.
+
+{% table label="Measured traits: Culling what can’t be reached" rowheads=true key=true %}
+* Trait
+* Caves, unreachable marked (c16)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.637, 0.608 to 0.665 {% mark p10=0.608 median=0.637 p90=0.665 unit="seeds" to=1 trait="floor_share" series="c16-unreachable" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 17, 11 to 23 {% mark p10=11 median=17 p90=23 unit="seeds" to=60 trait="regions" series="c16-unreachable" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 67, 57 to 83 {% mark p10=57 median=67 p90=83 unit="seeds" to=140 trait="dead_ends" series="c16-unreachable" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.131, 0.116 to 0.149 {% mark p10=0.116 median=0.131 p90=0.149 unit="seeds" to=0.4 trait="corridor_ratio" series="c16-unreachable" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 102, 93 to 112 (none on 72) {% mark p10=93 median=102 p90=112 unit="seeds" to=290 trait="path" series="c16-unreachable" /%}
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+Marking changes no tile, so this is the cave map’s own row {% own /%}. With `remove`, as in the talk’s next demo, a map is 1 region on every seed {% own-run values="c17.regions.max" /%}. What the cull costs varies: the floor share after it runs from 0.424 to 0.694, where the caves before it never fell below 0.559 {% own-run values="c17.floor_share.min c17.floor_share.max c03.floor_share.min" /%}. The talk’s warning is the extreme of this: a map with only two tiles left to walk on {% cite id="wolverson2020-talk/transcript#s238" /%}{% cite id="wolverson2020-talk/transcript#s239" /%}{% cite id="wolverson2020-talk/transcript#s240" /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.cull" /%}:
+
+- **Not one region**: the walkable tiles form more than one region. **200 of 200 seeds.** The talk’s own code: 200 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjJ9), and 197 more in the data file; or `map-lab build recipes/c16-unreachable.json --seed 0`.
+- **No path**: no walk from start to exit (the map’s own, or the standard probe’s). **72 of 200 seeds.** The talk’s own code: 54 of 200. Watch it fail on [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjB9), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjEyfQ), [seed 13](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjEzfQ), and 69 more in the data file; or `map-lab build recipes/c16-unreachable.json --seed 0`.
+
+These are the cave map’s failures, which marking leaves in place {% own /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [cellular → cull](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjF9) `c16`: finding unreachable areas
+- [cellular → cull → start](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9XSwic2VlZCI6MX0) `c17`: a start on the left
+- [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9XSwic2VlZCI6MX0) `c18`: an exit on the right
+- [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoiY2VudGVyIn0seyJzdGFnZSI6ImV4aXQiLCJhdCI6ImZhcnRoZXN0In1dLCJzZWVkIjoxfQ) `c19`: the least accessible exit
+- [cellular → cull → start → exit → hot-path](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9LHsic3RhZ2UiOiJob3QtcGF0aCIsInJhZGl1cyI6MTAsImN1bGwiOjE1fV0sInNlZWQiOjF9) `c20`: the hot path
+
+The talk culls before it picks a start, so the player can’t be placed somewhere they can’t get out of {% cite id="wolverson2020-talk/transcript#s236" /%}{% cite id="wolverson2020-talk/transcript#s237" /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.cull" /%}:
+
+- `c16-unreachable`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Placing the start" id="start" kind="Analysis" %}
+Decide where the start should be, then put it on the nearest tile that is open {% cite id="wolverson2020-talk/transcript#s241" /%}{% cite id="wolverson2020-talk/transcript#s242" /%}{% cite id="wolverson2020-talk/transcript#s243" /%}{% cite id="wolverson2020-slides/pdf#p25" /%}.
+
+Stage `start`. The talk’s demo: `c17-starting-left`.
+
+{% part title="The rule" %}
+```text
+choose a desired point: the middle of the left edge, or the center
+the start is the open tile nearest it, in a straight line
+```
+
+The demo measures every open tile’s straight-line distance to the desired point and takes the smallest {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L71-L86" /%}. It does so on a map already culled, so the start can walk to everything that is left {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L55-L67" /%}{% cite id="wolverson2020-talk/transcript#s236" /%}{% cite id="wolverson2020-talk/transcript#s237" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Caves, culled: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "start", demos: ["c17-starting-left"]} %}
+{% steps %}
+{% step src="assets/steps/c17-0013-light.png" dark="assets/steps/c17-0013-dark.png" alt="Caves, culled, seed 1: the map at step 13 of 15." at=13 of=15 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c17-0014-light.png" dark="assets/steps/c17-0014-dark.png" alt="Caves, culled, seed 1: the map at step 14 of 15." key="start.desired" at=14 of=15 %}
+Where the start should be: in the talk’s demos, the middle of the left edge or the center of the map {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L70" /%}{% cite id="wolverson2020-code/c19-ending-dijkstra/src/main.rs#L69" /%}{% cite id="wolverson2020-talk/transcript#s241" /%}{% cite id="wolverson2020-talk/transcript#s242" /%}.
+{% /step %}
+{% step src="assets/steps/c17-0015-light.png" dark="assets/steps/c17-0015-dark.png" alt="Caves, culled, seed 1: the map at step 15 of 15." key="start.placed" at=15 of=15 %}
+The start goes on the open tile nearest that point in a straight line {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L71-L86" /%}{% cite id="wolverson2020-talk/transcript#s242" /%}{% cite id="wolverson2020-talk/transcript#s243" /%}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c17-starting-left.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `at` (`left`, `center`; the talk’s: `left`). `left` is the middle of the left edge {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L70" /%}. `center` is the middle of the map, where the talk’s demo of the farthest exit starts {% cite id="wolverson2020-code/c19-ending-dijkstra/src/main.rs#L69" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.start" /%}.
+
+{% table label="Measured traits: Placing the start" rowheads=true key=true %}
+* Trait
+* Caves, culled (c17)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.627, 0.590 to 0.660 {% mark p10=0.59 median=0.627 p90=0.66 unit="seeds" to=1 trait="floor_share" series="c17-starting-left" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c17-starting-left" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 60, 51 to 74 {% mark p10=51 median=60 p90=74 unit="seeds" to=140 trait="dead_ends" series="c17-starting-left" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.124, 0.108 to 0.141 {% mark p10=0.108 median=0.124 p90=0.141 unit="seeds" to=0.4 trait="corridor_ratio" series="c17-starting-left" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 102, 92 to 113.1 {% mark p10=92 median=102 p90=113.1 unit="seeds" to=290 trait="path" series="c17-starting-left" /%}
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+A start changes no tile, so these are the culled caves’ traits {% own /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.start" /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [cellular → cull → start](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9XSwic2VlZCI6MX0) `c17`: a start on the left
+- [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9XSwic2VlZCI6MX0) `c18`: an exit on the right
+- [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoiY2VudGVyIn0seyJzdGFnZSI6ImV4aXQiLCJhdCI6ImZhcnRoZXN0In1dLCJzZWVkIjoxfQ) `c19`: the least accessible exit
+- [cellular → cull → start → exit → hot-path](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9LHsic3RhZ2UiOiJob3QtcGF0aCIsInJhZGl1cyI6MTAsImN1bGwiOjE1fV0sInNlZWQiOjF9) `c20`: the hot path
+- [rooms → start → exit → hot-rooms](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6NTAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InN0YXJ0IiwiYXQiOiJsZWZ0In0seyJzdGFnZSI6ImV4aXQiLCJhdCI6InJpZ2h0In0seyJzdGFnZSI6ImhvdC1yb29tcyJ9XSwic2VlZCI6MX0) `c21`: rooms on the path
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.start" /%}:
+
+- `c17-starting-left`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Placing the exit" id="exit" kind="Analysis" %}
+Put the exit near a point you choose, or let a Dijkstra map find the tile that is farthest from the start {% cite id="wolverson2020-talk/transcript#s244" /%}{% cite id="wolverson2020-talk/transcript#s245" /%}{% cite id="wolverson2020-talk/transcript#s246" /%}{% cite id="wolverson2020-talk/transcript#s247" /%}{% cite id="wolverson2020-talk/transcript#s248" /%}{% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}{% cite id="wolverson2020-slides/pdf#p26" /%}{% cite id="wolverson2020-slides/pdf#p27" /%}.
+
+Stage `exit`. The talk’s demos: `c18-ending-right`, `c19-ending-dijkstra`.
+
+{% part title="The rule" %}
+```text
+right:    the exit is the open tile nearest the middle of the right edge
+farthest: flood outward from the start, counting steps;
+          the exit is the reachable tile with the highest count
+then find the route from the start to the exit
+```
+
+The talk calls the second the least accessible part of the map, for when you really dislike your player {% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}. With a start in the middle it calls it a really bad idea for an exit, and a great way to hide something {% cite id="wolverson2020-talk/transcript#s251" /%}{% cite id="wolverson2020-talk/transcript#s252" /%}{% cite id="wolverson2020-talk/transcript#s253" /%}{% cite id="wolverson2020-talk/transcript#s254" /%}{% cite id="wolverson2020-talk/transcript#s255" /%}{% cite id="wolverson2020-talk/transcript#s256" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Caves, exit at right, Caves, exit farthest, Exit without a cull (ours): seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "exit", demos: ["c18-ending-right", "c19-ending-dijkstra", "nocull"]} %}
+{% steps %}
+{% step src="assets/steps/c18-0015-light.png" dark="assets/steps/c18-0015-dark.png" alt="Caves, exit at right, seed 1: the map at step 15 of 16." at=15 of=16 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c18-0016-light.png" dark="assets/steps/c18-0016-dark.png" alt="Caves, exit at right, seed 1: the map at step 16 of 16." key="exit.placed" at=16 of=16 %}
+The exit goes on the open tile nearest the middle of the right edge, and the route from the start to it is found {% cite id="wolverson2020-code/c18-ending-right/src/main.rs#L93-L111" /%}{% cite id="wolverson2020-talk/transcript#s247" /%}{% cite id="wolverson2020-talk/transcript#s248" /%}. Steps on the shortest route: {% value %}105{% /value %}.
+{% /step %}
+{% step src="assets/steps/c19-0016-light.png" dark="assets/steps/c19-0016-dark.png" alt="Caves, exit farthest, seed 1: the map at step 16 of 16." key="exit.placed#c19-ending-dijkstra" at=16 of=16 %}
+A Dijkstra map from the start gives every tile it can reach its walking distance, and the exit goes on the tile with the largest: the least accessible one {% cite id="wolverson2020-code/c19-ending-dijkstra/src/main.rs#L93-L103" /%}{% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}. Steps on the shortest route: {% value %}68{% /value %}.
+{% /step %}
+{% step src="assets/steps/nocull-0014-light.png" dark="assets/steps/nocull-0014-dark.png" alt="Exit without a cull (ours), seed 0: the map at step 14 of 14." key="exit.no-path" at=14 of=14 %}
+The exit is placed, but no route reaches it from the start: without a cull, the two can land in separate caves {% own /%}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c18-ending-right.json`, `map-lab build recipes/c19-ending-dijkstra.json`, `map-lab build recipes/own/exit-without-cull.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `at` (`right`, `farthest`; the talk’s: `right` in `c18`, `farthest` in `c19`). `right` takes the open tile nearest the middle of the right edge {% cite id="wolverson2020-code/c18-ending-right/src/main.rs#L93-L109" /%}. `farthest` takes the tile with the largest walking distance from the start {% cite id="wolverson2020-code/c19-ending-dijkstra/src/main.rs#L93-L101" /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.exit" /%}.
+
+{% table label="Measured traits: Placing the exit" rowheads=true key=true %}
+* Trait
+* Caves, exit at right (c18)
+* Caves, exit farthest (c19)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.627, 0.590 to 0.660 {% mark p10=0.59 median=0.627 p90=0.66 unit="seeds" to=1 trait="floor_share" series="c18-ending-right" /%}
+* 0.627, 0.590 to 0.660 {% mark p10=0.59 median=0.627 p90=0.66 unit="seeds" to=1 trait="floor_share" series="c19-ending-dijkstra" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c18-ending-right" /%}
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c19-ending-dijkstra" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 60, 51 to 74 {% mark p10=51 median=60 p90=74 unit="seeds" to=140 trait="dead_ends" series="c18-ending-right" /%}
+* 60, 51 to 74 {% mark p10=51 median=60 p90=74 unit="seeds" to=140 trait="dead_ends" series="c19-ending-dijkstra" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.124, 0.108 to 0.141 {% mark p10=0.108 median=0.124 p90=0.141 unit="seeds" to=0.4 trait="corridor_ratio" series="c18-ending-right" /%}
+* 0.124, 0.108 to 0.141 {% mark p10=0.108 median=0.124 p90=0.141 unit="seeds" to=0.4 trait="corridor_ratio" series="c19-ending-dijkstra" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 102, 92 to 113.1 {% mark p10=92 median=102 p90=113.1 unit="seeds" to=290 trait="path" series="c18-ending-right" /%}
+* 71, 64 to 88.1 {% mark p10=64 median=71 p90=88.1 unit="seeds" to=290 trait="path" series="c19-ending-dijkstra" /%}
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+From the left edge to the right, the route is 102 steps at the median. From the center to the farthest tile it is 71 {% own-run values="c18.path.median c19.path.median" /%}. The least accessible exit is the nearer one here, because a start in the middle has less map on any side of it {% own /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.exit" /%}.
+
+Take the cull out and it does fail. In a recipe of our own, the same pipeline without its cull, the exit lands in a cave the start can’t reach on 72 of 200 seeds {% own-run values="nocull.fails.exit-unreachable" /%}. [Seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InN0YXJ0IiwiYXQiOiJsZWZ0In0seyJzdGFnZSI6ImV4aXQiLCJhdCI6InJpZ2h0In1dLCJzZWVkIjowfQ) is one.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9XSwic2VlZCI6MX0) `c18`: an exit on the right
+- [cellular → cull → start → exit](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoiY2VudGVyIn0seyJzdGFnZSI6ImV4aXQiLCJhdCI6ImZhcnRoZXN0In1dLCJzZWVkIjoxfQ) `c19`: the least accessible exit
+- [cellular → cull → start → exit → hot-path](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9LHsic3RhZ2UiOiJob3QtcGF0aCIsInJhZGl1cyI6MTAsImN1bGwiOjE1fV0sInNlZWQiOjF9) `c20`: the hot path
+- [rooms → start → exit → hot-rooms](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6NTAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InN0YXJ0IiwiYXQiOiJsZWZ0In0seyJzdGFnZSI6ImV4aXQiLCJhdCI6InJpZ2h0In0seyJzdGFnZSI6ImhvdC1yb29tcyJ9XSwic2VlZCI6MX0) `c21`: rooms on the path
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.exit" /%}:
+
+- `c18-ending-right`: 8 of 8 traits consistent with the talk’s own code.
+- `c19-ending-dijkstra`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="The hot path" id="hot-path" kind="Analysis" %}
+Everything close to the best route through a map: the part a player is likely to see {% cite id="wolverson2020-talk/transcript#s257" /%}{% cite id="wolverson2020-talk/transcript#s258" /%}{% cite id="wolverson2020-talk/transcript#s259" /%}{% cite id="wolverson2020-talk/transcript#s260" /%}{% cite id="wolverson2020-talk/transcript#s261" /%}{% cite id="wolverson2020-talk/transcript#s262" /%}{% cite id="wolverson2020-slides/pdf#p28" /%}.
+
+Stage `hot-path`. The talk’s demo: `c20-hot-path`.
+
+{% part title="The rule" %}
+```text
+find the route from the start to the exit
+flood outward from every tile of the route at once, counting steps
+tiles under a chosen count are the hot path
+optionally, turn every tile beyond a second count to wall
+```
+
+The talk’s author finds the route, makes a Dijkstra map from all of its points, and takes everything under a value of, say, 10 {% cite id="wolverson2020-talk/transcript#s258" /%}{% cite id="wolverson2020-talk/transcript#s259" /%}{% cite id="wolverson2020-talk/transcript#s260" /%}{% cite id="wolverson2020-talk/transcript#s261" /%}{% cite id="wolverson2020-talk/transcript#s262" /%}. The demo then culls at 15, so a band of floor survives beyond the hot path it shows {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L140-L152" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Caves, hot path cull: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "hot-path", demos: ["c20-hot-path"]} %}
+{% steps %}
+{% step src="assets/steps/c20-0016-light.png" dark="assets/steps/c20-0016-dark.png" alt="Caves, hot path cull, seed 1: the map at step 16 of 18." at=16 of=18 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c20-0017-light.png" dark="assets/steps/c20-0017-dark.png" alt="Caves, hot path cull, seed 1: the map at step 17 of 18." key="hot-path.marked" at=17 of=18 %}
+A second Dijkstra map starts from every tile of the route at once, so each tile’s value is its distance from the route. Tiles under the radius are the hot path {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L133-L144" /%}{% cite id="wolverson2020-talk/transcript#s260" /%}{% cite id="wolverson2020-talk/transcript#s261" /%}{% cite id="wolverson2020-talk/transcript#s262" /%}. The radius: {% value %}10{% /value %}.
+{% /step %}
+{% step src="assets/steps/c20-0018-light.png" dark="assets/steps/c20-0018-dark.png" alt="Caves, hot path cull, seed 1: the map at step 18 of 18." key="hot-path.culled" at=18 of=18 %}
+Every tile at the cull distance or farther from the route becomes wall. The talk’s demo culls at 15, wider than the 10 of its hot path {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L140-L152" /%}{% cite id="wolverson2020-talk/transcript#s263" /%}{% cite id="wolverson2020-talk/transcript#s264" /%}. The cull distance: {% value %}15{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c20-hot-path.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+- `radius` (1 to 1,000; the talk’s: `10`). Tiles fewer than this many steps from the route are the hot path {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L140-L144" /%}. The lab’s walk also keeps its caches at least this far from the route {% own /%}.
+- `cull` (0 to 1,000; the talk’s: `15`). Tiles this many steps or more from the route become wall {% cite id="wolverson2020-code/c20-hot-path/src/main.rs#L148-L152" /%}. At 0 nothing is culled {% own /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.hot-path" /%}.
+
+{% table label="Measured traits: The hot path" rowheads=true key=true %}
+* Trait
+* Caves, hot path cull (c20)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.311, 0.278 to 0.339 {% mark p10=0.278 median=0.311 p90=0.339 unit="seeds" to=1 trait="floor_share" series="c20-hot-path" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c20-hot-path" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 53.5, 43 to 62 {% mark p10=43 median=53.5 p90=62 unit="seeds" to=140 trait="dead_ends" series="c20-hot-path" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.130, 0.107 to 0.152 {% mark p10=0.107 median=0.13 p90=0.152 unit="seeds" to=0.4 trait="corridor_ratio" series="c20-hot-path" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 102, 92 to 113.1 {% mark p10=92 median=102 p90=113.1 unit="seeds" to=290 trait="path" series="c20-hot-path" /%}
+* {% now trait="path" digits=0 /%}
+{% /table %}
+
+The cull at 15 keeps about half the floor: a share of 0.311 at the median against 0.627 before it, on a route of the same 102 steps {% own-run values="c20.floor_share.median c18.floor_share.median c20.path.median" /%}. The talk offers it for a less branchy game, one that doesn’t make the player explore winding labyrinths with no purpose {% cite id="wolverson2020-talk/transcript#s263" /%}{% cite id="wolverson2020-talk/transcript#s264" /%}{% cite id="wolverson2020-talk/transcript#s265" /%}{% cite id="wolverson2020-talk/transcript#s266" /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.hot-path" /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [cellular → cull → start → exit → hot-path](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9LHsic3RhZ2UiOiJob3QtcGF0aCIsInJhZGl1cyI6MTAsImN1bGwiOjE1fV0sInNlZWQiOjF9) `c20`: the hot path
+
+The lab’s walk hides its caches off the hot path, by [a rule of our own](#the-walk) {% own /%}.
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.hot-path" /%}:
+
+- `c20-hot-path`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Hot rooms" id="hot-rooms" kind="Analysis" %}
+On a map of rooms, the route says which rooms a player has to pass through and which are optional {% cite id="wolverson2020-talk/transcript#s267" /%}{% cite id="wolverson2020-talk/transcript#s268" /%}{% cite id="wolverson2020-talk/transcript#s269" /%}{% cite id="wolverson2020-slides/pdf#p30" /%}.
+
+Stage `hot-rooms`. The talk’s demo: `c21-hot-rooms`.
+
+{% part title="The rule" %}
+```text
+find the route from the start to the exit
+a room is on the route if any step of the route is inside it
+highlight those rooms, and gray the rest
+```
+
+The talk’s uses for the gray rooms: cull them for a room-to-room game, or hide bonus things in them {% cite id="wolverson2020-talk/transcript#s269" /%}{% cite id="wolverson2020-talk/transcript#s270" /%}{% cite id="wolverson2020-talk/transcript#s271" /%}. For the rooms on the route: order a story along them, since the player will probably pass through them in order {% cite id="wolverson2020-talk/transcript#s274" /%}{% cite id="wolverson2020-talk/transcript#s275" /%}{% cite id="wolverson2020-talk/transcript#s276" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}.
+{% /part %}
+
+{% part title="Step through it" %}
+{% interactive id="lab" caption="Step through Rooms, hot rooms: seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "hot-rooms", demos: ["c21-hot-rooms"]} %}
+{% steps %}
+{% step src="assets/steps/c21-0072-light.png" dark="assets/steps/c21-0072-dark.png" alt="Rooms, hot rooms, seed 1: the map at step 72 of 73." at=72 of=73 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/c21-0073-light.png" dark="assets/steps/c21-0073-dark.png" alt="Rooms, hot rooms, seed 1: the map at step 73 of 73." key="hot-rooms.marked" at=73 of=73 %}
+A room is on the route when a step of the route falls inside it. The demo highlights those rooms and grays the rest {% cite id="wolverson2020-code/c21-hot-rooms/src/main.rs#L131-L154" /%}{% cite id="wolverson2020-talk/transcript#s267" /%}{% cite id="wolverson2020-talk/transcript#s268" /%}{% cite id="wolverson2020-talk/transcript#s269" /%}. Rooms on the route: {% value %}9{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/c21-hot-rooms.json`.
+{% /interactive %}
+{% /part %}
+
+{% part title="Controls" %}
+This stage has no controls. It reads the rooms and the route that the stages before it made {% own /%}.
+{% /part %}
+
+{% part title="What it produces, measured" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.hot-rooms" /%}.
+
+{% table label="Measured traits: Hot rooms" rowheads=true key=true %}
+* Trait
+* Rooms, hot rooms (c21)
+* This map
+---
+* [Floor share](#our-definitions)
+* 0.248, 0.212 to 0.279 {% mark p10=0.212 median=0.248 p90=0.279 unit="seeds" to=1 trait="floor_share" series="c21-hot-rooms" /%}
+* {% now trait="floor_share" digits=3 /%}
+---
+* [Regions](#our-definitions)
+* 1, 1 to 1 {% mark p10=1 median=1 p90=1 unit="seeds" to=60 trait="regions" series="c21-hot-rooms" /%}
+* {% now trait="regions" digits=0 /%}
+---
+* [Dead ends](#our-definitions)
+* 0, 0 to 0 {% mark p10=0 median=0 p90=0 unit="seeds" to=140 trait="dead_ends" series="c21-hot-rooms" /%}
+* {% now trait="dead_ends" digits=0 /%}
+---
+* [Corridor ratio](#our-definitions)
+* 0.158, 0.121 to 0.197 {% mark p10=0.121 median=0.158 p90=0.197 unit="seeds" to=0.4 trait="corridor_ratio" series="c21-hot-rooms" /%}
+* {% now trait="corridor_ratio" digits=3 /%}
+---
+* [Path](#our-definitions)
+* 180.5, 148 to 222.3 {% mark p10=148 median=180.5 p90=222.3 unit="seeds" to=290 trait="path" series="c21-hot-rooms" /%}
+* {% now trait="path" digits=0 /%}
+---
+* [Rooms placed](#our-definitions)
+* 21, 18 to 23 {% mark p10=18 median=21 p90=23 unit="seeds" to=30 trait="rooms" series="c21-hot-rooms" /%}
+* {% now trait="rooms" digits=0 /%}
+{% /table %}
+
+With 50 attempts the map places 21 rooms at the median, and its route is 180.5 steps against the caves’ 102 {% own-run values="c21.rooms.median c21.path.median c18.path.median" /%}. Corridors join the rooms in left-to-right order, not by the shortest way {% own /%}.
+{% /part %}
+
+{% part title="Where it fails" %}
+None of seeds 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.hot-rooms" /%}.
+{% /part %}
+
+{% part title="What it combines with" %}
+The talk’s demos that run it with other stages {% own /%}:
+
+- [rooms → start → exit → hot-rooms](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6NTAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InN0YXJ0IiwiYXQiOiJsZWZ0In0seyJzdGFnZSI6ImV4aXQiLCJhdCI6InJpZ2h0In0seyJzdGFnZSI6ImhvdC1yb29tcyJ9XSwic2VlZCI6MX0) `c21`: rooms on the path
+{% /part %}
+
+{% part title="Checked against the talk’s code" %}
+Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.hot-rooms" /%}:
+
+- `c21-hot-rooms`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+## How this was measured
+
+{% callout type="note" title="These definitions are ours" %}
+The talk doesn’t measure its maps. Every trait, the probe and every failure criterion below is our own definition, written for this page and applied the same way to our code and to the talk’s {% own /%}.
 {% /callout %}
 
-## What it doesn't do
+Each of the talk’s 22 demos is a recipe, built once on each of seeds 0 to 199 by the same core that runs in this page {% own /%}. The data file lists every value with the recipe and the seed behind it {% ref source="this" path="assets/lab/traits.json" lines="1-6" /%}.
 
-The rule says nothing about connectivity {% own /%}. Even at 55% starting rock, 49 of the 50 seeds leave at least one pocket of floor that the largest cave doesn't reach after ten generations {% own-run values="split.55" /%}. A game has to fill those pockets or tunnel to them before it places anything there {% own /%}.
+### Our definitions
+
+What we measure on a finished map {% own /%}:
+
+{% table label="The traits we measure" rowheads=true %}
+* Trait
+* Our definition
+---
+* Floor share
+* Walkable tiles over all tiles. Walkable: floor, grass, treasure and traps; not wall, water or mountain.
+---
+* Regions
+* Groups of walkable tiles joined in four directions.
+---
+* Dead ends
+* Walkable tiles with exactly one walkable neighbor of four.
+---
+* Corridor ratio
+* The share of walkable tiles in no 2 x 2 block of walkable tiles: passages one tile wide.
+---
+* Path
+* Steps on the shortest four-way walk from start to exit; null when there is none.
+---
+* Water
+* Water tiles over all tiles.
+---
+* Grass
+* Grass tiles over all tiles.
+---
+* Mountain
+* Mountain tiles over all tiles.
+---
+* Rooms placed
+* Rooms placed, for maps built from rooms; null otherwise.
+{% /table %}
+
+A map with no start and exit of its own is measured between the open tile nearest the middle of its left edge and the open tile nearest the middle of its right edge: the probe. Those are the talk’s own rules for a start and an exit {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L70-L86" /%}{% cite id="wolverson2020-code/c18-ending-right/src/main.rs#L93-L109" /%}.
+
+### What counts as failing
+
+A seed fails a demo when its map meets one of these {% own /%}:
+
+{% table label="What counts as failing" rowheads=true %}
+* Failure
+* Our criterion
+---
+* No place for the prefab
+* A prefab stage found no place for its prefab (the talk’s loop would run forever).
+---
+* Exit unreachable
+* The exit stage’s exit can’t be walked to from the start.
+---
+* No floor
+* A stage needed a walkable tile and the map had none.
+---
+* A loop hit our cap
+* A loop the talk leaves uncapped hit our cap: a particle that never lands, a prefab that never fits.
+---
+* Not one region
+* The walkable tiles form more than one region.
+---
+* No path
+* No walk from start to exit (the map’s own, or the standard probe’s).
+---
+* Short path
+* Start and exit fewer than a quarter of the map’s width apart, in steps.
+---
+* Few rooms
+* A room generator placed fewer than four rooms.
+{% /table %}
+
+### The walk
+
+The lab’s walk uses what the talk teaches: a start and an exit placed by the pipeline, and things hidden away from the route for a player to hunt for {% cite id="wolverson2020-talk/transcript#s254" /%}{% cite id="wolverson2020-talk/transcript#s255" /%}{% cite id="wolverson2020-talk/transcript#s256" /%}{% cite id="wolverson2020-talk/transcript#s271" /%}. The talk has no walk, and these rules are ours {% own /%}:
+
+- Up to five caches go on floor or grass, at least the hot path’s radius from the route by walking. The first goes on the tile farthest from the route, and each one after it on the tile farthest from those already placed, more than 12 steps from them {% own /%}.
+- You see up to nine tiles away in straight lines over tiles that can be walked on, and the walls that touch what you see. You remember what you have seen {% own /%}.
+- Afterward the lab draws your route over the shortest one, on the map shaded by walking distance from the start {% own /%}.
+
+### Is this the talk’s technique?
+
+We built the talk’s code with only its window and its random seeding replaced, and ran every demo on the same 200 seeds {% own /%}. Its random number generator isn’t ours, so the maps can’t match tile for tile, and the comparison is of distributions: for each demo and trait a two-sample Kolmogorov–Smirnov test, with a trait counted as differing when p is under 0.01 {% own /%}. 182 of 183 compared traits are consistent {% own-run values="faith.consistent faith.compared table.faithfulness" /%}.
+
+{% table label="Faithfulness to the talk’s code" rowheads=true %}
+* Demo
+* Traits compared
+* Consistent
+* What differs
+---
+* [c01-rooms](#rooms-checked-against-the-talks-code)
+* 9
+* 9
+* –
+---
+* [c02-bsprooms](#bsp-checked-against-the-talks-code)
+* 9
+* 9
+* –
+---
+* [c03-cellular](#cellular-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c04-drunkard](#drunkard-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c05-dla](#dla-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c06-dla-attractor](#dla-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c07-dla-symmetry](#dla-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c08-dla-erosion](#dla-erode-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c08a-voronoi](#voronoi-checked-against-the-talks-code)
+* 7
+* 7
+* –
+---
+* [c09-combination](#combine-checked-against-the-talks-code)
+* 8
+* 7
+* corridor ratio: ours 0.139 on average, the talk’s 0.166
+---
+* [c10-perlin](#noise-checked-against-the-talks-code)
+* 10
+* 10
+* –
+---
+* [c11-overworld](#noise-checked-against-the-talks-code)
+* 10
+* 10
+* –
+---
+* [c12-noisezoom](#noise-checked-against-the-talks-code)
+* 10
+* 10
+* –
+---
+* [c13-double-noise](#noise-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c14-not-a-trap](#prefab-checked-against-the-talks-code)
+* 8
+* 8
+* the talk’s loop unfinished on 18 of 200 seeds; ours records a failure on 10
+---
+* [c15-still-not-a-trap](#prefab-checked-against-the-talks-code)
+* 8
+* 8
+* the talk’s loop unfinished on 142 of 200 seeds; ours records a failure on 130
+---
+* [c16-unreachable](#cull-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c17-starting-left](#start-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c18-ending-right](#exit-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c19-ending-dijkstra](#exit-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c20-hot-path](#hot-path-checked-against-the-talks-code)
+* 8
+* 8
+* –
+---
+* [c21-hot-rooms](#hot-rooms-checked-against-the-talks-code)
+* 8
+* 8
+* –
+{% /table %}
+
+The comparison’s numbers and the recipe format’s schema ship with this page too {% ref source="this" path="assets/lab/faithfulness.json" lines="1-6" /%}{% ref source="this" path="assets/lab/recipe.schema.json" lines="1-6" /%}. The core is also a command line, `map-lab`, in this page’s repository: `map-lab build`, `traits`, `measure` and `walk` take the same recipes {% own /%}.

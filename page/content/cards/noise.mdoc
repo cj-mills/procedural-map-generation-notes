@@ -1,0 +1,48 @@
+---
+title: Noise
+---
+Smooth random values from −1 to 1 at every point, most often read as altitude to make an overworld [[t:149-151 t:162]].
+
+## The rule
+```text
+for every tile: n = fractal noise at the tile's position, from -1 to 1
+height:    brightness = (n + 1) / 2
+overworld: water if n < 0, grass if n < 0.5, otherwise mountain
+zoom:      sample positions are multiplied by a scale that shrinks
+double:    a second, finer noise is mixed in as the scale shrinks
+```
+
+The demos use fractal simplex noise, the first one too, though it is named for Perlin [[c10:14-15]]. The talk gives the green band as altitudes from 0 to 0.75 [[t:164-165]]. Its code draws mountain from 0.5, and 0.75 is there only in the water’s color [[c11:31-44]].
+
+## Step through it
+@@steps limit=8 mid=3
+
+## Controls
+@@control mode
+What is made of the noise: a `height` map in gray, an `overworld` of water, grass and mountain, a `zoom` into the overworld, or the zoom with two noises mixed, `double` [[c10:23-24 c11:31-44 c12:77-90 c13:41-44]].
+@@control octaves
+In the talk’s words, how many different gradients it is mixing in [[t:154]].
+@@control gain
+In the talk’s words, how long the various gradients last [[t:155]]. In our noise, each further layer’s strength is the one before it times this [[own]].
+@@control lacunarity
+In the talk’s words, it adds in randomness [[t:156-158]]. In our noise, each further layer’s frequency is the one before it times this [[own]].
+@@control frequency
+In the talk’s words, how frequently each of the octaves peaks [[t:159]].
+
+## What it produces, measured
+@@measured
+
+The overworld’s land is not one piece: {{c11.regions.median}} regions at the median, with water between them [[run:c11.regions.median]]. A map at the median is {{c11.water.median}} water, {{c11.grass.median}} grass and {{c11.mountain.median}} mountain [[run:c11.water.median c11.grass.median c11.mountain.median]]. The zoom’s last frame is a small window of the noise, and what it holds varies widely: its floor share runs from {{c12.floor_share.min}} to {{c12.floor_share.max}} over the seeds [[run:c12.floor_share.min c12.floor_share.max]]. The height map is all floor, so its numbers say only how big the map is [[own]].
+
+## Where it fails
+@@fails
+
+Our criteria are written for maps to be walked across. An overworld isn’t one until something decides where a traveler can go [[own]].
+
+## What it combines with
+@@combines
+
+In the questions after the talk, its author suggests mixing several noise maps together, or running an erosion simulation over one [[t:313-314 t:322-324]].
+
+## Checked against the talk’s code
+@@checked

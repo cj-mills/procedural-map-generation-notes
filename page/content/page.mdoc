@@ -1,0 +1,69 @@
+@@lab
+
+This is a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, and more algorithms that fix the maps and find out whether they are usable [[t:6-9]]. A recipe is a pipeline of those techniques and a seed, and the same recipe always builds the same map [[own]]. The lab above builds one a step at a time. Below, each technique has a card: its rule, its controls, what it produces over 200 seeds, the seeds where it fails, and how our version compares with the talk’s own code [[own]].
+
+## Which technique for which map
+
+Each row is a criterion of our own over the measured traits, and the demos listed are the ones the data says meet it [[run:table.guide]].
+
+@@guide
+
+The talk’s 22 demos, each built on seeds 0 to 199. A cell’s number is the median, and its mark shows where 8 of 10 seeds fall [[run:table.comparison]]. The traits are [our own definitions](#our-definitions).
+
+@@comparison
+
+## Generators
+
+Each of these starts a new map [[own]].
+
+@@group Generators
+
+## Shaping and combining
+
+These change a map that another stage made, or join two [[own]].
+
+@@group Shaping and combining
+
+## Analysis and placement
+
+These read a map: what can be reached, where to start and end, and what lies near the way between. The talk builds them all on Dijkstra maps [[t:209-213]].
+
+@@group Analysis and placement
+
+## How this was measured
+
+{% callout type="note" title="These definitions are ours" %}
+The talk doesn’t measure its maps. Every trait, the probe and every failure criterion below is our own definition, written for this page and applied the same way to our code and to the talk’s [[own]].
+{% /callout %}
+
+Each of the talk’s 22 demos is a recipe, built once on each of seeds 0 to 199 by the same core that runs in this page [[own]]. The data file lists every value with the recipe and the seed behind it [[data:traits]].
+
+### Our definitions
+
+What we measure on a finished map [[own]]:
+
+@@definitions
+
+A map with no start and exit of its own is measured between the open tile nearest the middle of its left edge and the open tile nearest the middle of its right edge: the probe. Those are the talk’s own rules for a start and an exit [[c17:70-86 c18:93-109]].
+
+### What counts as failing
+
+A seed fails a demo when its map meets one of these [[own]]:
+
+@@failures
+
+### The walk
+
+The lab’s walk uses what the talk teaches: a start and an exit placed by the pipeline, and things hidden away from the route for a player to hunt for [[t:254-256 t:271]]. The talk has no walk, and these rules are ours [[own]]:
+
+- Up to five caches go on floor or grass, at least the hot path’s radius from the route by walking. The first goes on the tile farthest from the route, and each one after it on the tile farthest from those already placed, more than 12 steps from them [[own]].
+- You see up to nine tiles away in straight lines over tiles that can be walked on, and the walls that touch what you see. You remember what you have seen [[own]].
+- Afterward the lab draws your route over the shortest one, on the map shaded by walking distance from the start [[own]].
+
+### Is this the talk’s technique?
+
+We built the talk’s code with only its window and its random seeding replaced, and ran every demo on the same 200 seeds [[own]]. Its random number generator isn’t ours, so the maps can’t match tile for tile, and the comparison is of distributions: for each demo and trait a two-sample Kolmogorov–Smirnov test, with a trait counted as differing when p is under 0.01 [[own]]. {{faith.consistent}} of {{faith.compared}} compared traits are consistent [[run:faith.consistent faith.compared table.faithfulness]].
+
+@@faithfulness
+
+The comparison’s numbers and the recipe format’s schema ship with this page too [[data:faithfulness data:schema]]. The core is also a command line, `map-lab`, in this page’s repository: `map-lab build`, `traits`, `measure` and `walk` take the same recipes [[own]].

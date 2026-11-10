@@ -1,0 +1,42 @@
+---
+title: Drunkard’s walk
+---
+A digger staggers at random through solid rock, and more follow until enough of the map is open [[t:87-97 s:11]].
+
+## The rule
+```text
+start solid; the first digger starts at the center
+a digger steps in a random direction and digs where it lands,
+    until it leaves the map or runs out of steps
+while less than a share of the map is open:
+    start another digger on a random open tile
+```
+
+The talk has each new digger spawn somewhere within the open map, and stops when a third of the map is open [[t:95-97]].
+
+## Step through it
+@@steps limit=5 mid=1
+
+## Controls
+@@control lifetime
+How many steps a digger takes. The demo stops a digger once its step count is over 200 [[c04:71-74]].
+@@control floor_divisor
+Diggers keep coming until one over this number of the map’s tiles is open: a third, in the demo [[c04:25 t:97]].
+
+## What it produces, measured
+@@measured
+
+The talk says this map is guaranteed to be contiguous [[t:99-100]]. It is {{c04.regions.max}} region on every seed here [[run:c04.regions.max]]. Its passages are wide: a corridor ratio of {{c04.corridor_ratio.median}} at the median, against cellular automata’s {{c03.corridor_ratio.median}} [[run:c04.corridor_ratio.median c03.corridor_ratio.median]].
+
+## Where it fails
+@@fails
+
+The demo’s loop of diggers has no cap but the open share it waits for [[c04:25]].
+
+## What it combines with
+@@combines
+
+The talk suggests it for limestone caverns [[t:100-102]].
+
+## Checked against the talk’s code
+@@checked

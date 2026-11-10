@@ -1,0 +1,38 @@
+---
+title: Erosion by aggregation
+---
+Fire particles at a finished map and let them eat at its walls, so it looks more organic and keeps its structure [[t:191-197 s:21]].
+
+## The rule
+```text
+start from a finished map
+repeat for a number of particles:
+    start a particle on a random open tile
+    step at random until it stands on rock
+    dig that tile
+```
+
+Each particle digs exactly one tile: the first rock its walk reaches from inside the open area [[c08:100-128]].
+
+## Step through it
+@@steps limit=5 mid=1
+
+## Controls
+@@control iterations
+How many particles are fired, each digging one tile [[c08:86 c08:128]].
+
+## What it produces, measured
+@@measured
+
+500 particles lift the floor share from random rooms’ {{c01.floor_share.median}} to {{c08.floor_share.median}}, and turn a map with no dead ends into one with {{c08.dead_ends.median}} at the median [[run:c01.floor_share.median c08.floor_share.median c08.dead_ends.median]]. Erosion only opens tiles next to open ones, and the map stays {{c08.regions.max}} region on every seed [[run:c08.regions.max]].
+
+## Where it fails
+@@fails
+
+The demo’s walk has no cap [[c08:102]]. Ours has one, which {{c08.fails.guard-hit}} of these seeds reach [[run:c08.fails.guard-hit]].
+
+## What it combines with
+@@combines
+
+## Checked against the talk’s code
+@@checked

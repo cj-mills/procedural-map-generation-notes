@@ -1,0 +1,38 @@
+---
+title: Prefabs
+---
+A piece of map designed by hand, dropped into a generated one [[t:198-200 s:22]].
+
+## The rule
+```text
+in a room:     pick random rooms until one is big enough; stamp it at the room's center
+on open floor: pick random spots until the whole prefab lies on floor; stamp it there
+down the middle: stamp it over the center columns of the map
+```
+
+With rooms, the talk’s way is to go through the room list for a room bigger than the prefab [[t:203-205]]. On a map without rooms it picks random locations and looks whether the prefab will fit [[t:205-207]].
+
+## Step through it
+@@steps limit=5
+
+## Controls
+@@control shape
+`vault` is the talk’s treasure ringed by traps [[c14:149-155 t:200-201]]. `spine` is our stand-in for the fortifications the talk’s combined map gets: a hall of our own design [[own]].
+@@control place
+`room` puts it at the center of a random room that is big enough [[c14:105-109]], `open-area` wherever a random spot has floor under all of it [[c15:42-50]], and `center` down the middle of the map, as the combined map’s is [[c09:122-124]].
+
+## What it produces, measured
+@@measured
+
+Treasure and traps count as walkable, so a vault changes none of the traits its map had [[own]].
+
+## Where it fails
+@@fails
+
+Both of the talk’s placement loops end only when the prefab has been placed [[c14:106-124 c15:41-67]]. On a map with no room big enough, or no clear patch of floor the right size, they never end; ours stops and records the seed [[own]].
+
+## What it combines with
+@@combines
+
+## Checked against the talk’s code
+@@checked

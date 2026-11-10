@@ -1,0 +1,33 @@
+---
+title: Placing the start
+---
+Decide where the start should be, then put it on the nearest tile that is open [[t:241-243 s:25]].
+
+## The rule
+```text
+choose a desired point: the middle of the left edge, or the center
+the start is the open tile nearest it, in a straight line
+```
+
+The demo measures every open tile’s straight-line distance to the desired point and takes the smallest [[c17:71-86]]. It does so on a map already culled, so the start can walk to everything that is left [[c17:55-67 t:236-237]].
+
+## Step through it
+@@steps limit=4
+
+## Controls
+@@control at
+`left` is the middle of the left edge [[c17:70]]. `center` is the middle of the map, where the talk’s demo of the farthest exit starts [[c19:69]].
+
+## What it produces, measured
+@@measured
+
+A start changes no tile, so these are the culled caves’ traits [[own]].
+
+## Where it fails
+@@fails
+
+## What it combines with
+@@combines
+
+## Checked against the talk’s code
+@@checked

@@ -107,6 +107,12 @@ wherever a boundary runs down and to the left. That seals a cell, which is all a
 As floor it is 31 to 110 separate regions on each of seeds 0..200. With it, the roads are one
 region on 181 of those seeds and two on the other 19 (`recipes/own/voronoi-roads.json`).
 
+## An exit without a cull
+
+`recipes/own/exit-without-cull.json` is the talk's `c18-ending-right` with its cull stage taken
+out: caves, a start on the left and an exit on the right. It is on the page to show what the cull
+is for. On 72 of seeds 0..200 the exit lands in a cave the start can't reach.
+
 ## The level: start, exit and caches
 
 A map with a start, an exit and a path between them is a level that can be walked. The core
@@ -221,8 +227,8 @@ npm run check     # from the repo root
 ```
 
 The checks run `cargo test`, measure the WebAssembly module and fail if the `.wasm` plus its
-glue exceeds 50 KB gzipped. Until the site's own budget for interactives counts WebAssembly,
-this repo holds itself to that limit. They also check the WebAssembly build against the native
+glue exceeds 50 KB gzipped. The site's own check now counts everything the page's module loads
+against 100 KB; this limit on the core alone stays as the stricter backstop. They also check the WebAssembly build against the native
 one over 20 seeds a recipe (maps, frames, caches, walks, measured traits, the stage table and
 the 200-seed summaries), and that `data/` regenerates byte for byte.
 

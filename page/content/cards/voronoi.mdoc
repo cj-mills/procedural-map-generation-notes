@@ -1,0 +1,44 @@
+---
+extras: ["roads"]
+title: Voronoi cells
+---
+Scatter seed points and give every tile to its nearest seed: the map falls into cells [[t:121-126 s:15]].
+
+## The rule
+```text
+scatter seed points over the map
+each tile joins its nearest seed, by a chosen measure of distance
+a tile is on an edge where its right or lower neighbor belongs to another seed
+edges become walls (the talk's demo), or roads (our rule)
+```
+
+The first use the talk gives for the cells is to find their edges and place walls there [[t:137-138 s:16]]. Its demo draws the edges as `#`, the glyph its shared map code treats as open [[c08a:106-110 backend:54-65]]. We follow the talk’s words and make them walls [[own]].
+
+## Step through it
+@@steps limit=6
+
+## Controls
+@@control seeds
+How many seed points are scattered [[c08a:21-26]].
+@@control metric
+The distance that decides a tile’s nearest seed. The demo shows all three and builds its walls from the straight-line one [[c08a:52-53 c08a:69-73 c08a:89-93 c08a:106-107]].
+@@control edges
+`walls` is the talk’s demo. `roads` is our own rule for the roads the talk describes: the edges become floor and the cells solid, and a tile is also on an edge when its lower-right neighbor belongs to another seed [[own]].
+
+## What it produces, measured
+@@measured
+
+Walls seal each cell: a map has {{c08a.regions.median}} regions at the median, and the probe finds no path on any of the {{c08a.path.nulls}} seeds [[run:c08a.regions.median c08a.path.nulls]]. The talk’s uses for cells don’t need them joined: monsters spawned together in one cell, or kept apart in distant ones [[t:139-141]]. Our roads are one region on {{roads.regions.is1}} of 200 seeds and two on the other {{roads.regions.is2}} [[run:roads.regions.is1 roads.regions.is2]]. Without the lower-right neighbor, an edge that runs down and to the left touches itself only at corners, which seals a cell but can’t be walked [[own]].
+
+## Where it fails
+@@fails
+
+These are failures only for a map meant to be walked whole; sealed cells are what the wall rule is for [[own]].
+
+## What it combines with
+@@combines
+
+The talk’s author used the edges as roads in a game and filled each cell with a kind of city block [[t:142-145]].
+
+## Checked against the talk’s code
+@@checked

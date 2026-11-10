@@ -10,12 +10,16 @@ use crate::{run_sub, Ctx, GUARD_HIT, PREFAB_NO_PLACE};
 pub fn combine(c: &mut Ctx, s: &Stage) {
     let inputs = s.inputs(1);
     let mut maps = Vec::new();
+    // An input's stages record their own frames; the combine's own frames stay the combine's.
+    let mine = c.rec.stage;
     for (n, p) in inputs.iter().enumerate() {
-        c.rec.frame(&c.g, Note::CombineInput, n as i32, Vec::new());
+        c.rec.stage = mine;
+        c.rec.frame(&c.g, Note::CombineInput, n as i32 + 1, Vec::new());
         let (g, failures) = run_sub(c, p);
         c.failures |= failures;
         maps.push(g);
     }
+    c.rec.stage = mine;
     let half = c.g.w / 2;
     for i in 0..c.g.len() {
         let (x, _) = c.g.xy(i);

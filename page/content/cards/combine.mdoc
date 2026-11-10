@@ -1,0 +1,35 @@
+---
+title: Combining two maps
+---
+Two maps, each from a pipeline of its own, joined into one: the talk’s point that a map rarely needs just one technique [[t:179-180 s:20]].
+
+## The rule
+```text
+build the first input on a map of its own
+build the second input on a map of its own
+the result's left half is the first map's, and its right half the second's
+```
+
+The talk’s example is a fortress of rooms on the left that breaks out into caves on the right [[t:181-185]]. Its demo copies the halves column for column and joins nothing [[c09:101-114]]. The talk’s author then adds a prefab of fortifications down the middle [[t:186-188]].
+
+## Step through it
+@@steps limit=6
+
+## Controls
+The stage’s two inputs are pipelines of their own. In the lab’s strip they are the left row and the right row, and a stage can be added to either [[own]].
+
+## What it produces, measured
+@@measured
+
+The cave half brings its pockets with it: {{c09.regions.median}} regions at the median [[run:c09.regions.median]].
+
+## Where it fails
+@@fails
+
+## What it combines with
+@@combines
+
+## Checked against the talk’s code
+@@checked
+
+The corridor ratio differs because of the prefab down the middle: ours is a hall of our own design, standing in for the talk’s layout, which we don’t copy [[own]].

@@ -1,0 +1,38 @@
+---
+extras: ["nocull"]
+title: Placing the exit
+---
+Put the exit near a point you choose, or let a Dijkstra map find the tile that is farthest from the start [[t:244-250 s:26 s:27]].
+
+## The rule
+```text
+right:    the exit is the open tile nearest the middle of the right edge
+farthest: flood outward from the start, counting steps;
+          the exit is the reachable tile with the highest count
+then find the route from the start to the exit
+```
+
+The talk calls the second the least accessible part of the map, for when you really dislike your player [[t:249-250]]. With a start in the middle it calls it a really bad idea for an exit, and a great way to hide something [[t:251-256]].
+
+## Step through it
+@@steps limit=4
+
+## Controls
+@@control at
+`right` takes the open tile nearest the middle of the right edge [[c18:93-109]]. `farthest` takes the tile with the largest walking distance from the start [[c19:93-101]].
+
+## What it produces, measured
+@@measured
+
+From the left edge to the right, the route is {{c18.path.median}} steps at the median. From the center to the farthest tile it is {{c19.path.median}} [[run:c18.path.median c19.path.median]]. The least accessible exit is the nearer one here, because a start in the middle has less map on any side of it [[own]].
+
+## Where it fails
+@@fails
+
+Take the cull out and it does fail. In a recipe of our own, the same pipeline without its cull, the exit lands in a cave the start can’t reach on {{nocull.fails.exit-unreachable}} of 200 seeds [[run:nocull.fails.exit-unreachable]]. [Seed 0]({{recipe:nocull}}) is one.
+
+## What it combines with
+@@combines
+
+## Checked against the talk’s code
+@@checked
