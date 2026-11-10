@@ -210,7 +210,8 @@ export function figure(b, at, theme) {
     const x0 = (cell % w) * S, y0 = Math.floor(cell / w) * S;
     for (let y = y0 + inset; y < y0 + S - inset; y++) for (let x = x0 + inset; x < x0 + S - inset; x++) rgb.set(color, (y * w * S + x) * 3);
   };
-  const base = (cell) => (f.field?.length ? P.field[Math.round((f.field[cell] / 255) * 32)] : P.tiles[grid[cell]]);
+  // A noise field is drawn as brightness only where the map hasn't made terrain of it, as the module draws it.
+  const base = (cell) => (f.field?.length && grid[cell] < 2 ? P.field[Math.round((f.field[cell] / 255) * 32)] : P.tiles[grid[cell]]);
   for (let cell = 0; cell < w * h; cell++) fill(cell, base(cell));
   for (const [cell, m] of f.marks ?? []) {
     const color = m >= 32 ? P.groups[(m - 32) % P.groups.length] : P.marks[m];

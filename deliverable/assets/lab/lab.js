@@ -36,6 +36,7 @@ const SEEDS = 200;
 export const NEW_TINT = 0.6; // how strongly a step's new tiles are tinted; the build's figures use it too
 const TRAITS = ['floor_share', 'regions', 'dead_ends', 'corridor_ratio', 'path', 'probed', 'water', 'grass', 'mountain', 'field_mean', 'field_sd', 'rooms'];
 const WALKABLE = [0, 1, 0, 1, 0, 1, 1]; // by tile: wall, floor, water, grass, mountain, treasure, trap
+const TERRAIN = { 2: 'water', 3: 'grass', 4: 'mountain' };
 const MARKS = { 1: 'new', 2: 'rejected', 3: 'point', 4: 'start', 5: 'exit', 6: 'path', 7: 'hot path', 8: 'unreachable', 9: 'on the route', 10: 'off the route', 11: 'target', 32: 'rooms or cells' };
 
 function h(tag, props = {}, ...kids) {
@@ -305,8 +306,13 @@ export async function mount(root, { params, fallback, report }) {
   }
   function draw() {
     if (!st.lab || st.walking) return;
-    const g = gridAt(st.frame), field = st.lab.frame_field(st.frame), used = new Set();
-    for (let i = 0; i < g.length; i++) cell(i, field.length ? C.field(field[i]) : C.tiles[g[i]]);
+    const g = gridAt(st.frame), field = st.lab.frame_field(st.frame), used = new Set(), land = new Set();
+    // A noise field is drawn as brightness only where the map hasn't made terrain of it: the height map.
+    // Water, grass and mountain are drawn as what they are.
+    for (let i = 0; i < g.length; i++) {
+      if (g[i] >= 2 && g[i] <= 4) land.add(g[i]);
+      cell(i, field.length && g[i] < 2 ? C.field(field[i]) : C.tiles[g[i]]);
+    }
     // Each mark packs its cell and its kind: cell << 8 | mark. Marks from 32 up tell rooms or cells apart.
     for (const m of st.lab.frame_marks(st.frame)) {
       const k = m & 0xff;
@@ -322,7 +328,9 @@ export async function mount(root, { params, fallback, report }) {
       if (st.lab.exit() >= 0) cell(st.lab.exit(), C.marks[5]);
       [4, ...(st.lab.exit() >= 0 ? [5] : []), ...(st.path.length ? [6] : [])].forEach((m) => used.add(m));
     }
-    legend.replaceChildren(...[...used].sort((a, b) => a - b).map((m) => h('li', {}, h('i', { style: `background:${m === 32 ? C.groups[0] : C.marks[m]}` }), MARKS[m])));
+    legend.replaceChildren(
+      ...[...land].sort().map((t) => h('li', {}, h('i', { style: `background:${C.tiles[t]}` }), TERRAIN[t])),
+      ...[...used].sort((a, b) => a - b).map((m) => h('li', {}, h('i', { style: `background:${m === 32 ? C.groups[0] : C.marks[m]}` }), MARKS[m])));
   }
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => ((C = palette(root)), st.walking ? drawWalk() : draw()));
 

@@ -40,19 +40,19 @@
     {
       "date": "2026-11-10",
       "version": "0.5.0",
-      "note": "The text is distilled: each rule is a numbered list with a reference a step, tables where versions or modes differ, and what we measured as short items under recurring lead-ins. Eight rule diagrams are drawn by the build. The lab and each step-through open at the size of one step, and open in full when asked, so the page no longer moves as they load."
+      "note": "The text is distilled: each rule is a numbered list with a reference a step, tables where versions or modes differ, and what we measured as short items under recurring lead-ins. Eight rule diagrams are drawn by the build. The lab and each step-through open at the size of one step, and open in full when asked, so the page no longer moves as they load. The overworld and zoom maps are drawn as water, grass and mountain, where they were gray."
     }
   ],
   "testedAgainst": [
     {
       "name": "Rust (the map lab core, native and WebAssembly)",
       "version": "1.99.1",
-      "date": "2026-11-09"
+      "date": "2026-11-10"
     },
     {
       "name": "Node.js (the build: the page, its step figures and its checks)",
       "version": "26.13.0",
-      "date": "2026-11-09"
+      "date": "2026-11-10"
     }
   ],
   "hardware": [],
