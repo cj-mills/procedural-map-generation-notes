@@ -1,7 +1,7 @@
 {
   "format": "0.1",
   "id": "procedural-map-generation-techniques-notes",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "title": "Procedural map generation: an interactive lab built on Herbert Wolverson’s talk",
   "summary": "Build a map from the techniques of Herbert Wolverson’s talk, measure it over 200 seeds, and walk it to its exit.",
   "pageType": "post",
@@ -46,6 +46,11 @@
       "date": "2026-11-10",
       "version": "0.5.1",
       "note": "The lab at the head of the page opens by itself whenever that moves nothing in view, and a closed lab or step-through has a button over its map where it had a link beside its step’s label."
+    },
+    {
+      "date": "2026-11-10",
+      "version": "0.5.2",
+      "note": "In the lab and each step-through no control moves when it is pressed: the step buttons sit under the map, and the step’s text, whose length changes from step to step, comes after the controls."
     }
   ],
   "testedAgainst": [

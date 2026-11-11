@@ -129,7 +129,6 @@ export async function mount(root, { params, fallback, report }) {
   const playBtn = btn('Play', () => (st.timer ? stop() : play()), '');
   const transport = h('div', { class: 'mlab-transport', role: 'group', 'aria-label': 'Step through the build' },
     btn('⏮', () => go(0), 'q mlab-end', 'First step'), btn('◀', () => go(st.frame - 1), 'q', 'Step back'), btn('▶', () => go(st.frame + 1), 'q', 'Step forward'), btn('⏭', () => go(Infinity), 'q mlab-end', 'The finished map'), playBtn, scrub);
-  const stepArea = h('div', { class: 'mlab-steps' }, stepBox, transport);
   const stagePanel = h('div', { class: 'mlab-stage' });
   const walkBox = h('div', { class: 'mlab-walk', hidden: true });
   const readout = h('dl', { class: 'mlab-readout' });
@@ -149,9 +148,13 @@ export async function mount(root, { params, fallback, report }) {
   const openLink = !isLab && h('a', { href: '#recipe=' }, 'Open in the lab');
   const recipeText = h('textarea', { spellcheck: 'false', rows: '8', 'aria-label': 'The recipe, as JSON' });
   const cliLine = h('code', {}, 'map-lab build recipe.json');
-  const fit = h('div', { class: 'mlab-fit', 'data-fit': true }, demoBtns, pipe, errorBox, h('div', { class: 'mlab-view' }, canvas, openBtn, legend), stepArea, stagePanel, walkBox);
+  // Nothing a reader presses may move because of the press. So each control sits above whatever it can
+  // resize: the transport under the map, then the strip, then the stage's controls, then the parser's
+  // message, and the step's text, whose length changes with every step, after them all. The text is outside
+  // the part that must fit the window, so a longer text never shrinks the map either.
+  const fit = h('div', { class: 'mlab-fit', 'data-fit': true }, demoBtns, pipe, h('div', { class: 'mlab-view' }, canvas, openBtn, legend), transport, stagePanel, errorBox, walkBox);
   const limitProbe = h('div', { class: 'mlab-limit' });
-  const box = h('div', { class: 'mlab is-closed' }, limitProbe, fit, readout,
+  const box = h('div', { class: 'mlab is-closed' }, limitProbe, fit, stepBox, readout,
     h('div', { class: 'mlab-foot' },
       isLab && [walkBtn, fixBtn, walkWhy, measureBtn],
       h('span', { class: 'mlab-spacer' }),
@@ -375,7 +378,7 @@ export async function mount(root, { params, fallback, report }) {
   function select(i) {
     st.sel = i;
     for (const c of pipe.querySelectorAll('.mlab-chip')) c.setAttribute('aria-pressed', String(+c.dataset.i === i));
-    showSelected();
+    // The strip isn't scrolled to a chip the reader has just pressed: it would move under the press.
     renderStage();
     // The strip is also the step-through's chapters: a chip jumps to its stage's last step.
     const last = st.lab ? st.stageOf.lastIndexOf(i) : -1;
@@ -655,15 +658,15 @@ style.textContent = `
 .mlab { container-type: inline-size; display: grid; gap: var(--space-xs); font-size: var(--size-step--1); }
 .mlab [hidden] { display: none !important; }
 .mlab-limit { position: fixed; inset-block-start: 0; visibility: hidden; pointer-events: none; block-size: var(--interactive-max-block-size); }
-.mlab-fit { display: grid; gap: var(--space-2xs) var(--space-s); grid-template-columns: minmax(0, 1fr); grid-template-areas: "demos" "view" "steps" "pipe" "error" "stage"; align-items: start; }
+.mlab-fit { display: grid; gap: var(--space-2xs) var(--space-s); grid-template-columns: minmax(0, 1fr); grid-template-areas: "demos" "view" "ctl" "pipe" "stage" "error"; align-items: start; }
 .mlab-demos { grid-area: demos; }
 .mlab-pipe { grid-area: pipe; }
 .mlab-error { grid-area: error; }
 .mlab-view { grid-area: view; display: grid; justify-items: center; gap: var(--space-3xs); }
-.mlab-steps { grid-area: steps; display: grid; gap: var(--space-2xs); }
+.mlab-transport { grid-area: ctl; }
 .mlab-stage { grid-area: stage; }
-.mlab-walk { grid-area: steps; display: grid; gap: var(--space-2xs); }
-.is-walking > :is(.mlab-pipe, .mlab-demos, .mlab-steps, .mlab-stage, .mlab-error), .is-walking .mlab-legend { display: none; }
+.mlab-walk { grid-area: ctl; display: grid; gap: var(--space-2xs); }
+.is-walking > :is(.mlab-pipe, .mlab-demos, .mlab-transport, .mlab-stage, .mlab-error), .is-walking .mlab-legend, .mlab:has(.is-walking) > .mlab-step { display: none; }
 /* Narrow: the scrubber stands in for the first and last buttons, and a stage with many controls sets them two to a row, by number. */
 @container (inline-size < 44rem) {
   .mlab-end { display: none; }
@@ -673,13 +676,15 @@ style.textContent = `
   .mlab-many input[type="number"] { inline-size: 100%; }
 }
 @container (inline-size >= 44rem) {
-  .mlab-fit { grid-template-columns: minmax(0, 1.95fr) minmax(14rem, 1fr); grid-template-rows: auto auto auto auto 1fr; grid-template-areas: "demos demos" "pipe pipe" "error error" "view steps" "view stage"; }
-  .mlab-walk { grid-row: 4 / span 2; }
+  .mlab-fit { grid-template-columns: minmax(0, 1.95fr) minmax(14rem, 1fr); grid-template-rows: auto auto auto auto 1fr; grid-template-areas: "demos demos" "pipe pipe" "view ctl" "view stage" "view error"; }
+  .mlab-walk { grid-row: 3 / span 3; }
+  .mlab:not(.is-closed) > .mlab-step { max-inline-size: 66%; }
 }
 .mlab p { margin: 0; }
 .mlab ul, .mlab ol, .mlab dl { margin: 0; padding: 0; list-style: none; }
 .mlab canvas { display: block; max-inline-size: 100%; block-size: auto; image-rendering: pixelated; border: 1px solid var(--color-rule); background: var(--figure-dark); }
-.mlab-legend { display: flex; flex-wrap: wrap; gap: 0 var(--space-xs); min-block-size: 1.5em; justify-self: start; color: var(--color-muted); }
+.mlab-legend { display: flex; gap: 0 var(--space-xs); block-size: 1.5em; max-inline-size: 100%; overflow: hidden; white-space: nowrap; justify-self: start; color: var(--color-muted); }
+.mlab-legend li { flex: none; }
 .mlab-legend i { display: inline-block; inline-size: 0.7em; block-size: 0.7em; margin-inline-end: 0.3em; border: 1px solid var(--color-rule); }
 .mlab button { padding: var(--space-3xs) var(--space-2xs); min-block-size: 2.25rem; }
 .mlab button.q, .mlab-chip { border-color: var(--color-muted); background: var(--color-paper); color: var(--color-ink); }
@@ -735,7 +740,7 @@ style.textContent = `
 .mlab-open { display: none; }
 /* Closed: the fallback's last step, box for box (the site's .step: its picture, its label, its text), so the
    swap moves nothing. The button lies over the map and takes no room of its own. */
-.mlab.is-closed, .is-closed .mlab-fit, .is-closed .mlab-view, .is-closed .mlab-steps { display: block; }
+.mlab.is-closed, .is-closed .mlab-fit, .is-closed .mlab-view { display: block; }
 .is-closed .mlab-view { position: relative; inline-size: min(100%, 480px); }
 .is-closed :is(.mlab-demos, .mlab-pipe, .mlab-error, .mlab-legend, .mlab-transport, .mlab-stage, .mlab-walk, .mlab-readout, .mlab-foot, .mlab-recipe, .mlab-at) { display: none; }
 .is-closed canvas { inline-size: 480px; cursor: pointer; }
