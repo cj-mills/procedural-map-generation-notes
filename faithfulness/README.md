@@ -37,6 +37,7 @@ same way.
 cd faithfulness
 WOLVERSON_REPO=/path/to/roguelike-celebration-2020 cargo build --release
 target/release/wolverson-harness measure --seeds 0..200 --timeout 10 --jobs 12 --out talk-traits.json
+target/release/wolverson-harness checks --out talk-checks.json   # what four demos do, counted (below)
 target/release/wolverson-harness map c18-ending-right 3     # one run's map, in the core's glyphs
 cd ../lab && node measure.mjs                                # regenerates data/faithfulness.json
 ```
@@ -44,6 +45,25 @@ cd ../lab && node measure.mjs                                # regenerates data/
 `talk-traits.json` is committed: the comparison in `lab/data/faithfulness.json` regenerates
 from it without the talk's code. Building bracket-lib compiles its default window backend too,
 though no window opens.
+
+## What four demos do, counted
+
+`checks` answers four questions that reading the talk's code leaves open, or that depend on its
+library, by counting over the same seeds. `talk-checks.json` is committed, the page's table of
+where the talk and its code differ states its counts (`page/lib.mjs`, `value()`, names starting
+`talk.`), and the bundle carries the file.
+
+- **The library's rectangle, asked directly:** `for_each`, which draws a room, visits both ends
+  of a rectangle; `point_in_rect` leaves out its last column and last row.
+- **c21:** the rooms its last frame highlights against the tiles its route steps on. The demo
+  tests each room grown by one row (`c21-hot-rooms/src/main.rs:132-141`); the counts say that
+  comes to a step on any tile of the room except its last column, and how many rooms the route
+  crosses that stay gray.
+- **c05:** the particles that dig nothing, because they start on open floor.
+- **c03:** whether the map's outer ring keeps its first noise, and how much of it is open.
+- **c12:** how many tiles of its first frame change band when the library's noise mixes 1
+  octave in place of the demo's 3. The comparison keeps the demo's gain: the library scales its
+  result by 1 / (1 + gain + … + gain^octaves), one term more than the octaves it mixes.
 
 ## What the comparison says
 

@@ -29,7 +29,7 @@
 **Digger:** steps in a random direction and digs the tile it lands on, again and again, until it steps off the map or runs out of steps [[c04:54-76 t:90-95]]. The first starts at the center; each later one on a random open tile [[c04:21-22 c04:25-47 t:95-96]]. Digger {n}.
 
 ## dla.seed
-**Seed:** a plus of five open tiles at the center of a solid map, the target the particles are fired at [[c05:19-40 t:103-105]].
+**Seed:** a plus of five open tiles at the center of a solid map: the open floor the first particles have to reach [[c05:19-40 t:103-105]].
 
 ## dla.particle
 **Walk:** from a random tile, one random step at a time, until it steps onto open floor. Digs the solid tile it stepped from [[c05:49-82 t:104-108]]. Particle {n}.
@@ -137,4 +137,4 @@
 **Cull:** tiles at the cull distance or farther from the route become wall. The talk’s demo culls at 15, wider than the 10 of its hot path [[c20:131-154 t:263-264]]. Cull distance: {n}.
 
 ## hot-rooms.marked
-**Hot rooms:** a room is on the route when a step of the route falls inside it. The demo highlights those rooms and grays the rest [[c21:129-156 t:267-269]]. Rooms on the route: {n}.
+**Hot rooms:** each room is tested against every step of the route. The demo highlights the rooms that pass and grays the rest [[c21:129-156 t:267-269]]. Rooms on the route: {n}.

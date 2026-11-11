@@ -1,7 +1,7 @@
 ---
 title: Erosion by aggregation
 ---
-Fire particles at a finished map and let them eat at its walls, so it looks more organic and keeps its structure [[t:191-197 s:21]].
+Start particles on a finished map’s open floor and let each dig the first rock it wanders into, so the map looks more organic and keeps its structure [[c08:92-128 t:191-197]].
 
 ## The rule
 1. Start from a finished map. The demo’s: random rooms joined by corridors [[c08:21-83]].
@@ -10,14 +10,14 @@ Fire particles at a finished map and let them eat at its walls, so it looks more
    2. step it at random until it stands on rock [[c08:102-125]];
    3. dig that tile of rock [[c08:102-128]].
 
-- **One tile a particle:** the first rock its walk reaches from inside the open area [[c08:86-128]].
+- **One tile per particle:** the first rock its walk reaches from inside the open area [[c08:86-128]].
 
 ## Step through it
 @@steps limit=5 mid=1
 
 ## Controls
 @@control iterations
-Particles fired, each digging one tile [[c08:86-128]].
+Particles, each digging one tile [[c08:86-128]].
 
 ## What it produces, measured
 @@measured

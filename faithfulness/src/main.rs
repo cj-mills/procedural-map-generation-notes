@@ -16,6 +16,8 @@
 //!   wolverson-harness measure [--seeds 0..200] [--timeout 10] [--jobs 8] --out FILE
 //!   wolverson-harness one <demo> <seed>      one run, as the line `measure` reads
 //!   wolverson-harness map <demo> <seed>      one run's last frame, in the core's glyphs
+//!   wolverson-harness checks [--seeds 0..200] --out FILE
+//!                                            what four demos do that reading them leaves open
 
 use map_lab_core::grid::*;
 use map_lab_core::report::{self, string, Row};
@@ -320,8 +322,9 @@ fn main() {
             }
         }
         Some("measure") => measure(&args[1..]),
+        Some("checks") => checks(&args[1..]),
         _ => {
-            eprintln!("usage: wolverson-harness measure [--seeds 0..200] [--timeout 10] [--jobs 8] --out FILE | one <demo> <seed> | map <demo> <seed>");
+            eprintln!("usage: wolverson-harness measure [--seeds 0..200] [--timeout 10] [--jobs 8] --out FILE | checks [--seeds 0..200] --out FILE | one <demo> <seed> | map <demo> <seed>");
             std::process::exit(2);
         }
     }
@@ -426,4 +429,180 @@ fn measure(a: &[String]) {
     );
     std::fs::write(out, format!("{doc}\n")).unwrap();
     eprintln!("{} runs in {:.1}s", work.len(), started.elapsed().as_secs_f64());
+}
+
+/// What four of the talk's demos do, where reading the code leaves it open or depends on the
+/// library: counted from each demo's own frames over the seeds, and from the library asked
+/// directly. The page's table of where the talk and its code differ states these.
+///
+/// - c21 tests a room with the library's `point_in_rect` after adding a row to it
+///   (`c21-hot-rooms/src/main.rs:132-141`) and draws it with the library's `for_each`. Which
+///   tiles each covers is the library's to say.
+/// - c05 starts a particle on any tile, open ones included (`c05-dla/src/main.rs:49-55`).
+/// - c03's pass leaves out the map's outer ring (`c03-cellular/src/main.rs:58-59`).
+/// - c12 mixes 3 octaves at a gain of 0.005 (`c12-noisezoom/src/main.rs:61-62`).
+fn checks(a: &[String]) {
+    use backend::{a_star_search, to_cp437, FractalType, NoiseType, Point, Rect, GRAY, HEIGHT, RGB, WIDTH, YELLOW};
+    let (from, to) = flag(a, "--seeds").map_or((0, 200), |s| {
+        let (x, y) = s.split_once("..").expect("--seeds FROM..TO");
+        (x.parse::<u64>().unwrap(), y.parse::<u64>().unwrap())
+    });
+    let out = flag(a, "--out").expect("--out FILE");
+    let xy = |i: usize| ((i % WIDTH) as i32, (i / WIDTH) as i32);
+
+    // The library's rectangle, asked directly: 2 wide and 2 high, at (1, 1).
+    let r = Rect::with_size(1, 1, 2, 2);
+    let mut drawn = 0;
+    r.for_each(|_| drawn += 1);
+    let inside = (0..6).flat_map(|y| (0..6).map(move |x| Point::new(x, y))).filter(|p| r.point_in_rect(*p)).count();
+
+    // c21: the rooms its last frame highlights, against the tiles its route steps on.
+    let (yellow, gray) = (RGB::named(YELLOW), RGB::named(GRAY));
+    let (mut rooms, mut highlighted, mut crossed, mut crossed_gray, mut crossed_gray_seeds) = (0, 0, 0, 0, 0);
+    let (mut not_last_column_rule, mut last_row_only, mut last_row_only_seeds) = (0, 0, 0);
+    for seed in from..to {
+        shim::set_seed(seed);
+        let frames = c21::frames();
+        let (map, _) = frames.last().unwrap();
+        let find = |c: char| map.tiles.iter().position(|t| t.0 == to_cp437(c));
+        // The demo's own call, made again on its last frame: the glyphs are as they were when it ran.
+        let path = a_star_search(find('@').expect("a start"), find('>').expect("an exit"), map);
+        let steps: Vec<(i32, i32)> = path.steps.iter().map(|&i| xy(i)).collect();
+        // A room is a block of yellow or gray tiles: rooms never touch, and corridors keep another color.
+        let colored = |i: usize| map.tiles[i].1 == yellow || map.tiles[i].1 == gray;
+        let mut seen = vec![false; WIDTH * HEIGHT];
+        let (mut gray_here, mut row_here) = (0, 0);
+        for i0 in 0..WIDTH * HEIGHT {
+            if seen[i0] || !colored(i0) {
+                continue;
+            }
+            let (mut x1, mut y1, mut x2, mut y2) = (i32::MAX, i32::MAX, 0, 0);
+            let hot = map.tiles[i0].1 == yellow;
+            let mut stack = vec![i0];
+            seen[i0] = true;
+            while let Some(i) = stack.pop() {
+                let (x, y) = xy(i);
+                x1 = x1.min(x);
+                y1 = y1.min(y);
+                x2 = x2.max(x);
+                y2 = y2.max(y);
+                assert!((map.tiles[i].1 == yellow) == hot, "a room in two colors");
+                for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+                    let (nx, ny) = (x + dx, y + dy);
+                    if nx < 0 || ny < 0 || nx >= WIDTH as i32 || ny >= HEIGHT as i32 {
+                        continue;
+                    }
+                    let n = ny as usize * WIDTH + nx as usize;
+                    if !seen[n] && colored(n) {
+                        seen[n] = true;
+                        stack.push(n);
+                    }
+                }
+            }
+            let any = |xb: i32, yb: i32| steps.iter().any(|&(x, y)| x >= x1 && x <= xb && y >= y1 && y <= yb);
+            let whole = any(x2, y2); // a step on any tile the room is drawn on
+            rooms += 1;
+            highlighted += hot as u32;
+            crossed += whole as u32;
+            crossed_gray += (whole && !hot) as u32;
+            gray_here += (whole && !hot) as u32;
+            // The rule the counts point to: a step on any of its tiles but those of its last column.
+            not_last_column_rule += (hot != any(x2 - 1, y2)) as u32;
+            // Highlighted by steps on its last row alone: what the added row is for.
+            last_row_only += (hot && !any(x2 - 1, y2 - 1)) as u32;
+            row_here += (hot && !any(x2 - 1, y2 - 1)) as u32;
+        }
+        crossed_gray_seeds += (gray_here > 0) as u32;
+        last_row_only_seeds += (row_here > 0) as u32;
+    }
+
+    // c05: a particle a frame after the first. One that starts on open floor digs nothing.
+    let open = |m: &backend::Map| m.tiles.iter().filter(|t| t.0 == to_cp437('#')).count();
+    let (mut particles, mut dug_nothing) = (0, 0);
+    for seed in from..to {
+        shim::set_seed(seed);
+        let frames = c05::frames();
+        particles += frames.len() - 1;
+        dug_nothing += frames.windows(2).filter(|w| open(&w[1].0) == open(&w[0].0)).count();
+    }
+
+    // c03: the outer ring on the last frame, against the first frame's noise.
+    let ring: Vec<usize> = (0..WIDTH * HEIGHT).filter(|&i| i % WIDTH == 0 || i / WIDTH == 0 || i % WIDTH == WIDTH - 1 || i / WIDTH == HEIGHT - 1).collect();
+    let (mut ring_same, mut ring_open) = (0, 0);
+    for seed in from..to {
+        shim::set_seed(seed);
+        let frames = c03::frames();
+        let (first, last) = (&frames[0].0, &frames.last().unwrap().0);
+        ring_same += ring.iter().all(|&i| first.tiles[i].0 == last.tiles[i].0) as u32;
+        ring_open += ring.iter().filter(|&&i| last.tiles[i].0 == to_cp437('#')).count();
+    }
+
+    // c12: its first frame, against the library's noise from the same seed with the demo's own
+    // settings but for 1 octave in place of 3 (`c12-noisezoom/src/main.rs:60-64`), sampled as the
+    // demo samples it (`:33`) and read into its three bands (`:34-48`). The gain stays the
+    // demo's: the library scales its result by the gain whatever the octaves.
+    let mut band_differs = 0;
+    for seed in from..to {
+        shim::set_seed(seed);
+        let frames = c12::frames();
+        shim::set_seed(seed);
+        let mut noise = shim::FastNoise::seeded(4);
+        noise.set_noise_type(NoiseType::SimplexFractal);
+        noise.set_fractal_type(FractalType::FBM);
+        noise.set_fractal_octaves(1);
+        noise.set_fractal_gain(0.005);
+        noise.set_fractal_lacunarity(4.0);
+        noise.set_frequency(0.08);
+        for (i, t) in frames[0].0.tiles.iter().enumerate() {
+            let (x, y) = xy(i);
+            let n = noise.get_noise(x as f32 * 0.5, y as f32 * 0.5);
+            let band = if n < 0.0 { '~' } else if n < 0.5 { ';' } else { '^' };
+            band_differs += (t.0 != to_cp437(band)) as u32;
+        }
+    }
+
+    let n = to - from;
+    let doc = format!(
+        r#"{{
+  "note": "faithfulness/ wolverson-harness checks: the talk's code at {commit} with bracket-lib 0.8.1, counted from each demo's own frames; see checks() in faithfulness/src/main.rs",
+  "seeds": {{ "from": {from}, "to": {to} }},
+  "rect": {{
+    "what": "the library's Rect::with_size(1, 1, 2, 2): the tiles for_each visits, which is how a room is drawn, and the tiles point_in_rect holds for",
+    "drawn": {drawn},
+    "inside": {inside}
+  }},
+  "c21": {{
+    "what": "the rooms of c21-hot-rooms' last frame over the seeds: all of them; those highlighted; those with a step of the route on a tile they are drawn on; of those, the ones left gray, and the seeds with one; rooms whose highlight is not what 'a step on any of its tiles but those of its last column' gives; rooms highlighted by steps on their last row alone, and the seeds with one",
+    "rooms": {rooms},
+    "highlighted": {highlighted},
+    "crossed": {crossed},
+    "crossedGray": {crossed_gray},
+    "crossedGraySeeds": {crossed_gray_seeds},
+    "notLastColumnRule": {not_last_column_rule},
+    "lastRowOnly": {last_row_only},
+    "lastRowOnlySeeds": {last_row_only_seeds}
+  }},
+  "c05": {{
+    "what": "the particles of c05-dla over the seeds, a frame each, and those whose frame has no more open tiles than the one before",
+    "particles": {particles},
+    "dugNothing": {dug_nothing}
+  }},
+  "c03": {{
+    "what": "the outer ring of c03-cellular's map: the seeds where its last frame has the first frame's ring tile for tile, and the ring tiles open on the last frame, of all the ring's tiles over the seeds",
+    "ringSameSeeds": {ring_same},
+    "ringOpen": {ring_open},
+    "ringTiles": {ring_tiles}
+  }},
+  "c12": {{
+    "what": "the tiles of c12-noisezoom's first frame whose band (water, grass, mountain) is not the one the library's noise gives from the same seed and settings with 1 octave in place of 3, of all its tiles over the seeds",
+    "bandDiffers": {band_differs},
+    "tiles": {tiles}
+  }}
+}}
+"#,
+        commit = env!("WOLVERSON_COMMIT"),
+        ring_tiles = ring.len() as u64 * n,
+        tiles = (WIDTH * HEIGHT) as u64 * n,
+    );
+    std::fs::write(out, doc).unwrap();
 }

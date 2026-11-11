@@ -15,6 +15,10 @@ const json = (p) => JSON.parse(readFileSync(join(root, p), 'utf8'));
 export const traits = json('lab/data/traits.json');
 export const faith = Object.fromEntries(json('lab/data/faithfulness.json').demos.map((d) => [d.id, d]));
 export const faithTally = json('lab/data/faithfulness.json').tally;
+/** What the talk's own code does where reading it leaves that open, counted over the same seeds (faithfulness/, `checks`). */
+export const checks = json('faithfulness/talk-checks.json');
+/** The talk's own code measured over the same seeds, a summary per demo and trait as in traits.json (faithfulness/, `measure`). */
+const talkTraits = json('faithfulness/talk-traits.json');
 export const DEMOS = Object.fromEntries(traits.demos.map((d) => [d.id, d]));
 export const N = traits.seeds.to - traits.seeds.from; // seeds measured a demo
 
@@ -136,6 +140,18 @@ export function value(name) {
   if (d && d.summary[what] && which in d.summary[what]) return fmt(d.summary[what][which], which === 'n' || which === 'nulls' ? 'n' : what);
   if (d && what === 'faith' && faith[d.id].traits[which]) return faith[d.id].traits[which].ours[0].toFixed(3);
   if (d && what === 'talk' && faith[d.id].traits[which]) return faith[d.id].traits[which].talk[0].toFixed(3);
+  // talk.c21.crossedGray is a count from the talk's own code; talk.c05.dugNothing/particles is one count as a share of another.
+  if (who === 'talk' && checks[what]) {
+    const [a, b] = (which ?? '').split('/').map((k) => checks[what][k]);
+    if (Number.isInteger(a) && b === undefined) return a.toLocaleString('en-US');
+    if (Number.isInteger(a) && Number.isInteger(b)) return `${((100 * a) / b).toFixed((100 * a) / b < 10 ? 1 : 0)}%`;
+  }
+  // talk.c02.rooms.median is a trait of the talk's own code over the seeds, as c02.rooms.median is of ours.
+  if (who === 'talk') {
+    const [, , trait, stat] = name.split('.');
+    const s = talkTraits.demos.find((x) => short(x.id) === what)?.summary[trait];
+    if (s && stat in s) return fmt(s[stat], stat === 'n' || stat === 'nulls' ? 'n' : trait);
+  }
   if (who === 'faith' && what === 'compared') return String(faithTally.traits);
   if (who === 'faith' && what === 'consistent') return String(faithTally.traits - faithTally.differ);
   if (who === 'seeds') return String(what === 'last' ? traits.seeds.to - 1 : N);

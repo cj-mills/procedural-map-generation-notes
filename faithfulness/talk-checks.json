@@ -1,0 +1,36 @@
+{
+  "note": "faithfulness/ wolverson-harness checks: the talk's code at 604e5b5a6441edf0a8bdb836a3fa0946def2e247 with bracket-lib 0.8.1, counted from each demo's own frames; see checks() in faithfulness/src/main.rs",
+  "seeds": { "from": 0, "to": 200 },
+  "rect": {
+    "what": "the library's Rect::with_size(1, 1, 2, 2): the tiles for_each visits, which is how a room is drawn, and the tiles point_in_rect holds for",
+    "drawn": 9,
+    "inside": 4
+  },
+  "c21": {
+    "what": "the rooms of c21-hot-rooms' last frame over the seeds: all of them; those highlighted; those with a step of the route on a tile they are drawn on; of those, the ones left gray, and the seeds with one; rooms whose highlight is not what 'a step on any of its tiles but those of its last column' gives; rooms highlighted by steps on their last row alone, and the seeds with one",
+    "rooms": 4135,
+    "highlighted": 2396,
+    "crossed": 2450,
+    "crossedGray": 54,
+    "crossedGraySeeds": 49,
+    "notLastColumnRule": 0,
+    "lastRowOnly": 588,
+    "lastRowOnlySeeds": 198
+  },
+  "c05": {
+    "what": "the particles of c05-dla over the seeds, a frame each, and those whose frame has no more open tiles than the one before",
+    "particles": 330876,
+    "dugNothing": 65276
+  },
+  "c03": {
+    "what": "the outer ring of c03-cellular's map: the seeds where its last frame has the first frame's ring tile for tile, and the ring tiles open on the last frame, of all the ring's tiles over the seeds",
+    "ringSameSeeds": 200,
+    "ringOpen": 22930,
+    "ringTiles": 51200
+  },
+  "c12": {
+    "what": "the tiles of c12-noisezoom's first frame whose band (water, grass, mountain) is not the one the library's noise gives from the same seed and settings with 1 octave in place of 3, of all its tiles over the seeds",
+    "bandDiffers": 3610,
+    "tiles": 800000
+  }
+}

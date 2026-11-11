@@ -37,6 +37,128 @@ Each reads a map: what can be reached, where to start and end, and what lies nea
 
 @@group Analysis and placement
 
+## Where the talk and its code differ
+
+- **What this is:** the talk read against the code published with it, one row per difference [[own]].
+- **Counts:** from the talk’s code, run on seeds 0 to 199 as [the faithfulness check](#is-this-the-talks-technique) runs it [[data:checks]].
+- **The lab follows:** the code. Where ours departs from it, a card or the faithfulness data says so [[own data:faithfulness]].
+
+### Disagreements
+
+{% table label="Where the talk and its code disagree" rowheads=true %}
+* Technique
+* The talk says
+* Its code does
+---
+* [BSP rooms](#bsp): the split
+* Divide the map in half, vertically or horizontally at random, and divide each half again, down to room-sized spaces [[t:66-69 s:7]]
+* Cuts a rectangle into four quarters; no direction is chosen [[c02:86-112]]. Then tries 240 rooms, each in a rectangle picked from all those cut so far [[c02:41-54 c02:114-120]]
+---
+* [BSP rooms](#bsp): rejections
+* Of its animation: absolutely no rejections [[t:70-72]]
+* Records a frame only for a room that fits [[c02:41-55]]. Of 240 attempts, {{talk.c02.rooms.median}} place a room at the median [[run:talk.c02.rooms.median]]
+---
+* [BSP rooms](#bsp): spacing
+* A gutter of one tile around each space, so rooms don’t join [[t:68-70]]
+* Carves a room only where every tile within 2 of it is still solid [[c02:45-49 c02:138-174]]. Either way, at least 2 solid tiles separate rooms [[own]]
+---
+* [Drunkard’s walk](#drunkard)
+* On its slide: place the digger randomly on the solid map [[s:11]]
+* Starts the first digger at the center of the map [[c04:17-22]]
+---
+* [Diffusion-limited aggregation](#dla)
+* The simple version: pick a random point and a random direction, and shoot a particle [[t:103-104]]
+* The simple version’s particle takes one random step at a time [[c05:55-80]]. The attractor versions’ particles travel in a line, toward the center [[c06:56-66 c07:56-67]]
+---
+* [Erosion](#dla-erode)
+* Fire particles at a map and blast parts of it away [[t:191-193]]
+* Starts each particle on an open tile and steps it at random until it stands on rock, then digs that tile: the map wears from the inside [[c08:92-128]]
+---
+* [Voronoi cells](#voronoi)
+* Find the edges and place walls there [[t:136-138]]
+* Draws the edges as `#`, the glyph its shared map code treats as open [[c08a:96-113 backend:54-65]]
+---
+* [Noise](#noise): slide 17
+* Its left picture is captioned 2 octaves, 0.2 gain, 1.0 lacunarity, 2.0 frequency [[s:17]]
+* None of the 5 calls in `c10-perlin` uses those settings. The right picture’s caption matches the fourth call [[c10:42-46 s:17]]
+---
+* [Noise](#noise): the overworld
+* Altitudes from 0 to 0.75 are green, and those above are mountains [[t:164-166]]
+* Draws grass below 0.5 and mountain from 0.5. 0.75 appears only in the water’s color [[c11:31-44]]
+---
+* [The exit](#exit): its route
+* Says he uses A*, but thinks this demo walked a Dijkstra map instead [[t:258-260]]
+* Calls the library’s A* search in all four demos that find a route [[c18:111 c19:103 c20:111 c21:131]]
+---
+* [The hot path](#hot-path)
+* Everything under, say, 10 from the route is the hot path. Cull what is outside it [[t:260-264 s:29]]
+* Marks tiles under 10 and culls from 15, so a band outside the hot path survives [[c20:140-152]]
+---
+* [Hot rooms](#hot-rooms)
+* The rooms on the route are yellow, and the rest gray [[t:267-269]]
+* Tests each step of the route against the room grown by one row [[c21:132-141]]. When run, that counts a step on any tile of a room except its last column: {{talk.c21.crossedGray}} rooms on {{talk.c21.crossedGraySeeds}} of 200 seeds are crossed by the route and stay gray [[run:talk.c21.crossedGray talk.c21.crossedGraySeeds]]
+{% /table %}
+
+### Not mentioned in the talk
+
+{% table label="What the talk’s code does that the talk doesn’t mention" rowheads=true %}
+* Technique
+* Its code does
+* What follows
+---
+* [Random rooms](#rooms): how many
+* Stops after 20 attempts, whether or not each placed a room [[c01:20-54]]
+* {{talk.c01.rooms.median}} rooms at the median [[run:talk.c01.rooms.median]]
+---
+* [Random rooms](#rooms), [BSP rooms](#bsp): corridors
+* Sorts the rooms by their left edge before joining each to the one before it [[c01:57-78 c02:57]]
+* Corridors run from left to right through the rooms, not by the shortest way [[own]]
+---
+* [Cellular automata](#cellular): the seed
+* Makes its random number generator without a seed [[c03:18]]. So do 17 more demos [[c01:17 c02:39 c04:16 c05:16 c06:16 c07:16 c08:17 c08a:16 c09:38 c14:17 c15:18 c16:18 c17:18 c18:18 c19:18 c20:18 c21:17]]. The 4 noise demos fix their seeds in the code [[c10:13 c11:57-58 c12:60 c13:71]]
+* The talk: given the same seed, the same result every time [[t:85]]. That can’t be tried on these 18 demos as published [[own]]
+---
+* [Cellular automata](#cellular): the edge
+* Skips the map’s outer ring, as the talk says, so the ring keeps its starting noise [[c03:19-29 c03:56-59 t:79-80]]
+* The map’s edge is not sealed: {{talk.c03.ringOpen/ringTiles}} of the ring is open on the last frame [[run:talk.c03.ringOpen/ringTiles]]
+---
+* [Diffusion-limited aggregation](#dla): the simple version
+* Starts a particle on any tile. One that starts on open floor never steps, and digs nothing [[c05:49-55 c05:82]]. A particle that digs nothing still gets a frame [[c05:43-84]]
+* {{talk.c05.dugNothing/particles}} of particles dig nothing [[run:talk.c05.dugNothing/particles]]
+---
+* [Diffusion-limited aggregation](#dla): the other two
+* Sends the attractor and symmetric versions’ particles along a line to the center [[c06:56-66 c07:56-67]]
+* Neither is one piece: {{talk.c06.regions.median}} and {{talk.c07.regions.median}} regions at the median. The talk guarantees only the simple version [[run:talk.c06.regions.median talk.c07.regions.median]]
+---
+* [Noise](#noise): its kind
+* Uses fractal simplex noise in all 4 noise demos, the one named `c10-perlin` too [[c10:13-15 c11:20-22 c12:23-25 c13:23-25]]
+* The talk names Perlin noise beside simplex [[t:146-147]]. No demo shows Perlin noise [[own]]
+---
+* [Noise](#noise): the zoom
+* Mixes 3 octaves at a gain of 0.005 [[c12:60-64]]
+* One octave in practice: with 1 octave in the talk’s library, {{talk.c12.bandDiffers/tiles}} of the first frame’s tiles change band [[run:talk.c12.bandDiffers/tiles]]
+---
+* [Noise](#noise): two layers
+* Weights the second noise by 0.75 minus the scale, capped at 0.25 [[c13:41-44]]
+* Zoomed out, at a scale of 1, the second noise is subtracted at a quarter of its strength [[own]]
+---
+* [Combining two maps](#combine)
+* Runs the cave rule 4 times; the cellular demo runs it 10 times [[c09:93-95 c03:31-34]]. Copies each half column for column [[c09:99-114]]
+* Nothing joins the two halves [[own]]
+---
+* [Prefabs](#prefab)
+* Picks rooms, or spots, at random until the prefab fits [[c14:104-124 c15:41-67]]
+* Never ends when nothing fits: still looking after 10 seconds on {{c14.unfinished.talk}} and {{c15.unfinished.talk}} of 200 seeds [[run:c14.unfinished.talk c15.unfinished.talk]]
+---
+* [Culling](#cull)
+* Keeps whatever the open tile nearest the center can reach, small or large [[c17:34-66]]
+* A small cave at the center would become the whole map. On these 200 seeds none does: the smallest floor share left is {{talk.c17.floor_share.min}} [[run:talk.c17.floor_share.min]]
+---
+* [The start](#start)
+* Scans every tile and takes the open one nearest the chosen point in a straight line, however far [[c17:69-86]]
+* The talk: look around for a neighboring tile that is open [[t:241-243]]. The tile found can be far from the point [[own]]
+{% /table %}
+
 ## How this was measured
 
 {% callout type="note" title="These definitions are ours" %}
@@ -83,5 +205,5 @@ A seed fails a demo when its map meets one of these [[own]]:
 
 @@faithfulness
 
-- **Also with this page:** the comparison’s numbers and the recipe format’s schema [[data:faithfulness data:schema]].
+- **Also with this page:** the comparison’s numbers, the counts from the talk’s code and the recipe format’s schema [[data:faithfulness data:checks data:schema]].
 - **On the command line:** the core is also `map-lab`, in this page’s repository. `map-lab build`, `traits`, `measure` and `walk` take the same recipes [[own]].

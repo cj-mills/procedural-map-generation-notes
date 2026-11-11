@@ -148,7 +148,10 @@ pub fn hot_path(c: &mut Ctx, s: &Stage) {
 }
 
 /// The rooms the path passes through, and the rest (`c21-hot-rooms/src/main.rs:129-156`): a room
-/// counts when a path tile is inside it or on the row below it, as in the talk.
+/// counts when a path tile is on any of its tiles but those of its last column. The talk tests
+/// the room grown by one row with the library's `point_in_rect`, which leaves out a rectangle's
+/// far edges, as `Rect::contains` does here: the added row brings back the room's last row, and
+/// its last column stays out (`faithfulness/`, `checks`, counts this in the talk's code).
 pub fn hot_rooms(c: &mut Ctx, _s: &Stage) {
     let mut marks = Vec::new();
     c.important = c

@@ -1,17 +1,17 @@
 {
  "format": "slib-checking@1",
  "source": "index.mdoc",
- "source_sha256": "d366464abb0f98cb2af6d3c7d280f57bb3f08d2cd289797ea79d938613c2fe95",
+ "source_sha256": "34144d7f7440d745a56901f48e926702b43c72b3c253ebcae607460c243c270f",
  "checked": "2026-11-11",
  "claims": {
-  "cited": 266,
-  "verified": 266,
-  "own": 180,
-  "own_run": 76
+  "cited": 312,
+  "verified": 312,
+  "own": 202,
+  "own_run": 86
  },
  "context": {
   "passages": 2,
-  "claims": 266
+  "claims": 312
  },
  "verifiers": [
   {
@@ -21,6 +21,6 @@
    "model": "claude-opus-5-5"
   }
  ],
- "last_verified": "2026-11-10",
+ "last_verified": "2026-11-11",
  "open": []
 }

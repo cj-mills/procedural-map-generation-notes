@@ -5,7 +5,10 @@ On a map of rooms, the route says which rooms a player has to pass through and w
 
 ## The rule
 1. Find the route from the start to the exit [[c21:131]].
-2. A room is on the route when a step of the route falls inside it [[c21:132-141]].
+2. Test every step of the route against each room, grown by one row [[c21:132-141]].
+   - **In effect,** when the talk’s code is run: a step on any tile of the room except its last column. {{talk.c21.notLastColumnRule}} exceptions among {{talk.c21.rooms}} rooms on seeds 0 to 199 [[run:talk.c21.notLastColumnRule talk.c21.rooms]].
+   - **Why the extra row:** the library’s test skips a rectangle’s last row and last column, but a room is drawn with both. The extra row restores the last row; the last column stays untested [[own]].
+   - **Ours:** the same test [[own]].
 3. Highlight the rooms on the route, and gray the rest [[c21:131-154]].
 
 - **Talk says,** of the gray rooms: cull them for a room-to-room game, or hide bonus things in them [[t:269-271]].

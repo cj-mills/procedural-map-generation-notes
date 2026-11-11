@@ -17,7 +17,8 @@
 //   5. builds the core as WebAssembly (lab/measure-size.mjs) and folds its glue and the lab's
 //      rows (rows.js) into the module;
 //   6. draws every step figure from the core's own frames, for both themes;
-//   7. adds the measurement data and the recipe schema, and names the commit it was built from.
+//   7. adds the measurement data, the counts from the talk's own code and the recipe schema, and
+//      names the commit it was built from.
 //
 // It needs the repo's pinned Rust toolchain (rust-toolchain.toml, mise.toml) and Node; it has no
 // other dependencies. The publish command belongs to the site, which owns the deliverable format.
@@ -177,7 +178,7 @@ for (const [name, { rows, key }] of diagrams) {
 console.log(`drew ${figures.size} step figures and ${diagrams.size} rule diagrams, each for both themes`);
 
 // 7. The measurement data and the recipe schema, for agents and anyone who wants the numbers.
-for (const [from, to] of [['lab/data/traits.json', 'traits.json'], ['lab/data/faithfulness.json', 'faithfulness.json'], ['lab/schema/recipe.schema.json', 'recipe.schema.json']]) copyFileSync(join(here, from), join(bundle, 'assets/lab', to));
+for (const [from, to] of [['lab/data/traits.json', 'traits.json'], ['lab/data/faithfulness.json', 'faithfulness.json'], ['faithfulness/talk-checks.json', 'talk-checks.json'], ['lab/schema/recipe.schema.json', 'recipe.schema.json']]) copyFileSync(join(here, from), join(bundle, 'assets/lab', to));
 
 if (clean) manifest.code.commit = commit;
 else console.warn('working tree has changes: the bundle names no commit');

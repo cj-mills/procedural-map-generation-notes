@@ -1,7 +1,7 @@
 ---
 title: Diffusion-limited aggregation
 ---
-Fire particles at a small open seed. Each digs the last solid tile it crossed before it reached open floor [[t:103-108 s:13]].
+Dig a small open seed, then start particles on random tiles. Each travels until it reaches open floor, and digs the last solid tile it stood on [[c05:19-82 t:103-108]].
 
 ## The rule
 1. **Seed:** dig a plus of five tiles at the center of a solid map [[c05:19-40 t:103-104]].
@@ -72,7 +72,7 @@ Stop when 1 / this of the map is open. All three demos: a third [[c05:43 c06:43 
 ## What it combines with
 @@combines
 
-- **Erosion:** the talk also fires particles at a finished map, which its slide calls DLA for erosion [[t:191-193 s:21]]. See [erosion by aggregation](#dla-erode).
+- **Erosion:** the talk also uses DLA on a finished map, to wear parts of it away. Its slide calls that DLA for erosion [[t:191-193 s:21]]. See [erosion by aggregation](#dla-erode).
 
 ## Checked against the talk’s code
 @@checked

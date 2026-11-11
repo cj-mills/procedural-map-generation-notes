@@ -36,7 +36,8 @@ lab/                            the map lab's deterministic Rust core, its WebAs
                                 CLI for agents, the demo recipes, the recipe schema and the
                                 measurement data (lab/README.md)
 faithfulness/                   the talk's own code run without a window over many seeds, for the
-                                faithfulness check (faithfulness/README.md)
+                                faithfulness check and for the counts behind the page's table of
+                                where the talk and its code differ (faithfulness/README.md)
 rust-toolchain.toml, mise.toml  the Rust toolchain, wasm-bindgen and wasm-opt this repo pins
 ```
 
@@ -110,8 +111,8 @@ stages the bundle in `dist/bundle/`:
   written into the module;
 - every step figure drawn from the core's own frames, in the site's figure colors for both
   themes;
-- the measurement data and the recipe schema, and `code.commit` set to `HEAD` when the working
-  tree is clean.
+- the measurement data, the counts from the talk's own code (`faithfulness/talk-checks.json`)
+  and the recipe schema, and `code.commit` set to `HEAD` when the working tree is clean.
 
 The two JSON files beside the page stay out of the bundle. They hold ids, locators, counts and
 states only, so a fresh clone rebuilds the bundle without the private source library.
