@@ -14,7 +14,8 @@
 //   3. checks every {% own-run %}: each value it names is regenerated from the data or the core
 //      and must be what the page states;
 //   4. fills the manifest's `checked` from the checking note (`slib note`'s file);
-//   5. builds the core as WebAssembly (lab/measure-size.mjs) and folds its glue into the module;
+//   5. builds the core as WebAssembly (lab/measure-size.mjs) and folds its glue and the lab's
+//      rows (rows.js) into the module;
 //   6. draws every step figure from the core's own frames, for both themes;
 //   7. adds the measurement data and the recipe schema, and names the commit it was built from.
 //
@@ -134,10 +135,15 @@ const ending = "export { initSync, __wbg_init as default };\n";
 if (!importLine || !glue.endsWith(ending) || /^import /m.test(glue)) throw new Error('the module or the glue is not shaped as this build folds them');
 const folded = glue.slice(0, -ending.length).replace(/^export (class|function) /gm, '$1 ');
 if (/^export /m.test(folded)) throw new Error('the glue has an export this build does not know how to fold');
+// The open lab's rows (rows.js, which page/gen.mjs reads for the tag's reserve) are folded in the same way.
+const rowsLine = /^import \{ ([\w, ]+) \} from '\.\/rows\.js';\n/m.exec(moduleSource);
+const rows = readFileSync(join(bundle, 'assets/lab/rows.js'), 'utf8');
+if (!rowsLine || /^import /m.test(rows)) throw new Error('the module or rows.js is not shaped as this build folds them');
+rmSync(join(bundle, 'assets/lab/rows.js'));
 // The module's names for things and the demos it loads by id are the page's own (page/gen.mjs).
 const dataLine = /^const DATA = .*;$/m;
 if (!dataLine.test(moduleSource)) throw new Error('the module has no DATA line for this build to fill');
-writeFileSync(modulePath, moduleSource.replace(importLine[0], `const { init, ${importLine[1]} } = (() => {\n${folded}return { init: __wbg_init, ${importLine[1]} };\n})();\n`).replace(dataLine, () => `const DATA = ${JSON.stringify(data)};`));
+writeFileSync(modulePath, moduleSource.replace(importLine[0], () => `const { init, ${importLine[1]} } = (() => {\n${folded}return { init: __wbg_init, ${importLine[1]} };\n})();\n`).replace(rowsLine[0], () => `const { ${rowsLine[1]} } = (() => {\n${rows.replace(/^export /gm, '')}return { ${rowsLine[1]} };\n})();\n`).replace(dataLine, () => `const DATA = ${JSON.stringify(data)};`));
 copyFileSync(join(web, 'map_lab_wasm_bg.wasm'), join(bundle, 'assets/lab/map_lab_wasm_bg.wasm'));
 const tint = /export const NEW_TINT = ([\d.]+);/.exec(moduleSource)?.[1];
 if (Number(tint) !== NEW_TINT) throw new Error(`the module tints new tiles ${tint}, the figures ${NEW_TINT}: page/lib.mjs and the module must agree`);

@@ -28,6 +28,8 @@ deliverable/
   content/index.citations.json  passage ids resolved into the site's locators (`slib trace`)
   content/index.checking.json   the data for the page's "how this was checked" note (`slib note`)
   assets/lab/lab.js             the page's module: the lab, and each card's step-through
+  assets/lab/rows.js            the open lab's rows and the room the page reserves for them;
+                                the build folds it into the module
 apply-citations.mjs             source-library's splicer, copied verbatim (source-library aa45a58)
 build.mjs                       stages the bundle in dist/bundle/ and publishes it
 lab/                            the map lab's deterministic Rust core, its WebAssembly binding, the
@@ -64,6 +66,14 @@ standing context, which the verifier reads with every claim, so no claim has to 
 A card's step-through opens on its first demo, as the last step of its fallback: the site shows
 that step alone while the module loads, and the module opens at the same step and the same size,
 so the swap moves nothing. The other demos' steps are a list of their own below it.
+
+The lab at the page's head opens by itself. `page/gen.mjs` writes its open height on its tag
+(`reserve="…"`, the site's spec, Interactives), the site holds the figure to that from the first
+paint, and the module opens at mount, within it. The height is the module's own: open, every row
+of the lab has a set height and the map follows the width, and `deliverable/assets/lab/rows.js`
+holds the rows and their sum, for the module's CSS and for the tag. Change a row there and the
+page changes with it; the site's build then reads the figure's height before and after the mount
+at 16 window sizes and fails on any difference.
 
 ```sh
 node page/gen.mjs            # writes deliverable/content/index.mdoc

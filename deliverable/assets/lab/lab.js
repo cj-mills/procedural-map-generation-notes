@@ -2,16 +2,22 @@
 // every technique card. It runs the deterministic core in WebAssembly (lab/core in this page's
 // repository), so a recipe builds the same map here, on the command line and in an engine.
 //
-//   mount(root, { params, fallback, report })     the site's contract, awaited
+//   mount(root, { params, fallback, reserve, report })     the site's contract, awaited
 //
 // params.mode is "lab" (the pipeline can be edited, measured, walked and shared) or "card" (the
 // pipeline is one of the technique's demos).
 //
-// It mounts as its fallback's last step stands: the finished map, the step's label and its text,
-// at the same sizes, so the swap moves nothing on the page (the site's spec, Interactives). The
-// strip, the transport, the controls, the readout and the rest open when the reader asks: the
-// button over the map, the map itself, or a recipe link on the page. The lab at the page's head
-// doesn't wait to be asked: it opens by itself as soon as that moves nothing a reader can see.
+// A card mounts as its fallback's last step stands: the finished map, the step's label and its
+// text, at the same sizes, so the swap moves nothing on the page (the site's spec, Interactives).
+// The strip, the transport, the controls, the readout and the rest open when the reader asks: the
+// button over the map, the map itself, or a recipe link on the page.
+//
+// The lab at the page's head doesn't wait to be asked. Its page reserves its open height on its
+// tag (`reserve`, from rows.js), the site holds the figure to that from the first paint, and the
+// lab opens at mount, within it. Open, the lab's height is fixed by its layout: the map follows
+// the width and every other row has a set height, whatever recipe it loads and whatever the
+// reader does short of opening the recipe's text or the list of stages to add. Without a reserve
+// it mounts closed, as a card does.
 //
 // The module holds no wording of its own about the
 // techniques: each step's text is read from the page's step lists by its key. The names of
@@ -19,6 +25,7 @@
 // from the same files the page's tables are made from. The controls are made from the core's
 // stage table, and the caches, the 200-seed summary and the walk are the core's.
 import init, { Lab, failure_key, note_key, stage_table } from './map_lab_wasm.js';
+import { MAP_WIDE, ROWS, SAYS_NARROW, SAYS_WIDE, actionsSlot, endSlot, mapSlotNarrow, stageSlot } from './rows.js';
 
 let ready; // one WebAssembly instance for every mount on the page
 let table; // the core's stage table: every stage and its parameters, by stage name
@@ -59,7 +66,9 @@ const enc = (r) => btoa(String.fromCharCode(...new TextEncoder().encode(text(r))
 function fromHash(hash) {
   const m = /^#recipe=(.+)$/.exec(hash);
   try {
-    return m && JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))));
+    const recipe = m && JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))));
+    // Anything with a pipeline is the core's to accept or refuse, with its own message; anything else isn't a recipe.
+    return Array.isArray(recipe?.pipeline) ? recipe : null;
   } catch {
     return null;
   }
@@ -101,7 +110,7 @@ function palette(el) {
   return c;
 }
 
-export async function mount(root, { params, fallback, report }) {
+export async function mount(root, { params, fallback, reserve, report }) {
   ready ??= init().then(() => (table = Object.assign(JSON.parse(stage_table()), { by: {} })) && table.stages.forEach((s) => (table.by[s.name] = s)));
   await ready;
   const isLab = params.mode === 'lab';
@@ -124,19 +133,24 @@ export async function mount(root, { params, fallback, report }) {
   // A step's text keeps its reference marker, as the site prints it: a copy opens its note as the original does.
   const stepText = h('span');
   const stepBox = h('p', { class: 'mlab-step', 'aria-live': 'polite' }, stepLabel, stepText);
+  // One slot says what is on the map: the step's text, or the walk's count while the reader walks, or the
+  // parser's message while the recipe is one the core refuses. The slot keeps its height whichever it holds.
+  const walkSays = h('p', { class: 'mlab-step', 'aria-live': 'polite', hidden: true });
+  const says = h('div', { class: 'mlab-says' }, stepBox, walkSays, errorBox);
   // Closed, the way in is a button over the map: it takes no room, so the closed lab keeps its fallback's size.
   const openBtn = h('button', { type: 'button', class: 'mlab-open', onclick: () => open(true) }, h('span', { class: 'mlab-tri' }), isLab ? 'Open the lab' : 'Step through it');
-  const playBtn = btn('Play', () => (st.timer ? stop() : play()), '');
+  const playBtn = btn('Play', () => (st.timer ? stop() : play()), 'mlab-play');
   const transport = h('div', { class: 'mlab-transport', role: 'group', 'aria-label': 'Step through the build' },
     btn('⏮', () => go(0), 'q mlab-end', 'First step'), btn('◀', () => go(st.frame - 1), 'q', 'Step back'), btn('▶', () => go(st.frame + 1), 'q', 'Step forward'), btn('⏭', () => go(Infinity), 'q mlab-end', 'The finished map'), playBtn, scrub);
   const stagePanel = h('div', { class: 'mlab-stage' });
   const walkBox = h('div', { class: 'mlab-walk', hidden: true });
   const readout = h('dl', { class: 'mlab-readout' });
+  const failsBox = h('p', { class: 'mlab-fails' });
   const seedIn = h('input', { type: 'number', min: '0', max: String(table.recipe.maxSeed), step: '1', 'aria-label': 'Seed', onchange: () => ((st.recipe.seed = Math.max(0, Math.floor(+seedIn.value || 0))), rebuild()) });
   // A recipe is a seed plus a pipeline, so the seed is the strip's first link.
   const seedChip = h('li', { class: 'mlab-seed' }, h('span', { class: 'mlab-name' }, 'seed'), seedIn, btn('New', () => ((st.recipe.seed = Math.floor(Math.random() * 100000)), rebuild()), 'q', 'A new random seed'));
   const walkBtn = btn('Walk this map', () => startWalk(), '');
-  const fixBtn = btn('Add cull → start → exit', addMissing, '');
+  const fixBtn = btn('Make it walkable', addMissing, '', 'A walk needs a start and an exit the start can reach: this adds what is missing');
   const walkWhy = h('span', { class: 'mlab-note' });
   const measureBtn = btn(`Measure over ${SEEDS} seeds`, measure, 'q');
   const presets = isLab && h('select', { 'aria-label': 'Start from one of the talk’s demos', onchange: () => load(demos[+presets.value].recipe) },
@@ -144,34 +158,33 @@ export async function mount(root, { params, fallback, report }) {
     DATA.groups.map((g) => h('optgroup', { label: g.title }, demos.map((d, i) => g.stages.some((s) => s.name === d.stage) && h('option', { value: i }, `${d.id.split('-')[0]} ${d.label}`)))));
   const demoBtns = !isLab && demos.length > 1 && h('div', { class: 'mlab-demos', role: 'group', 'aria-label': 'The talk’s demos of this technique' },
     demos.map((d, i) => h('button', { type: 'button', class: 'q', 'aria-pressed': 'false', onclick: () => ((st.demo = i), load(d.recipe)) }, d.label)));
-  const shareNote = h('span', { class: 'mlab-note', role: 'status' });
+  const shareBtn = btn('Copy link', share, 'q mlab-share');
+  const shareNote = h('span', { class: 'mlab-sr', role: 'status' });
   const openLink = !isLab && h('a', { href: '#recipe=' }, 'Open in the lab');
   const recipeText = h('textarea', { spellcheck: 'false', rows: '8', 'aria-label': 'The recipe, as JSON' });
   const cliLine = h('code', {}, 'map-lab build recipe.json');
-  // Nothing a reader presses may move because of the press. So each control sits above whatever it can
-  // resize: the transport under the map, then the strip, then the stage's controls, then the parser's
-  // message, and the step's text, whose length changes with every step, after them all. The text is outside
-  // the part that must fit the window, so a longer text never shrinks the map either.
-  const fit = h('div', { class: 'mlab-fit', 'data-fit': true }, demoBtns, pipe, h('div', { class: 'mlab-view' }, canvas, openBtn, legend), transport, stagePanel, errorBox, walkBox);
-  const limitProbe = h('div', { class: 'mlab-limit' });
-  const box = h('div', { class: 'mlab is-closed' }, limitProbe, fit, stepBox, readout,
-    h('div', { class: 'mlab-foot' },
-      isLab && [walkBtn, fixBtn, walkWhy, measureBtn],
-      h('span', { class: 'mlab-spacer' }),
-      isLab ? [h('label', {}, 'Start from ', presets), btn('Copy link', share), shareNote] : openLink),
-    isLab && h('details', { class: 'mlab-recipe' }, h('summary', {}, 'Recipe'), recipeText,
-      h('div', { class: 'mlab-foot' }, btn('Apply', () => { try { load(JSON.parse(recipeText.value)); } catch (e) { showError(`recipe: ${e.message}`); } }, ''), cliLine,
-        h('span', { class: 'mlab-note' }, 'Save it as recipe.json: the same recipe builds the same map on the command line.'))));
+  // Nothing a reader presses may move because of the press. Open, every part is a row of set height (rows.js),
+  // so the lab is one height whatever it shows: the map, then the step buttons, the strip and the stage's
+  // slot, which must fit the window with the map; then the slot for the step's text, the actions, and a
+  // last part for the readout and the recipe's line, which fill it from the top. Side by side on a wide
+  // screen: the step buttons and the stage beside the map, the actions beside the step's text.
+  const fit = h('div', { class: `mlab-fit${demoBtns ? ' has-demos' : ''}`, 'data-fit': true }, demoBtns, pipe, h('div', { class: 'mlab-view' }, h('div', { class: 'mlab-map' }, canvas), openBtn, legend), transport, stagePanel, walkBox);
+  const box = h('div', { class: `mlab is-closed${isLab ? ' is-lab' : ''}` }, fit,
+    h('div', { class: 'mlab-mid' }, says,
+      h('div', { class: 'mlab-foot' }, isLab ? [walkBtn, fixBtn, walkWhy, measureBtn, h('label', { class: 'mlab-from' }, 'Start from ', presets)] : openLink)),
+    h('div', { class: 'mlab-last' }, readout, failsBox, isLab && h('div', { class: 'mlab-recipe' }, h('details', {}, h('summary', {}, 'Recipe'), recipeText,
+      h('div', { class: 'mlab-acts' }, btn('Apply', () => { try { load(JSON.parse(recipeText.value)); } catch (e) { showError(`recipe: ${e.message}`); } }, ''), cliLine,
+        h('span', { class: 'mlab-note' }, 'Save it as recipe.json: the same recipe builds the same map on the command line.'))), shareBtn, shareNote)));
   root.append(box);
   canvas.addEventListener('click', () => open(false));
 
-  /** Opens everything the closed lab leaves out. It is the reader's act, so the page may move for it. */
+  /** Opens everything the closed lab leaves out. For a card it is the reader's act, so the page may move
+   *  for it; the lab at the page's head opens at mount, into the room its page reserved. */
   function open(focus) {
     if (st.open) return;
     st.open = true;
     box.classList.remove('is-closed');
     showSelected();
-    fitToFrame();
     if (focus) playBtn.focus();
   }
 
@@ -179,33 +192,41 @@ export async function mount(root, { params, fallback, report }) {
   function showError(msg) {
     errorBox.textContent = msg;
     errorBox.hidden = !msg;
+    says.classList.toggle('has-error', !!msg);
   }
   function load(recipe) {
+    // A recipe from the address bar, a link or the recipe's text is the core's to refuse before anything of
+    // it is shown: the parser's message says where it is wrong, and the lab keeps what it had.
+    let built;
+    try {
+      built = new Lab(text(recipe));
+    } catch (e) {
+      return showError(e.message);
+    }
     st.recipe = copy(clean(recipe));
     const stages = flat(st.recipe.pipeline);
     st.sel = isLab ? stages.length - 1 : Math.max(0, stages.findIndex((f) => f.s.stage === params.stage));
-    rebuild();
+    rebuild(built);
   }
-  function rebuild() {
+  /** Shows the recipe, built: by load() already, or here after an edit, which the core may refuse. */
+  function rebuild(built) {
     stop();
     leaveWalk();
     seedIn.value = st.recipe.seed;
     recipeText.value = JSON.stringify(clean(st.recipe), null, 1);
     renderPipe();
     renderStage();
-    let lab;
+    let lab = built;
     try {
-      lab = new Lab(text(st.recipe));
+      lab ??= new Lab(text(st.recipe));
     } catch (e) {
       // The parser says where the recipe is wrong; the last good map stays.
-      showError(e.message);
-      return fitToFrame();
+      return showError(e.message);
     }
     showError('');
     st.lab?.free();
     st.lab = lab;
     st.summary = null;
-    measureBtn.hidden = false;
     measureBtn.disabled = false;
     measureBtn.textContent = `Measure over ${SEEDS} seeds`;
     // Which of the talk's demos this pipeline is, if any: a card's marks and a demo's own step texts go by it.
@@ -239,24 +260,7 @@ export async function mount(root, { params, fallback, report }) {
       openLink.href = `#recipe=${enc(st.recipe)}`;
       demoBtns && [...demoBtns.children].forEach((b, i) => b.setAttribute('aria-pressed', String(i === st.demo)));
     }
-    fitToFrame();
   }
-  /** The drawing and its controls stay within the block size the site allows, by drawing smaller, where
-   *  that works: a map shrunk to under half its size shows too little to be worth the fit. Where the window
-   *  is too short for the two together at any size worth drawing (a phone on its side), the map keeps the
-   *  column's width and the reader scrolls. Closed, the lab is its fallback's size and nothing is shrunk. */
-  function fitToFrame() {
-    canvas.style.maxBlockSize = '';
-    if (!st.open) return;
-    const full = canvas.getBoundingClientRect().height;
-    const over = fit.getBoundingClientRect().height - limitProbe.getBoundingClientRect().height;
-    if (over > 0 && full - over >= full / 2) canvas.style.maxBlockSize = `${full - over}px`;
-  }
-  let width = 0;
-  new ResizeObserver(([e]) => {
-    const w = Math.round(e.contentRect.width);
-    if (w !== width && ((width = w), st.lab)) fitToFrame();
-  }).observe(root);
 
   function gridAt(i) {
     if (st.cur < 0 || i < st.cur) (st.grid = new Uint8Array(st.w * st.h)), (st.cur = -1);
@@ -288,7 +292,6 @@ export async function mount(root, { params, fallback, report }) {
     }
     canvas.setAttribute('aria-label', `The map at step ${st.frame + 1} of ${st.n}`);
     draw();
-    if (st.open && fit.getBoundingClientRect().height > limitProbe.getBoundingClientRect().height + 0.5) fitToFrame();
   }
   function play() {
     if (st.frame >= st.n - 1) go(0);
@@ -340,7 +343,8 @@ export async function mount(root, { params, fallback, report }) {
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => ((C = palette(root)), st.walking ? drawWalk() : draw()));
 
   // ---------------------------------------------------------------- the pipeline strip
-  const shown = (stage) => table.by[stage].params.filter((p) => p.kind !== 'inputs' && !(p.kind === 'pick' && p.options.length < 2));
+  // A stage the core doesn't have has no controls here: the parser names it when the recipe is built.
+  const shown = (stage) => (table.by[stage]?.params ?? []).filter((p) => p.kind !== 'inputs' && !(p.kind === 'pick' && p.options.length < 2));
   function renderPipe() {
     let n = 0;
     const chip = (s) => {
@@ -383,7 +387,6 @@ export async function mount(root, { params, fallback, report }) {
     // The strip is also the step-through's chapters: a chip jumps to its stage's last step.
     const last = st.lab ? st.stageOf.lastIndexOf(i) : -1;
     if (last >= 0) stop(), go(last);
-    fitToFrame();
   }
   /** The list a stage is in, and its place there. A path alternates stage index and input index. */
   function listOf(path) {
@@ -397,7 +400,7 @@ export async function mount(root, { params, fallback, report }) {
     st.sel = Math.max(0, Math.min(st.sel, stages.length - 1));
     const cur = stages[st.sel];
     if (!cur) return stagePanel.replaceChildren();
-    const set = (p, v) => { cur.s[p.name] = v; clearTimeout(debounce); debounce = setTimeout(rebuild, 90); };
+    const set = (p, v) => { cur.s[p.name] = v; clearTimeout(debounce); debounce = setTimeout(() => rebuild(), 90); };
     const rows = shown(cur.s.stage).map((p) => {
       const v = cur.s[p.name] ?? p.default, id = `mlab-c${++ids}`;
       let input;
@@ -414,14 +417,15 @@ export async function mount(root, { params, fallback, report }) {
     const move = (d) => { [arr[i], arr[i + d]] = [arr[i + d], arr[i]]; st.sel = flat(st.recipe.pipeline).findIndex((f) => f.s === cur.s); rebuild(); };
     const title = names.titles[cur.s.stage];
     const act = (label, name, off, fn) => h('button', { type: 'button', class: 'q', disabled: off, title: name, 'aria-label': name, onclick: fn }, label);
-    // The stage's name links to what each of its controls does, in its technique's card.
-    stagePanel.replaceChildren(...[
+    // The stage's name links to what each of its controls does, in its technique's card. Which stage it is,
+    // the strip shows; the head says it for a reader who can't see the strip.
+    stagePanel.replaceChildren(
       h('div', { class: 'mlab-head' },
-        h('p', {}, `Stage ${st.sel + 1}: `, h('a', { href: `#${cur.s.stage}${rows.length ? '-controls' : ''}` }, title ?? h('code', {}, cur.s.stage))),
-        isLab && [act('←', 'Move this stage earlier', i === 0, () => move(-1)), act('→', 'Move this stage later', i === arr.length - 1, () => move(1)),
-          act('Remove', 'Remove this stage', arr.length === 1, () => { arr.splice(i, 1); st.sel = Math.max(0, st.sel - 1); rebuild(); })]),
-      rows.length ? h('div', { class: `mlab-ctls${rows.length > 3 ? ' mlab-many' : ''}` }, rows) : h('p', { class: 'mlab-note' }, 'This stage has no controls.'),
-    ].filter(Boolean));
+        h('p', {}, h('span', { class: 'mlab-sr' }, `Stage ${st.sel + 1}: `), h('a', { href: `#${cur.s.stage}${rows.length ? '-controls' : ''}` }, title ?? h('code', {}, cur.s.stage))),
+        isLab && h('div', { class: 'mlab-moves' }, act('←', 'Move this stage earlier', i === 0, () => move(-1)), act('→', 'Move this stage later', i === arr.length - 1, () => move(1)),
+          act('✕', 'Remove this stage', arr.length === 1, () => { arr.splice(i, 1); st.sel = Math.max(0, st.sel - 1); rebuild(); }))),
+      // The slot holds the most controls any stage has; a stage with more would scroll inside it.
+      rows.length ? h('div', { class: `mlab-ctls${rows.length > 3 ? ' mlab-many' : ''}` }, rows) : h('p', { class: 'mlab-note' }, 'This stage has no controls.'));
   }
 
   // ---------------------------------------------------------------- this map's traits, and measuring the pipeline
@@ -439,22 +443,28 @@ export async function mount(root, { params, fallback, report }) {
     const s = st.summary;
     // The summary holds 8 numbers a trait: seeds that have it, mean, sd, lowest, 10th percentile, median, 90th, highest.
     const sum = (k) => s && s[TRAITS.indexOf(k) * 8] > 0 && { p10: s[TRAITS.indexOf(k) * 8 + 4], median: s[TRAITS.indexOf(k) * 8 + 5], p90: s[TRAITS.indexOf(k) * 8 + 6] };
-    const rows = names.traits.filter((n) => !n.extra || (!Number.isNaN(value(n.key)) && (n.key === 'rooms' || t[6] + t[7] + t[8] > 0))).map((n) => {
-      const v = value(n.key), q = sum(n.key), at = (x) => Math.min(1, Math.max(0, x / n.to)).toFixed(4);
-      return h('div', {}, h('dt', {}, h('a', { href: '#our-definitions' }, n.label)),
-        h('dd', {}, fmt(v, n.key), n.key === 'path' && t[5] === 1 && !Number.isNaN(v) && h('small', { title: 'The map has no start and exit of its own, so this is between the standard probe’s two points.' }, ' probe'),
-          q && h('span', { class: 'mlab-mark', role: 'img', 'aria-label': `Over seeds 0 to ${SEEDS - 1}: median ${fmt(q.median, n.key)}; 8 of 10 seeds fall between ${fmt(q.p10, n.key)} and ${fmt(q.p90, n.key)}.`, style: `--lo:${at(q.p10)};--mid:${at(q.median)};--hi:${at(q.p90)};--now:${Number.isNaN(v) ? 0 : at(v)}` }, h('i'), !Number.isNaN(v) && h('b')),
-          q && h('small', {}, `median ${fmt(q.median, n.key)}`)));
-    });
+    // The slot has a cell for every trait the core reports: the five every map has, then rooms placed, then
+    // the terrain's three shares on a row of their own. A cell is the trait's name, this map's value and a
+    // scale with the value marked on it; measuring adds where 200 seeds fall on the same scale, in the same room.
+    const shown = names.traits.filter((n) => !n.extra || (!Number.isNaN(value(n.key)) && (n.key === 'rooms' || t[6] + t[7] + t[8] > 0)));
+    const order = [...shown.filter((n) => !n.extra), ...shown.filter((n) => n.key === 'rooms'), ...shown.filter((n) => n.extra && n.key !== 'rooms')];
+    readout.replaceChildren(...order.map((n) => {
+      const v = value(n.key), q = sum(n.key), at = (x) => Math.min(1, Math.max(0, x / n.to)).toFixed(4), has = !Number.isNaN(v);
+      return h('div', { class: n.key === 'water' ? 'mlab-terrain' : null }, h('dt', {}, h('a', { href: '#our-definitions' }, n.label)),
+        h('dd', {}, fmt(v, n.key), n.key === 'path' && t[5] === 1 && has && h('small', { title: 'The map has no start and exit of its own, so this is between the standard probe’s two points.' }, ' probe'),
+          q && h('small', { class: 'mlab-med' }, ` median ${fmt(q.median, n.key)}`),
+          h('span', { class: 'mlab-mark', role: q ? 'img' : null, 'aria-hidden': q ? null : 'true', 'aria-label': q && `Over seeds 0 to ${SEEDS - 1}: median ${fmt(q.median, n.key)}; 8 of 10 seeds fall between ${fmt(q.p10, n.key)} and ${fmt(q.p90, n.key)}.`,
+            style: `--now:${has ? at(v) : 0}${q ? `;--lo:${at(q.p10)};--mid:${at(q.median)};--hi:${at(q.p90)}` : ''}` }, q && h('em'), q && h('i'), has && h('b'))));
+    }));
     const fails = failKeys(st.lab.failures());
-    rows.push(h('div', { class: 'mlab-fails' }, h('dt', {}, 'Fails'), h('dd', {}, fails.length ? fails.map((f, i) => [i > 0 && ', ', h('a', { href: '#what-counts-as-failing' }, failName(f))]) : 'nothing')));
+    let over = 'not measured';
     if (s) {
       const rowsOf = st.lab.measured(), counts = {};
       for (let i = 12; i < rowsOf.length; i += 13) for (const f of failKeys(rowsOf[i])) counts[f] = (counts[f] ?? 0) + 1;
-      const list = Object.entries(counts).map(([f, n]) => `${failName(f)} on ${n}`);
-      rows.push(h('div', { class: 'mlab-fails' }, h('dt', {}, `Over seeds 0 to ${SEEDS - 1}`), h('dd', {}, list.length ? list.join(', ') : 'no seed fails')));
+      over = Object.entries(counts).map(([f, n]) => `${failName(f)} on ${n}`).join(', ') || 'no seed fails';
     }
-    readout.replaceChildren(...rows);
+    failsBox.replaceChildren(h('span', { class: 'mlab-k' }, 'Fails: '), ...(fails.length ? fails.flatMap((f, i) => [i > 0 && ', ', h('a', { href: '#what-counts-as-failing' }, failName(f))]).filter(Boolean) : ['nothing']),
+      '.', ...(isLab ? [' ', h('span', { class: 'mlab-k' }, `Over seeds 0 to ${SEEDS - 1}: `), over, '.'] : []));
     if (!isLab) report(Object.fromEntries(TRAITS.map((k, i) => [k, Number.isNaN(t[i]) ? null : t[i]])), demos[st.demo]?.id);
   }
   /** Builds the pipeline on seeds 0 to 199 in slices sized by time, so the page stays responsive. */
@@ -470,7 +480,8 @@ export async function mount(root, { params, fallback, report }) {
       if (st.lab !== lab) return;
     }
     st.summary = lab.summary();
-    measureBtn.hidden = true;
+    // The button stays where it was, saying what was done: a button that left would move what follows it.
+    measureBtn.textContent = `Measured over ${SEEDS} seeds`;
     renderReadout();
   }
 
@@ -479,7 +490,7 @@ export async function mount(root, { params, fallback, report }) {
     const ok = st.lab.start() >= 0 && st.lab.exit() >= 0 && st.path.length > 1;
     walkBtn.hidden = !ok;
     fixBtn.hidden = ok;
-    walkWhy.textContent = ok ? `Reach the exit. The shortest walk is ${count(st.path.length - 1)} steps.` : 'A walk needs a start and an exit the start can reach.';
+    walkWhy.textContent = ok ? `The shortest walk: ${count(st.path.length - 1)} steps` : `adds ${['cull', 'start', 'exit'].filter((name) => name !== 'cull' || !flat(st.recipe.pipeline).some((f) => f.s.stage === 'cull')).join(' → ')}`;
   }
   function addMissing() {
     const have = new Set(flat(st.recipe.pipeline).map((f) => f.s.stage));
@@ -489,23 +500,27 @@ export async function mount(root, { params, fallback, report }) {
     st.sel = flat(st.recipe.pipeline).length - 1;
     rebuild();
   }
+  // Walking, the map stays where it is and the lab keeps its height: the pad takes the room of the step
+  // buttons and the stage's slot, and the walk's count takes the step's text's.
   function startWalk() {
     stop();
     if (!st.lab.walk()) return;
     st.walking = true;
     st.caches = st.lab.caches();
-    fit.classList.add('is-walking');
-    walkBox.hidden = false;
+    box.classList.add('is-walking');
+    pipe.inert = true;
+    walkBox.hidden = walkSays.hidden = false;
     renderWalk();
-    fitToFrame();
     walkBox.querySelector('button')?.focus();
   }
   function leaveWalk() {
     if (!st.walking) return;
     st.walking = false;
-    fit.classList.remove('is-walking');
-    walkBox.hidden = true;
+    box.classList.remove('is-walking');
+    pipe.inert = false;
+    walkBox.hidden = walkSays.hidden = true;
     walkBox.replaceChildren();
+    walkSays.replaceChildren();
     canvas.setAttribute('aria-label', 'The map');
   }
   const DIRS = { ArrowLeft: 0, a: 0, ArrowRight: 1, d: 1, ArrowUp: 2, w: 2, ArrowDown: 3, s: 3 };
@@ -514,7 +529,7 @@ export async function mount(root, { params, fallback, report }) {
     st.lab.step(dir);
     st.lab.walk_done() ? renderResult(true) : renderWalk();
   }
-  fit.addEventListener('keydown', (e) => {
+  box.addEventListener('keydown', (e) => {
     if (st.walking && e.key in DIRS && !e.metaKey && !e.ctrlKey && !e.altKey && !/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) (e.preventDefault(), act(DIRS[e.key]));
   });
   const found = () => st.caches.filter((_, n) => (st.lab.found() >> n) & 1).length;
@@ -522,13 +537,13 @@ export async function mount(root, { params, fallback, report }) {
   function renderWalk() {
     drawWalk();
     const steps = st.lab.route().length - 1;
-    if (walkBox.firstChild && walkStatus?.isConnected) return (walkStatus.textContent = `${count(steps)} steps · caches ${found()} of ${st.caches.length}`);
+    if (walkStatus?.isConnected) return (walkStatus.textContent = `${count(steps)} steps · caches ${found()} of ${st.caches.length}`);
     walkStatus = h('strong', {}, `${count(steps)} steps · caches ${found()} of ${st.caches.length}`);
+    walkSays.replaceChildren(h('span', { class: 'mlab-n' }, 'The walk'), walkStatus, '. Reach the exit.');
     walkBox.replaceChildren(
-      h('p', { class: 'mlab-step', 'aria-live': 'polite' }, h('span', { class: 'mlab-n' }, 'The walk '), walkStatus, '. Reach the exit.'),
       h('div', { class: 'mlab-pad', role: 'group', 'aria-label': 'Move' }, [['Up', 2, '↑'], ['Left', 0, '←'], ['Down', 3, '↓'], ['Right', 1, '→']].map(([name, dir, arrow]) => h('button', { type: 'button', class: `q mlab-${name.toLowerCase()}`, 'aria-label': name, onclick: () => act(dir) }, arrow))),
       h('p', { class: 'mlab-note' }, 'The arrow keys or the pad move you. You see nine tiles around you in straight lines, and remember what you have seen.'),
-      h('div', { class: 'mlab-acts' }, btn('Show me the map', () => renderResult(false)), btn('Leave', () => (leaveWalk(), draw(), fitToFrame()))));
+      h('div', { class: 'mlab-acts' }, btn('Show me the map', () => renderResult(false)), btn('Leave', () => (leaveWalk(), draw()))));
   }
   function drawWalk() {
     // The camera follows the walker and stops at the map's edges: a window of 32 by 20 tiles, large enough to read on a phone.
@@ -568,19 +583,24 @@ export async function mount(root, { params, fallback, report }) {
     const mine = route.length - 1, best = st.path.length - 1;
     canvas.setAttribute('aria-label', 'The whole map: your route and the shortest route, over walking distance from the start');
     walkStatus = null;
+    walkSays.replaceChildren(
+      h('strong', {}, reached ? `You reached the exit in ${count(mine)} steps. ` : `You stopped after ${count(mine)} steps. `),
+      `The shortest walk is ${count(best)}${reached ? `, so yours was ${(mine / best).toFixed(2)} times as long` : ''}. You found ${found()} of ${st.caches.length} caches.`);
+    // What the map now shows, as a key where the pad was: the colors are the drawing's own, in either theme.
+    const key = (color, label) => h('li', {}, h('i', { style: `background:${color}` }), label);
     walkBox.replaceChildren(
-      h('p', { class: 'mlab-step', 'aria-live': 'polite' },
-        h('strong', {}, reached ? `You reached the exit in ${count(mine)} steps. ` : `You stopped after ${count(mine)} steps. `),
-        `The shortest walk is ${count(best)}${reached ? `, so yours was ${(mine / best).toFixed(2)} times as long` : ''}. You found ${found()} of ${st.caches.length} caches. `,
-        'Your route is orange and the shortest is blue. The shading is walking distance from the start.'),
-      h('div', { class: 'mlab-acts' }, btn('Walk it again', () => (leaveWalk(), startWalk()), ''), btn('Back to the build', () => (leaveWalk(), draw(), fitToFrame()))));
-    fitToFrame();
+      h('ul', { class: 'mlab-key' }, key(C.focus, 'your route'), key(C.primary, 'the shortest route'), key(C.green, st.caches.length ? 'the start, and each cache you found' : 'the start'),
+        key(C.yellow, st.caches.length ? 'the exit, and each cache you missed' : 'the exit'), key(C.dist(0.8), 'floor: the bluer, the farther from the start on foot')),
+      h('div', { class: 'mlab-acts' }, btn('Walk it again', () => (leaveWalk(), startWalk()), ''), btn('Back to the build', () => (leaveWalk(), draw()))));
   }
 
   // ---------------------------------------------------------------- sharing, and recipes sent from the page
   function share() {
     const url = `${location.origin}${location.pathname}${location.search}#recipe=${enc(st.recipe)}`;
-    navigator.clipboard?.writeText(url).then(() => (shareNote.textContent = 'Link copied'), () => (shareNote.textContent = 'The link is in the address bar'));
+    // The button says what happened, where it is: a note beside it would need room of its own.
+    const said = (label, note) => ((shareBtn.textContent = label), (shareNote.textContent = note), setTimeout(() => ((shareBtn.textContent = 'Copy link'), (shareNote.textContent = '')), 2500));
+    const inBar = () => (history.replaceState(null, '', url), said('In the address bar', 'The link is in the address bar'));
+    navigator.clipboard ? navigator.clipboard.writeText(url).then(() => said('Link copied', 'Link copied'), inBar) : inBar();
   }
   const me = { root, load, open, recipe: () => st.recipe, demo: (i) => (st.demo = i), demos };
   if (isLab) theLab = me;
@@ -597,22 +617,10 @@ export async function mount(root, { params, fallback, report }) {
   // A card sent a recipe before it mounted was asked for by the reader, and a refused recipe has a message
   // to show: both open.
   if ((shared && !isLab) || !errorBox.hidden) open(false);
-  // The lab is the page's main part, so it opens without being asked, whenever that moves nothing a reader
-  // can see. Opening makes the figure taller, which moves only what follows it; with the figure's end at or
-  // below the window's lower edge, what follows is out of sight. With its end in the window the lab stays
-  // closed, behind its button, and opens when the reader's scrolling takes its end out of sight below.
-  if (isLab && !st.open) {
-    const figure = root.closest('figure') ?? root;
-    const settle = () => {
-      if (!st.open && figure.getBoundingClientRect().bottom < innerHeight) return;
-      removeEventListener('scroll', settle);
-      removeEventListener('resize', settle);
-      open(false);
-    };
-    addEventListener('scroll', settle, { passive: true });
-    addEventListener('resize', settle);
-    settle();
-  }
+  // The lab is the page's main part, so it opens without being asked: its page reserved its open height on
+  // its tag and the site has held the figure to it since the first paint, so opening moves nothing. Without
+  // a reserve it waits behind its button, as a card does.
+  if (isLab && reserve) open(false);
 }
 
 /** Loads a recipe sent to a mount, marking which of a card's demos it is, if any. */
@@ -653,104 +661,178 @@ addEventListener('hashchange', () => {
   theLab.root.scrollIntoView();
 });
 
+// The open lab's rows, from rows.js: `rem` is a length in rem, and the names below are the slots.
+const rem = (n) => `${+n.toFixed(4)}rem`;
+const N = ROWS.narrow, M = ROWS.mid, W = ROWS.wide;
+const actionRows = (layout) => `repeat(${layout.actions}, minmax(${rem(ROWS.action)}, auto))`;
+const DEMOS_ROW = 2.75; // a card's row of demo buttons
+const ctlsSlot = (rows) => rem(rows * (ROWS.control + ROWS.controlGap) - ROWS.controlGap);
+
 const style = document.createElement('style');
 style.textContent = `
-.mlab { container-type: inline-size; display: grid; gap: var(--space-xs); font-size: var(--size-step--1); }
+.mlab { container-type: inline-size; display: grid; grid-template-columns: minmax(0, 1fr); gap: ${rem(ROWS.gap)}; font-size: var(--size-step--1); }
 .mlab [hidden] { display: none !important; }
-.mlab-limit { position: fixed; inset-block-start: 0; visibility: hidden; pointer-events: none; block-size: var(--interactive-max-block-size); }
-.mlab-fit { display: grid; gap: var(--space-2xs) var(--space-s); grid-template-columns: minmax(0, 1fr); grid-template-areas: "demos" "view" "ctl" "pipe" "stage" "error"; align-items: start; }
-.mlab-demos { grid-area: demos; }
-.mlab-pipe { grid-area: pipe; }
-.mlab-error { grid-area: error; }
-.mlab-view { grid-area: view; display: grid; justify-items: center; gap: var(--space-3xs); }
-.mlab-transport { grid-area: ctl; }
-.mlab-stage { grid-area: stage; }
-.mlab-walk { grid-area: ctl; display: grid; gap: var(--space-2xs); }
-.is-walking > :is(.mlab-pipe, .mlab-demos, .mlab-transport, .mlab-stage, .mlab-error), .is-walking .mlab-legend, .mlab:has(.is-walking) > .mlab-step { display: none; }
-/* Narrow: the scrubber stands in for the first and last buttons, and a stage with many controls sets them two to a row, by number. */
-@container (inline-size < 44rem) {
-  .mlab-end { display: none; }
-  .mlab-many { grid-template-columns: 1fr 1fr; }
-  .mlab-many .mlab-ctl { grid-template-columns: auto minmax(0, 1fr); }
-  .mlab-many input[type="range"] { display: none; }
-  .mlab-many input[type="number"] { inline-size: 100%; }
-}
-@container (inline-size >= 44rem) {
-  .mlab-fit { grid-template-columns: minmax(0, 1.95fr) minmax(14rem, 1fr); grid-template-rows: auto auto auto auto 1fr; grid-template-areas: "demos demos" "pipe pipe" "view ctl" "view stage" "view error"; }
-  .mlab-walk { grid-row: 3 / span 3; }
-  .mlab:not(.is-closed) > .mlab-step { max-inline-size: 66%; }
-}
+.mlab-sr { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .mlab p { margin: 0; }
 .mlab ul, .mlab ol, .mlab dl { margin: 0; padding: 0; list-style: none; }
-.mlab canvas { display: block; max-inline-size: 100%; block-size: auto; image-rendering: pixelated; border: 1px solid var(--color-rule); background: var(--figure-dark); }
-.mlab-legend { display: flex; gap: 0 var(--space-xs); block-size: 1.5em; max-inline-size: 100%; overflow: hidden; white-space: nowrap; justify-self: start; color: var(--color-muted); }
-.mlab-legend li { flex: none; }
-.mlab-legend i { display: inline-block; inline-size: 0.7em; block-size: 0.7em; margin-inline-end: 0.3em; border: 1px solid var(--color-rule); }
-.mlab button { padding: var(--space-3xs) var(--space-2xs); min-block-size: 2.25rem; }
+.mlab button { padding: 0 var(--space-2xs); min-block-size: 2.25rem; }
 .mlab button.q, .mlab-chip { border-color: var(--color-muted); background: var(--color-paper); color: var(--color-ink); }
 .mlab button:disabled { opacity: 0.45; cursor: default; }
 .mlab button[aria-pressed="true"] { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary); }
 .mlab select, .mlab textarea { font: inherit; color: inherit; padding: var(--space-3xs); border: 1px solid var(--color-muted); border-radius: var(--radius); background: var(--color-paper); }
 .mlab :is(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
-.mlab-demos { display: flex; gap: var(--space-2xs); overflow-x: auto; padding-block-end: var(--space-3xs); }
-.mlab-demos button { flex: none; }
-.mlab-transport, .mlab-acts, .mlab-foot { display: flex; flex-wrap: wrap; gap: var(--space-3xs) var(--space-2xs); align-items: center; }
-.mlab-pipe { display: flex; gap: var(--space-2xs); align-items: stretch; overflow-x: auto; padding-block-end: var(--space-3xs); }
-.mlab-pipe > li, .mlab-combine ol > li { flex: none; display: flex; }
-.mlab-seed { gap: var(--space-3xs); align-items: center; }
-.mlab-seed input { inline-size: 7ch; }
-.mlab-name { font-family: var(--font-code); }
 .mlab code { font-weight: 400; }
-.mlab-chip { position: relative; display: grid; justify-items: start; padding-block-end: calc(var(--space-3xs) + 3px); text-align: start; }
-.mlab-vals { color: var(--color-muted); font-size: var(--size-step--2); min-block-size: 1.2em; }
-.mlab-chip i { position: absolute; inset: auto 0 0 0; block-size: 3px; background: linear-gradient(to right, var(--color-primary) calc(var(--p, 0) * 100%), var(--color-rule) 0); }
-.mlab-combine { gap: var(--space-2xs); align-items: stretch; }
-.mlab-combine ol { display: flex; gap: var(--space-3xs); align-items: stretch; padding: var(--space-3xs); border: 1px dashed var(--color-muted); border-radius: var(--radius); }
-.mlab-half { align-items: center; color: var(--color-muted); font-size: var(--size-step--2); }
-.mlab-add { position: relative; }
-.mlab-add summary, .mlab-recipe summary { cursor: pointer; padding: var(--space-3xs) var(--space-2xs); min-block-size: 2.25rem; }
-.mlab-add summary { border: 1px dashed var(--color-muted); border-radius: var(--radius); white-space: nowrap; }
-.mlab-add div { display: grid; gap: var(--space-3xs); padding-block-start: var(--space-3xs); min-inline-size: 15rem; }
-.mlab-add div button { text-align: start; }
-.mlab-error { padding: var(--space-3xs) var(--space-2xs); border-inline-start: 4px solid var(--color-red); background: var(--color-paper); font-family: var(--font-code); }
-.mlab-step { padding: var(--space-2xs); border-inline-start: 4px solid var(--color-primary); background: var(--color-paper); min-block-size: 6.6em; line-height: 1.4; }
-.mlab-walk .mlab-step { min-block-size: 0; }
-.mlab-n { display: block; color: var(--color-muted); font-weight: 600; }
-.mlab-transport button { min-inline-size: 2.25rem; }
-.mlab input[type="range"] { inline-size: 100%; min-inline-size: 0; margin: 0; }
-.mlab-transport input[type="range"] { flex: 1 1 6rem; inline-size: auto; }
-.mlab-stage { display: grid; gap: var(--space-3xs); }
-.mlab-head { display: flex; flex-wrap: wrap; gap: var(--space-3xs) var(--space-2xs); align-items: center; }
-.mlab-head p { flex: 1; font-weight: 600; }
-.mlab-ctls { display: grid; gap: var(--space-3xs) var(--space-2xs); }
-.mlab-ctl { display: grid; grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr) auto; gap: var(--space-2xs); align-items: center; }
-.mlab-ctl > :last-child:nth-child(2) { grid-column: 2 / -1; justify-self: start; }
+.mlab-name { font-family: var(--font-code); }
 .mlab-note, .mlab-readout small { color: var(--color-muted); }
-.mlab-readout { display: flex; flex-wrap: wrap; gap: var(--space-2xs) var(--space-s); }
-.mlab-readout > div { min-inline-size: 6.5rem; }
-.mlab-readout dt { color: var(--color-muted); }
-.mlab-readout dd { margin: 0; font-variant-numeric: tabular-nums; }
-.mlab-fails { flex-basis: 100%; }
-.mlab-mark { position: relative; display: block; inline-size: 6.5rem; block-size: 14px; margin-block: 2px; }
-.mlab-mark::before { content: ''; position: absolute; inset-inline: 0; inset-block-start: 6px; block-size: 2px; background: var(--color-rule); }
-.mlab-mark::after { content: ''; position: absolute; inset-block-start: 4px; inset-inline-start: calc(var(--lo) * 100%); inline-size: max(2px, calc((var(--hi) - var(--lo)) * 100%)); block-size: 6px; border-radius: 3px; background: color-mix(in oklab, var(--color-primary) 85%, var(--color-surface)); }
-.mlab-mark i { position: absolute; inset-block-start: 3px; inset-inline-start: calc(var(--mid) * 100%); inline-size: 8px; block-size: 8px; margin-inline-start: -4px; border-radius: 50%; background: var(--color-ink); box-shadow: 0 0 0 2px var(--color-surface); }
-.mlab-mark b { position: absolute; inset-block-start: 0; inset-inline-start: calc(var(--now) * 100%); inline-size: 3px; block-size: 14px; margin-inline-start: -1.5px; border-radius: 1.5px; background: var(--color-focus); box-shadow: 0 0 0 1.5px var(--color-surface); }
-.mlab-spacer { flex: 1; }
-.mlab-open { display: none; }
+.mlab-acts { display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; align-items: center; }
+
+/* The drawing and its controls: one column, the map over the step buttons, the strip and the stage's slot.
+   Each row has a set height, so the part is one height whatever the stage and the step; the map's slot is
+   what the window leaves it (rows.js, mapSlotNarrow). */
+.mlab-fit { --mlab-map: ${mapSlotNarrow()}; display: grid; gap: ${rem(ROWS.fitGap)} 1rem; align-items: start; grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "view" "ctl" "pipe" "stage"; grid-template-rows: auto minmax(${rem(N.transport)}, auto) minmax(${rem(ROWS.strip)}, auto) minmax(${rem(stageSlot(N))}, auto); }
+.mlab-fit.has-demos { --mlab-map: ${mapSlotNarrow(DEMOS_ROW + ROWS.fitGap)}; grid-template-areas: "demos" "view" "ctl" "pipe" "stage"; grid-template-rows: minmax(${rem(DEMOS_ROW)}, auto) auto minmax(${rem(N.transport)}, auto) minmax(${rem(ROWS.strip)}, auto) minmax(${rem(stageSlot(N))}, auto); }
+.mlab-demos { grid-area: demos; display: flex; gap: 0.5rem; overflow-x: auto; scrollbar-width: thin; }
+.mlab-demos button { flex: none; }
+.mlab-view { grid-area: view; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+/* A map of another shape than the page's is drawn inside the same slot, smaller. */
+.mlab-map { display: grid; grid-template: 100% / 100%; place-items: center; block-size: var(--mlab-map); }
+.mlab canvas { display: block; max-inline-size: 100%; max-block-size: 100%; image-rendering: pixelated; border: 1px solid var(--color-rule); background: var(--figure-dark); }
+.mlab-legend { display: flex; gap: 0 0.75rem; block-size: ${rem(ROWS.legend - 0.25)}; line-height: ${rem(ROWS.legend - 0.25)}; max-inline-size: 100%; overflow: hidden; white-space: nowrap; color: var(--color-muted); }
+.mlab-legend li { flex: none; }
+.mlab-legend i { display: inline-block; inline-size: 0.7em; block-size: 0.7em; margin-inline-end: 0.3em; border: 1px solid var(--color-rule); }
+/* The scrubber stands in for the first and last buttons where there is one row. */
+.mlab-transport { grid-area: ctl; display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); gap: 0.25rem 0.5rem; align-items: center; }
+.mlab-transport button { min-inline-size: 2.25rem; }
+.mlab-end { display: none; }
+.mlab-play { min-inline-size: 4rem; }
+.mlab input[type="range"] { inline-size: 100%; min-inline-size: 0; margin: 0; }
+/* The strip is one row that scrolls sideways, with room under its chips for a scrollbar where one is drawn. */
+.mlab-pipe { grid-area: pipe; display: flex; gap: 0.5rem; align-items: flex-start; overflow-x: auto; scrollbar-width: thin; min-block-size: ${rem(ROWS.strip)}; }
+.mlab-pipe > li, .mlab-combine ol > li { flex: none; display: flex; align-items: center; min-block-size: 3.125rem; }
+.mlab-seed { gap: 0.25rem; }
+.mlab-seed input { inline-size: 7ch; block-size: 2.25rem; }
+.mlab-chip { position: relative; display: grid; align-content: center; justify-items: start; min-block-size: 3.125rem; padding-block-end: 3px; text-align: start; line-height: 1.25; }
+.mlab-vals { color: var(--color-muted); font-size: var(--size-step--2); min-block-size: 1.25em; }
+.mlab-chip i { position: absolute; inset: auto 0 0 0; block-size: 3px; background: linear-gradient(to right, var(--color-primary) calc(var(--p, 0) * 100%), var(--color-rule) 0); }
+.mlab-combine { gap: 0.5rem; }
+.mlab-combine ol { display: flex; gap: 0.25rem; padding: 0 0.25rem; border: 1px dashed var(--color-muted); border-radius: var(--radius); }
+.mlab-half { color: var(--color-muted); font-size: var(--size-step--2); }
+.mlab-add { position: relative; }
+.mlab-add summary, .mlab-recipe summary { cursor: pointer; padding: 0 var(--space-2xs); line-height: 2.25rem; }
+.mlab-add summary { border: 1px dashed var(--color-muted); border-radius: var(--radius); white-space: nowrap; }
+.mlab-add div { display: grid; gap: 0.25rem; padding-block-start: 0.25rem; min-inline-size: 15rem; }
+.mlab-add div button { text-align: start; }
+/* The stage's slot: its title beside its buttons, then room for the most controls a stage has. Five go two to
+   a row, by number, so three rows hold any stage. */
+.mlab-stage { grid-area: stage; display: grid; gap: ${rem(ROWS.controlGap)}; align-content: start; grid-template-columns: minmax(0, 1fr); }
+.mlab-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 0.5rem; align-items: center; min-block-size: ${rem(N.head)}; }
+.mlab-head p { font-weight: 600; line-height: 1.3; }
+.mlab-moves { display: flex; gap: 0.25rem; }
+.mlab-moves button { min-inline-size: 2.25rem; }
+.mlab-ctls { display: grid; gap: ${rem(ROWS.controlGap)} 0.5rem; max-block-size: ${ctlsSlot(N.controls)}; overflow-y: auto; }
+.mlab-ctl { display: grid; grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; min-block-size: ${rem(ROWS.control)}; }
+.mlab-ctl > :last-child:nth-child(2) { grid-column: 2 / -1; justify-self: start; }
+.mlab-ctl :is(select, input[type="number"]) { block-size: ${rem(ROWS.control)}; padding-block: 0; }
+.mlab-many { grid-template-columns: 1fr 1fr; }
+.mlab-many .mlab-ctl { grid-template-columns: auto minmax(0, 1fr); }
+.mlab-many input[type="range"] { display: none; }
+.mlab-many :is(select, input[type="number"]) { inline-size: 100%; min-inline-size: 0; }
+.mlab-stage > .mlab-note { line-height: ${rem(ROWS.control)}; }
+/* Walking: the pad takes the room of the step buttons, the strip and the stage's slot. */
+.mlab-walk { grid-row: ctl-start / stage-end; grid-column: ctl; display: grid; gap: 0.5rem; align-content: start; justify-items: center; }
+.is-walking :is(.mlab-transport, .mlab-stage, .mlab-pipe) { display: none; }
+.is-walking .mlab-legend { visibility: hidden; }
+.mlab-key { justify-self: stretch; display: grid; gap: 0.125rem; line-height: 1.4; }
+.mlab-key i { display: inline-block; inline-size: 0.7em; block-size: 0.7em; margin-inline-end: 0.4em; border: 1px solid var(--color-rule); }
+.mlab-pad { display: grid; grid-template-areas: ". up ." "left down right"; grid-template-columns: repeat(3, 2.75rem); gap: 0.25rem; justify-content: center; }
+.mlab-pad button { min-block-size: 2.75rem; }
+.mlab-up { grid-area: up; } .mlab-left { grid-area: left; } .mlab-down { grid-area: down; } .mlab-right { grid-area: right; }
+
+/* What is on the map, in words, and what to do with the map. The slot for the words is sized for the
+   longest step's text at each width, so nothing under it moves as the build is stepped through. */
+.mlab-mid { display: grid; grid-template-columns: minmax(0, 1fr); gap: ${rem(ROWS.gap)} 1rem; }
+.mlab-says { display: grid; grid-template-columns: minmax(0, 1fr); min-block-size: ${SAYS_NARROW}; }
+.mlab-step { padding: 0.5rem; border-inline-start: 4px solid var(--color-primary); background: var(--color-paper); line-height: 1.4; }
+.mlab-n { display: block; color: var(--color-muted); font-weight: 600; }
+.mlab-error { padding: 0.5rem; border-inline-start: 4px solid var(--color-red); background: var(--color-paper); font-family: var(--font-code); line-height: 1.4; overflow-wrap: anywhere; }
+.has-error > .mlab-step, .is-walking .mlab-says > :not(:nth-child(2)) { display: none; }
+.mlab.is-walking .mlab-says > .mlab-step:nth-child(2) { display: block; }
+.mlab-foot { display: flex; align-items: center; min-block-size: 2.25rem; }
+.is-lab .mlab-foot { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "walk note" "measure measure" "from from"; grid-template-rows: ${actionRows(N)}; gap: ${rem(ROWS.actionGap)}; align-content: start; min-block-size: ${rem(actionsSlot(N))}; }
+.mlab-foot > button { justify-self: start; white-space: nowrap; }
+.mlab-foot > button:nth-of-type(-n + 2) { grid-area: walk; }
+.mlab-foot > .mlab-note { grid-area: note; font-size: var(--size-step--2); line-height: 1.3; }
+.mlab-foot > button:nth-of-type(3) { grid-area: measure; }
+.mlab-from { grid-area: from; display: flex; gap: 0.5rem; align-items: center; white-space: nowrap; }
+.mlab-from select { flex: 1; min-inline-size: 0; block-size: 2.25rem; padding-block: 0; }
+
+/* The last part: the readout, a cell for each trait this map has, three to a row with the terrain's shares
+   on a row of their own; what fails, on this map and over the seeds measured; and the recipe's line. They
+   fill the part from the top, and the part has room for every trait the core reports, so a map with more
+   traits to show moves the recipe's line down and nothing else. */
+.mlab-last { display: grid; grid-template-columns: minmax(0, 1fr); gap: ${rem(ROWS.traitGap)}; align-content: start; min-block-size: ${rem(endSlot(N))}; }
+.mlab-readout { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(${rem(ROWS.trait)}, auto); gap: ${rem(ROWS.traitGap)} 0.75rem; }
+.mlab-readout > div { min-inline-size: 0; container-type: inline-size; }
+.mlab-terrain { grid-column-start: 1; }
+.mlab-readout dt { color: var(--color-muted); font-size: var(--size-step--2); line-height: 1.3; white-space: nowrap; }
+.mlab-readout dd { margin: 0; font-variant-numeric: tabular-nums; line-height: 1.4; white-space: nowrap; }
+.mlab-med { display: none; }
+@container (inline-size >= 7.5rem) { .mlab-med { display: inline; } }
+/* A trait's scale, with this map's value marked on it; measured, the bar is where 8 of 10 seeds fall and the dot their median. */
+.mlab-mark { position: relative; display: block; max-inline-size: 8rem; block-size: 12px; }
+.mlab-mark::before { content: ''; position: absolute; inset-inline: 0; inset-block-start: 5px; block-size: 2px; background: var(--color-rule); }
+.mlab-mark em { position: absolute; inset-block-start: 3px; inset-inline-start: calc(var(--lo) * 100%); inline-size: max(2px, calc((var(--hi) - var(--lo)) * 100%)); block-size: 6px; border-radius: 3px; background: color-mix(in oklab, var(--color-primary) 85%, var(--color-surface)); }
+.mlab-mark i { position: absolute; inset-block-start: 2px; inset-inline-start: calc(var(--mid) * 100%); inline-size: 8px; block-size: 8px; margin-inline-start: -4px; border-radius: 50%; background: var(--color-ink); box-shadow: 0 0 0 2px var(--color-surface); }
+.mlab-mark b { position: absolute; inset-block-start: 0; inset-inline-start: calc(var(--now) * 100%); inline-size: 3px; block-size: 12px; margin-inline-start: -1.5px; border-radius: 1.5px; background: var(--color-focus); box-shadow: 0 0 0 1.5px var(--color-surface); }
+.mlab-fails { line-height: 1.4; }
+/* A card's step-through is opened by its reader and reserves nothing: its last part is as tall as what it shows. */
+.mlab:not(.is-lab) :is(.mlab-last, .mlab-head, .mlab-head p) { min-block-size: 0; }
+.mlab-k { color: var(--color-muted); }
+
+/* The recipe's text opens under its summary; the link to this recipe is copied from the same line. */
+.mlab-recipe { position: relative; min-block-size: ${rem(ROWS.recipe)}; }
+.mlab-share { position: absolute; inset-block-start: 0; inset-inline-end: 0; }
+.mlab-recipe textarea { display: block; inline-size: 100%; margin-block: 0.5rem; font-family: var(--font-code); font-size: var(--size-step--2); }
+
+/* One column with room: the actions in two rows, the traits five to a row. */
+@container (inline-size >= ${M.at}rem) {
+  .is-lab .mlab-foot { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "walk note measure" "from from from"; grid-template-rows: ${actionRows(M)}; min-block-size: ${rem(actionsSlot(M))}; }
+  .mlab-last { min-block-size: ${rem(endSlot(M))}; }
+  .mlab-readout { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .mlab-terrain { grid-column-start: auto; }
+}
+/* Two columns: the step buttons and the stage's slot beside the map, the actions beside the step's text. */
+@container (inline-size >= ${W.at}rem) {
+  .mlab-fit { --mlab-map: ${MAP_WIDE}; grid-template-columns: ${ROWS.map * 100}cqi minmax(0, 1fr); grid-template-areas: "pipe pipe" "view ctl" "view stage"; grid-template-rows: minmax(${rem(ROWS.strip)}, auto) minmax(${rem(W.transport)}, auto) minmax(${rem(stageSlot(W))}, 1fr); }
+  .mlab-fit.has-demos { --mlab-map: ${MAP_WIDE}; grid-template-areas: "demos demos" "pipe pipe" "view ctl" "view stage"; grid-template-rows: minmax(${rem(DEMOS_ROW)}, auto) minmax(${rem(ROWS.strip)}, auto) minmax(${rem(W.transport)}, auto) minmax(${rem(stageSlot(W))}, 1fr); }
+  .mlab-transport { grid-template-columns: repeat(4, auto) minmax(0, 1fr); align-content: start; }
+  .mlab-end { display: block; }
+  .mlab-play { grid-row: 2; grid-column: 1 / span 2; }
+  .mlab-transport input { grid-row: 2; grid-column: 3 / -1; }
+  .mlab-head { grid-template-columns: minmax(0, 1fr); min-block-size: ${rem(W.head)}; align-content: start; }
+  .mlab-head p { min-block-size: 1.5rem; }
+  .mlab-ctls { max-block-size: ${ctlsSlot(W.controls)}; }
+  .mlab-many { grid-template-columns: minmax(0, 1fr); }
+  .mlab-many .mlab-ctl { grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr); }
+  .mlab-many :is(select, input[type="number"]) { inline-size: 6.5rem; max-inline-size: 100%; justify-self: start; }
+  .is-walking .mlab-pipe { display: flex; opacity: 0.45; }
+  .mlab-mid { grid-template-columns: ${ROWS.map * 100}cqi minmax(0, 1fr); }
+  .mlab-says { min-block-size: ${SAYS_WIDE}; }
+  .is-lab .mlab-foot { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "walk note" "measure measure" "from from"; grid-template-rows: ${actionRows(W)}; min-block-size: ${rem(actionsSlot(W))}; }
+  .mlab-last { min-block-size: ${rem(endSlot(W))}; }
+}
+
 /* Closed: the fallback's last step, box for box (the site's .step: its picture, its label, its text), so the
    swap moves nothing. The button lies over the map and takes no room of its own. */
-.mlab.is-closed, .is-closed .mlab-fit, .is-closed .mlab-view { display: block; }
+.mlab-open { display: none; }
+.mlab.is-closed, .is-closed :is(.mlab-fit, .mlab-view, .mlab-map, .mlab-mid, .mlab-says) { display: block; min-block-size: 0; block-size: auto; }
 .is-closed .mlab-view { position: relative; inline-size: min(100%, 480px); }
-.is-closed :is(.mlab-demos, .mlab-pipe, .mlab-error, .mlab-legend, .mlab-transport, .mlab-stage, .mlab-walk, .mlab-readout, .mlab-foot, .mlab-recipe, .mlab-at) { display: none; }
-.is-closed canvas { inline-size: 480px; cursor: pointer; }
-.is-closed .mlab-step { margin-block-start: var(--space-3xs); padding: 0; border: 0; background: none; min-block-size: 0; }
+.is-closed :is(.mlab-demos, .mlab-pipe, .mlab-error, .mlab-legend, .mlab-transport, .mlab-stage, .mlab-walk, .mlab-last, .mlab-foot, .mlab-at) { display: none; }
+.is-closed canvas { inline-size: 480px; block-size: auto; max-block-size: none; cursor: pointer; }
+.is-closed .mlab-step { margin-block-start: var(--space-3xs); padding: 0; border: 0; background: none; }
 .is-closed .mlab-n { margin-block-end: var(--space-3xs); }
 .mlab.is-closed .mlab-open { display: flex; align-items: center; gap: var(--space-2xs); position: absolute; inset-block-end: var(--space-s); inset-inline-start: 50%; translate: -50% 0; min-block-size: 2.75rem; padding: var(--space-2xs) var(--space-s); font-weight: 600; white-space: nowrap; box-shadow: 0 0 0 2px var(--color-surface), 0 2px 10px rgb(0 0 0 / 0.4); }
 .mlab-tri { inline-size: 0; block-size: 0; border-block: 0.4em solid transparent; border-inline-start: 0.65em solid currentColor; }
-.mlab-recipe textarea { display: block; inline-size: 100%; margin-block: var(--space-2xs); font-family: var(--font-code); font-size: var(--size-step--2); }
-.mlab-pad { display: grid; grid-template-areas: ". up ." "left down right"; grid-template-columns: repeat(3, 2.75rem); gap: var(--space-3xs); justify-content: center; }
-.mlab-pad button { min-block-size: 2.75rem; }
-.mlab-up { grid-area: up; } .mlab-left { grid-area: left; } .mlab-down { grid-area: down; } .mlab-right { grid-area: right; }
 `;
 document.head.append(style);

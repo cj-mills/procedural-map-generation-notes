@@ -21,6 +21,7 @@ import {
   DEMOS, EXTRA_TRAITS, FAIL_NAMES, GROUPS, N, OWN, SCALE, SHORT, SUBJECT, TRAITS, build, cleanRecipe, failuresOf, faith, faithTally, flatStages, fmt, pickFrames,
   pipelineWords, recipeLink, root, short, stageTable, traits, value,
 } from './lib.mjs';
+import { RESERVE } from '../deliverable/assets/lab/rows.js';
 
 const content = join(root, 'page/content');
 /** What is written by hand, with its short citations written out: [[t:73-74 s:9 c03:61-66 own run:c03.regions.median]]
@@ -299,7 +300,9 @@ export function generate() {
     const b = build(recipe);
     const lastOf = b.stages.map((_, k) => b.frames.list.map((f) => f.stage).lastIndexOf(k)).filter((i) => i >= 0);
     return [
-      `{% interactive id="lab" caption="${attr(`The talk’s last pipeline, ${pipelineWords(recipe.pipeline)}, on seed ${LAB.seed}. Change the pipeline, a control or the seed; step through the build; then walk the map to its exit.`)}" params=${literal({ mode: 'lab', recipe })} %}`,
+      // The lab opens at mount, in room the page reserves from the first paint: the open lab's height, which
+      // the module owns (rows.js). The cards reserve nothing and stay closed until asked.
+      `{% interactive id="lab" reserve="${attr(RESERVE)}" caption="${attr(`The talk’s last pipeline, ${pipelineWords(recipe.pipeline)}, on seed ${LAB.seed}. Change the pipeline, a control or the seed; step through the build; then walk the map to its exit.`)}" params=${literal({ mode: 'lab', recipe })} %}`,
       '{% steps %}', ...lastOf.map((i) => step(LAB.demo, recipe, LAB.seed, b, i)), '{% /steps %}', '',
       `On the command line: \`${`map-lab build ${d.recipeFile} --seed ${LAB.seed}`}\`.`,
       '{% /interactive %}',
