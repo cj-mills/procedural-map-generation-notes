@@ -21,7 +21,7 @@ A piece of map designed by hand, dropped into a generated one [[t:198-200 s:22]]
 - **Talk says,** with rooms: go through the room list and find a room that’s bigger than the prefab [[t:203-205]].
 - **Talk says,** without rooms: pick random locations and see if the prefab will fit [[t:205-207]].
 
-## Step through it
+## Step-through
 @@steps limit=5
 
 ## Controls
@@ -30,21 +30,21 @@ A piece of map designed by hand, dropped into a generated one [[t:198-200 s:22]]
 @@control place
 `room`: the center of a random room that is big enough [[c14:104-124]]. `open-area`: wherever a random spot has floor under all of it [[c15:41-67]]. `center`: down the middle of the map, as the combined map’s is [[c09:116-133]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Vault:** changes none of the traits its map had [[own]].
   - **Why:** treasure and traps count as walkable [[own]].
 
-## Where it fails
+## Failures
 @@fails
 
 - **No cap in the talk’s code:** both of its placement loops end only when the prefab has been placed [[c14:104-124 c15:41-67]].
 - **So:** on a map with no room big enough, or no clear patch of floor the right size, they never end [[own]].
 - **Ours:** stops and records the seed [[own]].
 
-## What it combines with
+## Combinations
 @@combines
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

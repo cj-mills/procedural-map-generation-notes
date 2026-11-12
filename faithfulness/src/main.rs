@@ -406,13 +406,16 @@ fn measure(a: &[String]) {
         if !astar.is_empty() {
             let longer = astar.iter().filter(|(d, s)| d > s).count();
             let extra_steps: u32 = astar.iter().map(|(d, s)| d - s).sum();
+            // The talk's drawn A* path against the shortest walk on the same last frame: the seeds where
+            // it is longer, of the seeds that drew one, and the extra steps averaged over all of those.
+            // Numbers, because the page states the first (page/lib.mjs, value(), `c18.astar.longer`).
             extra.push((
                 "astarVsShortest",
-                string(&format!(
-                    "the talk's drawn A* path was longer than the shortest walk on {longer} of {} seeds, by {} steps on average over all of them",
+                format!(
+                    "{{\"longer\": {longer}, \"seeds\": {}, \"meanExtraSteps\": {}}}",
                     astar.len(),
                     report::num((extra_steps as f64 / astar.len() as f64 * 1000.0).round() / 1000.0)
-                )),
+                ),
             ));
         }
         let rows: Vec<Row> = mine.into_iter().map(|r| Row { seed: r.0.seed, values: r.0.values.clone(), failures: r.0.failures }).collect();

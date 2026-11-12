@@ -27,7 +27,7 @@ Scatter rectangles over a solid map, keep the ones that don’t overlap, and joi
 - **Talk says:** keep adding rooms until there are enough by your own criteria [[t:50]].
 - **Demo:** a fixed 20 attempts. A rectangle that overlaps is discarded without another try [[c01:20-54]].
 
-## Step through it
+## Step-through
 @@steps limit=6
 
 ## Controls
@@ -36,24 +36,24 @@ Rectangles tried. The demo: a fixed 20, and a discarded one is not tried again [
 @@control min_size
 Smallest value a room’s width and height are drawn from [[c01:22-27]]. A room covers 1 tile more than the value each way: the demo’s rectangle type includes both of its ends [[own]].
 @@control max_size
-Largest such value. The demo writes it as an upper end of 10, which its random call leaves out [[own]].
+Largest value they are drawn from. The demo writes 10 as the upper end, which its random call leaves out [[own]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Random rooms:** {{c01.regions.max}} region and {{c01.dead_ends.max}} dead ends on every seed [[run:c01.regions.max c01.dead_ends.max]].
   - **Why:** each room is joined to the one before it, and a corridor ends inside a room [[own]].
 - **Rooms placed:** of 20 attempts, {{c01.rooms.median}} at the median; never fewer than {{c01.rooms.min}} [[run:c01.rooms.median c01.rooms.min]].
 
-## Where it fails
+## Failures
 @@fails
 
-- **No loop without an end:** attempts are a fixed 20; corridors, one for each room after the first [[c01:20-21 c01:67-78]].
+- **No endless loop:** attempts are a fixed 20; corridors, one per room after the first [[c01:20-21 c01:67-78]].
 
-## What it combines with
+## Combinations
 @@combines
 
 - **As a base map:** the talk’s demos of erosion and of a prefab placed in a room both start by building random rooms [[c08:21-83 c14:21-125]].
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

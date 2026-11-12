@@ -46,7 +46,7 @@ The talk gives three versions: the simple one, a central attractor, and the attr
 #####.#######
 #############
 
-## Step through it
+## Step-through
 @@steps limit=5 mid=2
 
 ## Controls
@@ -55,7 +55,7 @@ How a particle travels. `walk`: a random step at a time. `attractor`: a line to 
 @@control floor_divisor
 Stop when 1 / this of the map is open. All three demos: a third [[c05:43 c06:43 c07:43]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Talk says:** the simple version is very winding, and guaranteed to be contiguous [[t:103-109]].
@@ -63,16 +63,16 @@ Stop when 1 / this of the map is open. All three demos: a third [[c05:43 c06:43 
 - **Attractor, symmetric:** not contiguous. {{c06.regions.median}} and {{c07.regions.median}} regions at the median; never fewer than {{c06.regions.min}} and {{c07.regions.min}} [[run:c06.regions.median c07.regions.median c06.regions.min c07.regions.min]].
   - **Why:** their particles follow a Bresenham line to the center [[c06:56-60 c07:56-60]]. A diagonal step on that line leaves the dug tile touching the cave only at a corner, and walking is four-way [[own]].
 
-## Where it fails
+## Failures
 @@fails
 
 - **No cap in the talk’s code:** the simple version’s walk runs until it finds open floor [[c05:55-80]].
-- **Ours has a cap:** {{c05.fails.guard-hit}} of these seeds reach it [[run:c05.fails.guard-hit]].
+- **Our cap:** {{c05.fails.guard-hit}} of these seeds reach it [[run:c05.fails.guard-hit]].
 
-## What it combines with
+## Combinations
 @@combines
 
 - **Erosion:** the talk also uses DLA on a finished map, to wear parts of it away. Its slide calls that DLA for erosion [[t:191-193 s:21]]. See [erosion by aggregation](#dla-erode).
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

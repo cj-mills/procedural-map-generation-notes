@@ -4041,7 +4041,7 @@
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c18-ending-right/src/main.rs, run without a window by faithfulness/src/main.rs",
       "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
       "differences": "The talk's A* (bracket-pathfinding 0.8.4) accumulates f rather than g and can return a path longer than the shortest; ours is a shortest path. The path trait measures the shortest walk on both sides; the hot path and hot rooms follow each side's own path.",
-      "astarVsShortest": "the talk's drawn A* path was longer than the shortest walk on 15 of 200 seeds, by 0.2 steps on average over all of them",
+      "astarVsShortest": {"longer": 15, "seeds": 200, "meanExtraSteps": 0.2},
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 0.619331, "sd": 0.039439, "min": 0.4235, "p10": 0.57695, "median": 0.624125, "p90": 0.65755, "max": 0.69925},
         "regions": {"n": 200, "nulls": 0, "mean": 1, "sd": 0, "min": 1, "p10": 1, "median": 1, "p90": 1, "max": 1},
@@ -4265,7 +4265,7 @@
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c19-ending-dijkstra/src/main.rs, run without a window by faithfulness/src/main.rs",
       "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
       "differences": "The talk's A* (bracket-pathfinding 0.8.4) accumulates f rather than g and can return a path longer than the shortest; ours is a shortest path. The path trait measures the shortest walk on both sides; the hot path and hot rooms follow each side's own path.",
-      "astarVsShortest": "the talk's drawn A* path was longer than the shortest walk on 29 of 200 seeds, by 0.44 steps on average over all of them",
+      "astarVsShortest": {"longer": 29, "seeds": 200, "meanExtraSteps": 0.44},
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 0.619331, "sd": 0.039439, "min": 0.4235, "p10": 0.57695, "median": 0.624125, "p90": 0.65755, "max": 0.69925},
         "regions": {"n": 200, "nulls": 0, "mean": 1, "sd": 0, "min": 1, "p10": 1, "median": 1, "p90": 1, "max": 1},
@@ -4489,7 +4489,7 @@
       "source": "thebracket/roguelike-celebration-2020 at 604e5b5a6441edf0a8bdb836a3fa0946def2e247, c20-hot-path/src/main.rs, run without a window by faithfulness/src/main.rs",
       "classification": "# open and . solid, the backend's own rule; @ > * open tiles carrying the start, exit and path; $ treasure; ^ trap; ! (a desired-point marker) solid",
       "differences": "The talk's A* (bracket-pathfinding 0.8.4) accumulates f rather than g and can return a path longer than the shortest; ours is a shortest path. The path trait measures the shortest walk on both sides; the hot path and hot rooms follow each side's own path.",
-      "astarVsShortest": "the talk's drawn A* path was longer than the shortest walk on 7 of 200 seeds, by 0.09 steps on average over all of them",
+      "astarVsShortest": {"longer": 7, "seeds": 200, "meanExtraSteps": 0.09},
       "summary": {
         "floor_share": {"n": 200, "nulls": 0, "mean": 0.311516, "sd": 0.025809, "min": 0.19125, "p10": 0.2824, "median": 0.313375, "p90": 0.3411, "max": 0.36725},
         "regions": {"n": 200, "nulls": 0, "mean": 1, "sd": 0, "min": 1, "p10": 1, "median": 1, "p90": 1, "max": 1},

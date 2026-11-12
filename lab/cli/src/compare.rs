@@ -24,6 +24,7 @@ struct Demo {
     unfinished: usize,
     /// Per failure, the seeds that had it.
     fails: Vec<usize>,
+    /// What the talk's file says of the demo beyond its rows, each value already JSON.
     extra: Vec<(String, String)>,
 }
 
@@ -73,8 +74,18 @@ fn read(path: &str) -> Result<Vec<Demo>, String> {
         }
         let mut extra = Vec::new();
         for (k, v) in d.iter() {
-            if let ("source" | "classification" | "differences" | "astarVsShortest", Json::Str(s)) = (k.as_str(), v) {
-                extra.push((k.clone(), s.clone()));
+            match (k.as_str(), v) {
+                ("source" | "classification" | "differences", Json::Str(s)) => extra.push((k.clone(), string(s))),
+                // Counts the talk's harness made of its own runs, copied as they are.
+                ("astarVsShortest", Json::Obj(o)) => {
+                    let mut out = Obj::new();
+                    for (name, x) in o {
+                        let Json::Num(n) = x else { return Err(bad()) };
+                        out.raw(name, n);
+                    }
+                    extra.push((k.clone(), out.end()));
+                }
+                _ => {}
             }
         }
         out.push(Demo { id: id.clone(), cols, nulls, seeds: rows.len(), unfinished, fails, extra });
@@ -163,7 +174,7 @@ pub fn cmd(a: &[String]) -> Result<(), String> {
             o.raw("unfinished", &format!("[{}, {}]", d.unfinished, t.unfinished));
         }
         for (k, v) in &t.extra {
-            o.raw(k, &string(v));
+            o.raw(k, v);
         }
         let mut traits = Obj::lines(8);
         for (c, (name, _)) in COLUMNS.iter().enumerate() {

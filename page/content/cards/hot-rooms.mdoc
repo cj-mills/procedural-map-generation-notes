@@ -14,23 +14,23 @@ On a map of rooms, the route says which rooms a player has to pass through and w
 - **Talk says,** of the gray rooms: cull them for a room-to-room game, or hide bonus things in them [[t:269-271]].
 - **Talk says,** of the rooms on the route: order a story along them, since the player will probably pass through them in order [[t:274-276 s:31]].
 
-## Step through it
+## Step-through
 @@steps limit=4
 
 ## Controls
 - **None:** it reads the rooms and the route that the stages before it made [[own]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Rooms, hot rooms:** with 50 attempts, {{c21.rooms.median}} rooms at the median. Its route: {{c21.path.median}} steps, vs the caves’ {{c18.path.median}} [[run:c21.rooms.median c21.path.median c18.path.median]].
   - **Why longer:** corridors join the rooms in left-to-right order, not by the shortest way [[own]].
 
-## Where it fails
+## Failures
 @@fails
 
-## What it combines with
+## Combinations
 @@combines
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

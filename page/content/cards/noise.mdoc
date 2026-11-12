@@ -18,7 +18,7 @@ Smooth random values from −1 to 1 at every point, most often read as altitude 
 * water below 0, grass from 0 up to 0.5, mountain from 0.5 [[c11:31-44]]
 ---
 * `zoom` (c12)
-* the same three bands, with every sample position multiplied by a scale that shrinks 0.01 a frame [[c12:31-47 c12:77-91]]
+* the same three bands, with every sample position multiplied by a scale that shrinks 0.01 per frame [[c12:31-47 c12:77-91]]
 ---
 * `double` (c13)
 * the zoom, with a second noise mixed in by weights that change with the scale [[c13:39-44 c13:150-164]]
@@ -28,7 +28,7 @@ Smooth random values from −1 to 1 at every point, most often read as altitude 
 - **Talk says:** altitudes from 0 to 0.75 are green [[t:164-165]].
 - **Demo:** draws mountain from 0.5. Its 0.75 is only in the water’s color [[c11:28-44]].
 
-## Step through it
+## Step-through
 @@steps limit=8 mid=3
 
 ## Controls
@@ -43,7 +43,7 @@ Talk says: it adds in randomness [[t:156-158]]. In our noise: each further layer
 @@control frequency
 Talk says: how frequently each of the octaves peaks [[t:159]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Overworld:** its land is not one piece. {{c11.regions.median}} regions at the median, with water between them [[run:c11.regions.median]].
@@ -51,16 +51,16 @@ Talk says: how frequently each of the octaves peaks [[t:159]].
 - **Zoom:** its last frame is a small window of the noise, and what it holds varies widely. Floor share: {{c12.floor_share.min}} to {{c12.floor_share.max}} over the seeds [[run:c12.floor_share.min c12.floor_share.max]].
 - **Height map:** all floor, so its numbers say only how big the map is [[own]].
 
-## Where it fails
+## Failures
 @@fails
 
-- **Read with care:** our criteria are written for maps to be walked across. An overworld isn’t one until something decides where a traveler can go [[own]].
+- **Caveat:** our criteria are written for maps to be walked across. An overworld isn’t one until something decides where a traveler can go [[own]].
 
-## What it combines with
+## Combinations
 @@combines
 
 - **More noise:** in the questions after the talk, its author suggests mixing several noise maps together [[t:307-314]].
 - **Erosion:** its author also suggests running an erosion simulation over the noise [[t:322-324]].
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

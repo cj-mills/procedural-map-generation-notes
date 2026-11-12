@@ -25,28 +25,28 @@ cccccccddddddd
 - **Talk says:** halve the map, then each half, until a piece is about the size of a room [[t:66-69]].
 - **Demo:** looser. It cuts into quarters, keeps every rectangle it has cut on its list, and quarters a rectangle again each time a room lands in it [[c02:41-55 c02:86-121]].
 
-## Step through it
+## Step-through
 @@steps limit=6
 
 ## Controls
 @@control attempts
 Times a rectangle is picked and a room tried. The demo’s counter goes up on every attempt, whether or not the room fits [[c02:41-55]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Talk says,** of its animation: absolutely no rejections [[t:70-72]].
 - **BSP rooms:** of 240 attempts, {{c02.rooms.median}} place a room at the median [[run:c02.rooms.median]].
-  - **Why none are seen:** the demo records a frame only for a room that fits, so the attempts that fail are never shown [[c02:41-55]].
+  - **Why none are seen:** the demo records a frame only for a room that fits [[c02:41-55]].
 - **vs random rooms:** {{c02.rooms.median}} rooms vs {{c01.rooms.median}}; floor share {{c02.floor_share.median}} vs {{c01.floor_share.median}} [[run:c02.rooms.median c01.rooms.median c02.floor_share.median c01.floor_share.median]].
 
-## Where it fails
+## Failures
 @@fails
 
-## What it combines with
+## Combinations
 @@combines
 
 - **Talk’s use:** the left half of its combined map, a fortress that breaks out into caves [[t:181-185]].
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

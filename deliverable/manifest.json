@@ -1,7 +1,7 @@
 {
   "format": "0.1",
   "id": "procedural-map-generation-techniques-notes",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "title": "Procedural map generation: an interactive lab built on Herbert Wolverson’s talk",
   "summary": "Build a map from the techniques of Herbert Wolverson’s talk, measure it over 200 seeds, and walk it to its exit.",
   "pageType": "post",
@@ -66,6 +66,11 @@
       "date": "2026-11-11",
       "version": "0.7.1",
       "note": "The page now carries the traits measured on the talk’s own code, seed by seed, which five counts in the section on where the talk and its code differ are read from. The text is unchanged but for the two items that name the page’s data files."
+    },
+    {
+      "date": "2026-11-11",
+      "version": "0.8.0",
+      "note": "The exit card, the hot path card and the section on where the talk and its code differ now say that our route is a shortest path where the talk’s A* route is sometimes longer, with counts from running the talk’s own code; the faithfulness data gives those counts as numbers. Each card’s parts have shorter names (Step-through, Measured traits, Failures, Combinations, Faithfulness), so links to them change, and the heading “Is this the talk’s technique?” is now “Faithfulness to the talk’s code”. Wording is tightened across the page. No other claim changes."
     }
   ],
   "testedAgainst": [

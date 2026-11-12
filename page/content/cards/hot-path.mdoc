@@ -21,8 +21,9 @@ Everything close to the best route through a map, though not necessarily on it [
 
 - **Talk says:** everything with a value under, say, 10 is close to the best path, but not necessarily on it [[t:261-262]].
 - **Demo:** culls at 15, so a band of floor survives beyond the hot path it shows [[c20:131-154]].
+- **The route:** ours is a shortest path; the talk’s A* route [can be longer](#exit-faithfulness). Each side’s hot path follows its own route [[own]].
 
-## Step through it
+## Step-through
 @@steps limit=4
 
 ## Controls
@@ -31,19 +32,19 @@ Tiles fewer than this many steps from the route are the hot path [[c20:131-145]]
 @@control cull
 Tiles this many steps or more from the route become wall [[c20:147-154]]. At 0, nothing is culled [[own]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Cull at 15:** keeps about half the floor. Floor share {{c20.floor_share.median}} at the median, vs {{c18.floor_share.median}} before it; the route is the same {{c20.path.median}} steps [[run:c20.floor_share.median c18.floor_share.median c20.path.median]].
 - **Talk says:** for a less branchy game. It removes the parts of the map that are irrelevant, so the player isn’t forced through winding labyrinths with no purpose [[t:263-266]].
 
-## Where it fails
+## Failures
 @@fails
 
-## What it combines with
+## Combinations
 @@combines
 
 - **The lab’s walk:** hides its caches off the hot path, by [a rule of our own](#the-walk) [[own]].
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

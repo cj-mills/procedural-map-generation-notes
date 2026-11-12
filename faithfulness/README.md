@@ -76,5 +76,10 @@ where the talk and its code differ states its counts (`page/lib.mjs`, `value()`,
 
 It also gives both sides' failure rates. Traits are compared over finished maps only. Each
 demo's entry carries the known differences (`differences`), such as c09's spine prefab, which
-is our own design because the talk's layout isn't copied. It also says how often the talk's A*
-returned a path longer than the shortest (`astarVsShortest`).
+is our own design because the talk's layout isn't copied. It also counts how often the talk's A*
+returned a path longer than the shortest (`astarVsShortest`: the seeds where the path drawn on
+the last frame is longer than the shortest walk on that frame, the seeds that drew one, and the
+extra steps averaged over them). The page states the first for c18 and c19 (`page/lib.mjs`,
+`value()`, `c18.astar.longer`). c20's drawn route is as long as c18's on every seed, but its
+last frame is culled: on 8 of the 15 seeds where c18's route is longer than the shortest walk,
+the shortest walk left on c20's last frame is as long as the route, so c20's count is 7.

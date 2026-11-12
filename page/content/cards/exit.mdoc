@@ -18,30 +18,36 @@ Put the exit near a point you choose, or let a Dijkstra map find the tile that i
 
 Then the route from the start to the exit is found [[c18:111 c19:103]].
 
+- **Demo:** the route is the one its library’s A* search returns [[c18:111 c19:103]].
+- **Ours:** always a shortest path; the demo’s [isn’t always](#exit-faithfulness) [[own]].
+
 - **Talk says,** of `farthest`: the least accessible part of the map, for when you really dislike your player [[t:249-250]].
 - **Talk says,** with a start in the middle: a really bad idea for an exit, and a great way to hide something [[t:249-256]].
 
-## Step through it
+## Step-through
 @@steps limit=4
 
 ## Controls
 @@control at
 `right`: the open tile nearest the middle of the right edge [[c18:92-109]]. `farthest`: the tile with the largest walking distance from the start [[c19:92-101]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Left edge to right:** a route of {{c18.path.median}} steps at the median [[run:c18.path.median]].
 - **Center to farthest:** {{c19.path.median}} [[run:c19.path.median]].
-  - **Why the least accessible exit is the nearer one:** a start in the middle has less map on any side of it [[own]].
+  - **Why shorter:** a start in the middle has less map on any side of it [[own]].
 
-## Where it fails
+## Failures
 @@fails
 
-- **Without the cull, it fails:** in a recipe of our own, the same pipeline without its cull, the exit lands in a cave the start can’t reach on {{nocull.fails.exit-unreachable}} of 200 seeds [[run:nocull.fails.exit-unreachable]]. [Seed 0]({{recipe:nocull}}) is one.
+- **Without the cull:** in a recipe of our own, the exit lands in a cave the start can’t reach on {{nocull.fails.exit-unreachable}} of 200 seeds [[run:nocull.fails.exit-unreachable]]. [Seed 0]({{recipe:nocull}}) is one.
 
-## What it combines with
+## Combinations
 @@combines
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked
+
+- **The route:** the talk’s is longer than the shortest walk between its own start and exit on {{c18.astar.longer}} of 200 seeds in `c18`, and on {{c19.astar.longer}} in `c19` [[run:c18.astar.longer c19.astar.longer]].
+  - **Why the path trait still agrees:** it counts the shortest walk on both sides [[own]].

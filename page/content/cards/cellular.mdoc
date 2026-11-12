@@ -23,7 +23,7 @@ ___________
 - **Talk says:** no neighbors, a wall; 1 to 4, empty; 5 or more, a wall [[t:80-82]].
 - **Demo:** the neighbors it counts are walls, and a tile’s own state plays no part in what it becomes [[c03:40-70]].
 
-## Step through it
+## Step-through
 @@steps limit=5 mid=1
 
 ## Controls
@@ -32,7 +32,7 @@ Chance each tile starts as wall [[c03:19-29]].
 @@control iterations
 Times the rule is applied to the whole map [[c03:31-34 c03:56-70]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Talk says:** it can give you chunks of the map that you can’t get to [[t:222-223]].
@@ -40,13 +40,13 @@ Times the rule is applied to the whole map [[c03:31-34 c03:56-70]].
   - **Why:** the rule says nothing about joining the caves up [[own]].
 - **Path:** the map has no start and exit of its own, so it is measured between [our probe’s](#our-definitions) two points. On {{c03.path.nulls}} of 200 seeds they lie in different caves [[run:c03.path.nulls]].
 
-## Where it fails
+## Failures
 @@fails
 
-## What it combines with
+## Combinations
 @@combines
 
 - **Dijkstra maps:** the talk’s first big use for them is on something like cellular automata, which can leave chunks of the map that can’t be reached [[t:209-213 t:222-228]]. See [culling](#cull).
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

@@ -4,12 +4,12 @@
 
 - **What this is:** a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, then algorithms that fix them and find out whether they are usable [[t:3-9]].
 - **A recipe:** a pipeline of those techniques and a seed. Same recipe, same map [[own]].
-- **The lab,** above: builds a recipe a step at a time. Edit it, measure it over 200 seeds, walk it [[own]].
+- **The lab,** above: builds a recipe step by step. Edit it, measure it over 200 seeds, walk it [[own]].
 - **Each card,** below: the rule · its controls · what it produces over 200 seeds · the seeds where it fails · our version checked against the talk’s code [[own]].
 
 ## Which technique for which map
 
-- **Each row:** a criterion of our own over the measured traits. The demos listed are the ones the data says meet it [[run:table.guide]].
+- **Each row:** a criterion of our own, and the demos whose measured traits meet it [[run:table.guide]].
 
 @@guide
 
@@ -40,7 +40,7 @@ Each reads a map: what can be reached, where to start and end, and what lies nea
 ## Where the talk and its code differ
 
 - **What this is:** the talk read against the code published with it, one row per difference [[own]].
-- **Counts:** from the talk’s code, run on seeds 0 to 199 as [the faithfulness check](#is-this-the-talks-technique) runs it [[data:talktraits data:checks]].
+- **Counts:** from the talk’s code, run on seeds 0 to 199 as [the faithfulness check](#faithfulness-to-the-talks-code) runs it [[data:talktraits data:checks]].
 - **The lab follows:** the code. Where ours departs from it, a card or the faithfulness data says so [[own data:faithfulness]].
 
 ### Disagreements
@@ -157,12 +157,16 @@ Each reads a map: what can be reached, where to start and end, and what lies nea
 * [The start](#start)
 * Scans every tile and takes the open one nearest the chosen point in a straight line, however far [[c17:69-86]]
 * The talk: look around for a neighboring tile that is open [[t:241-243]]. The tile found can be far from the point [[own]]
+---
+* [The exit](#exit): its route
+* Draws the route its library’s A* search returns [[c18:111-118 c19:103-110]]
+* Not always a shortest one: longer than the shortest walk between the same start and exit on {{c18.astar.longer}} of 200 seeds in `c18`, and on {{c19.astar.longer}} in `c19` [[run:c18.astar.longer c19.astar.longer]]. Ours is a shortest path [[own]]
 {% /table %}
 
 ## How this was measured
 
-{% callout type="note" title="These definitions are ours" %}
-The talk doesn’t measure its maps. Every trait, the probe and every failure criterion below is our own definition, written for this page and applied the same way to our code and to the talk’s [[own]].
+{% callout type="note" title="Our definitions, not the talk’s" %}
+The talk doesn’t measure its maps. Each trait, the probe and each failure criterion below is ours, applied the same way to our code and the talk’s [[own]].
 {% /callout %}
 
 - **What is measured:** each of the talk’s 22 demos, as a recipe [[own]].
@@ -175,7 +179,7 @@ What we measure on a finished map [[own]]:
 
 @@definitions
 
-- **The probe:** for a map with no start and exit of its own. Its path is measured between the open tile nearest the middle of its left edge and the open tile nearest the middle of its right edge [[own]].
+- **The probe:** for a map with no start and exit of its own. Its path runs between the open tiles nearest the middle of its left edge and of its right edge [[own]].
 - **Why those two:** they are where the talk’s demos look for a start and for an exit [[c17:69-86 c18:92-109]].
 
 ### What counts as failing
@@ -189,13 +193,13 @@ A seed fails a demo when its map meets one of these [[own]]:
 - **Talk says:** hide something at the least accessible point of a map, for a treasure hunt [[t:253-256]].
 - **Talk says:** hide bonus things in the gray rooms, the ones its route doesn’t need [[t:267-271]].
 - **The lab’s walk:** borrows that, as caches to find on the way to the exit. The talk has no walk, and these rules are ours [[own]]:
-  - **Caches:** up to 5, on floor or grass, at least the hot path’s radius from the route by walking. The first goes on the tile farthest from the route. Each one after it goes on the tile farthest from those already placed, more than 12 steps from them [[own]].
+  - **Caches:** up to 5, on floor or grass, at least the hot path’s radius from the route by walking. The first: the tile farthest from the route. Each later one: the tile farthest from those placed, more than 12 steps from them [[own]].
   - **Sight:** up to 9 tiles away in straight lines, over tiles that can be walked on, plus the walls that touch what you see. What you have seen stays on the map [[own]].
   - **Afterward:** the lab draws your route over the shortest one, on the map shaded by walking distance from the start [[own]].
 
-### Is this the talk’s technique?
+### Faithfulness to the talk’s code
 
-- **One key to the talk’s code:** `.` is its solid tile and `#` its open one [[own]].
+- **Glyphs in the talk’s code:** `.` is its solid tile and `#` its open one [[own]].
   - A new map is all `.` [[backend:12-16]].
   - Its pathfinding steps only onto neighbors that are not `.` [[backend:54-65]].
 - **What we ran:** the talk’s code, with only its window and its random seeding replaced. Every demo, on the same 200 seeds [[own]].

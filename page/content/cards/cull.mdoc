@@ -20,31 +20,31 @@ Find the parts of a map that can’t be reached, then delete them or put them to
 
 - **Talk says,** of Dijkstra maps: start from one or more points and mark the rest of the map with a sentinel value, meaning you can’t go there. Then number every walkable tile by its steps from the start [[t:214-221 s:23]].
 
-## Step through it
+## Step-through
 @@steps limit=4
 
 ## Controls
 @@control mode
 `mark`: shows the unreachable tiles and leaves them, as the demo `c16-unreachable` does [[c16:62-73]]. `remove`: turns them to wall, as the demo `c17-starting-left` does before it places its start [[c17:54-94]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
-- **Mark:** changes no tile, so this is the cave map’s own row [[own]].
+- **Mark:** changes no tile, so these are the cave map’s traits [[own]].
 - **Remove:** {{c17.regions.max}} region on every seed [[run:c17.regions.max]].
-- **What it costs:** varies. Floor share after the cull: {{c17.floor_share.min}} to {{c17.floor_share.max}}. The caves before it: never below {{c03.floor_share.min}} [[run:c17.floor_share.min c17.floor_share.max c03.floor_share.min]].
+- **Cost:** varies. Floor share after the cull: {{c17.floor_share.min}} to {{c17.floor_share.max}}. The caves before it: never below {{c03.floor_share.min}} [[run:c17.floor_share.min c17.floor_share.max c03.floor_share.min]].
 - **Talk says:** culling before picking a start avoids the extreme case, a map with only two tiles you can walk on [[t:236-240]].
 
-## Where it fails
+## Failures
 @@fails
 
 - **The cave map’s failures:** marking leaves them in place [[own]].
 
-## What it combines with
+## Combinations
 @@combines
 
 - **Before a start:** the talk culls before it picks one, so the player can’t be placed somewhere they can’t get out of [[t:236-237]].
 - **Or put them to use:** in a game that encourages tunneling, the talk hides things in the unreachable areas [[t:231-234]].
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

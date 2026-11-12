@@ -137,6 +137,8 @@ export function value(name) {
   if (d && what === 'fails') return String((d.failingSeeds[which] ?? []).length);
   if (d && what === 'talkfails') return String(Math.round(faith[d.id].failureRates[which][1] * faith[d.id].seeds[1]));
   if (d && what === 'unfinished') return String(faith[d.id].unfinished[which === 'talk' ? 1 : 0]);
+  // c18.astar.longer: the seeds on which the talk's own code drew an A* route longer than the shortest walk on its map.
+  if (d && what === 'astar' && Number.isInteger(faith[d.id].astarVsShortest?.[which])) return String(faith[d.id].astarVsShortest[which]);
   if (d && d.summary[what] && which in d.summary[what]) return fmt(d.summary[what][which], which === 'n' || which === 'nulls' ? 'n' : what);
   if (d && what === 'faith' && faith[d.id].traits[which]) return faith[d.id].traits[which].ours[0].toFixed(3);
   if (d && what === 'talk' && faith[d.id].traits[which]) return faith[d.id].traits[which].talk[0].toFixed(3);

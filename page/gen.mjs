@@ -50,11 +50,11 @@ function citations(text, file) {
 }
 const read = (p) => citations(readFileSync(join(content, p), 'utf8'), p);
 export const PAGE = join(root, 'deliverable/content/index.mdoc');
-export const PARTS = ['The rule', 'Step through it', 'Controls', 'What it produces, measured', 'Where it fails', 'What it combines with', 'Checked against the talk’s code'];
+export const PARTS = ['The rule', 'Step-through', 'Controls', 'Measured traits', 'Failures', 'Combinations', 'Faithfulness'];
 const LAB = { demo: 'c20-hot-path', seed: 7 };
 /** What the verifier reads with every claim of the page, which no claim then has to cite: the lines of the
  *  demos' shared map code that say which glyph is solid. In the talk's code `.` is the solid tile and `#` an
- *  open one, the reverse of the usual. The page states it once, under "Is this the talk's technique?"
+ *  open one, the reverse of the usual. The page states it once, under "Faithfulness to the talk's code"
  *  (source-library, docs/formats.md, "Standing context for the verifier"). */
 const CONTEXT = [`${SOURCES.code}/backend/src/lib.rs#L12-L16`, `${SOURCES.code}/backend/src/lib.rs#L54-L65`];
 
@@ -166,7 +166,7 @@ export function generate() {
       `On the command line: ${lines.join(', ')}.`,
       '{% /interactive %}',
       // The other demos' steps are a list of their own, in the page for every reader: the step-through reads their texts from it.
-      ...(others.length ? ['', `Also in the step-through: ${rest.join('; ')}. Where ${rest.length > 1 ? 'each' : 'it'} differs, and ${rest.length > 1 ? 'each one’s' : 'its'} last step:`, '', '{% steps %}', ...others, '{% /steps %}'] : []),
+      ...(others.length ? ['', `Also in the step-through: ${rest.join('; ')}. The steps that differ, and ${rest.length > 1 ? 'each one’s' : 'its'} last:`, '', '{% steps %}', ...others, '{% /steps %}'] : []),
     ].join('\n');
   }
   function control(card, name, text) {
@@ -214,7 +214,7 @@ export function generate() {
   }
   /** A card's failing seeds, as a table: a row a failure a demo. The criteria's wording is in "What counts as failing". */
   function fails(card) {
-    const rows = [`{% table label="${attr(`Where it fails: ${card.title}`)}" rowheads=true %}`, '* Failure', '* Demo', `* Seeds failing, of ${N}`, `* The talk’s code, of ${N}`, '* Watch it fail on'];
+    const rows = [`{% table label="${attr(`Failures: ${card.title}`)}" rowheads=true %}`, '* Failure', '* Demo', `* Seeds failing, of ${N}`, `* The talk’s code, of ${N}`, '* Watch it fail on'];
     let any = false;
     for (const { d } of demosOf(card.stage)) {
       const un = faith[d.id].unfinished;
@@ -246,7 +246,7 @@ export function generate() {
       return t;
     });
     blocks.set(`list.checked.${card.stage}`, lines.join('\n'));
-    return `Our stage against the talk’s own code, each run on seeds 0 to ${last} and [measured the same way](#is-this-the-talks-technique) {% own-run values="list.checked.${card.stage}" /%}:\n\n${lines.join('\n')}`;
+    return `Our stage against the talk’s own code, each run on seeds 0 to ${last} and [measured the same way](#faithfulness-to-the-talks-code) {% own-run values="list.checked.${card.stage}" /%}:\n\n${lines.join('\n')}`;
   }
 
   function card(stage, kind) {
@@ -359,7 +359,7 @@ export function generate() {
       const f = faith[d.id], c = compared(d), diff = differing(d);
       const note = diff.map(([k, v]) => `${(TRAITS.find((x) => x.key === k)?.label ?? k).toLowerCase()}: ours ${v.ours[0].toFixed(3)} on average, the talk’s ${v.talk[0].toFixed(3)}`);
       if (f.unfinished) note.push(`the talk’s loop unfinished on ${f.unfinished[1]} of ${N} seeds; ours records a failure on ${f.unfinished[0]}`);
-      rows.push('---', `* [${d.id}](#${SUBJECT[d.id]}-checked-against-the-talks-code)`, `* ${c.length}`, `* ${c.length - diff.length}`, `* ${note.join('; ') || '–'}`);
+      rows.push('---', `* [${d.id}](#${SUBJECT[d.id]}-faithfulness)`, `* ${c.length}`, `* ${c.length - diff.length}`, `* ${note.join('; ') || '–'}`);
     }
     rows.push('{% /table %}');
     blocks.set('table.faithfulness', rows.join('\n'));

@@ -12,14 +12,14 @@ Start particles on a finished map’s open floor and let each dig the first rock
 
 - **One tile per particle:** the first rock its walk reaches from inside the open area [[c08:86-128]].
 
-## Step through it
+## Step-through
 @@steps limit=5 mid=1
 
 ## Controls
 @@control iterations
 Particles, each digging one tile [[c08:86-128]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Talk says:** the map becomes more and more organic looking, while keeping its basic structure [[t:196-197]].
@@ -28,14 +28,14 @@ Particles, each digging one tile [[c08:86-128]].
 - **Still one piece:** {{c08.regions.max}} region on every seed [[run:c08.regions.max]].
   - **Why:** erosion only opens tiles next to open ones [[own]].
 
-## Where it fails
+## Failures
 @@fails
 
 - **No cap in the talk’s code:** a particle’s walk runs until it reaches rock [[c08:100-128]].
-- **Ours has a cap:** {{c08.fails.guard-hit}} of these seeds reach it [[run:c08.fails.guard-hit]].
+- **Our cap:** {{c08.fails.guard-hit}} of these seeds reach it [[run:c08.fails.guard-hit]].
 
-## What it combines with
+## Combinations
 @@combines
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

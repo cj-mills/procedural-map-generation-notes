@@ -12,23 +12,23 @@ Decide where the start should be, then put it on the nearest tile that is open [
 - **On a culled map:** the demo culls first, so the start can walk to everything that is left [[c17:34-67 t:236-237]].
 - **Talk says:** place somewhere in the middle on the left, then look around for a neighboring tile that is open and hasn’t been culled [[t:241-243]].
 
-## Step through it
+## Step-through
 @@steps limit=4
 
 ## Controls
 @@control at
 `left`: the middle of the left edge [[c17:70]]. `center`: the middle of the map, as in the demo `c19-ending-dijkstra` [[c19:69]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Caves, culled:** a start changes no tile, so these are the culled caves’ traits [[own]].
 
-## Where it fails
+## Failures
 @@fails
 
-## What it combines with
+## Combinations
 @@combines
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

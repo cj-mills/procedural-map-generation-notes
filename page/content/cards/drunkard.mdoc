@@ -14,7 +14,7 @@ A digger staggers at random through solid rock, and more follow until enough of 
 
 - **Talk says:** each new digger spawns somewhere within the open map. Stop when enough of the map is open: a third, here [[t:95-97]].
 
-## Step through it
+## Step-through
 @@steps limit=5 mid=1
 
 ## Controls
@@ -23,22 +23,22 @@ Steps a digger takes. The demo stops a digger once its step count is over 200 [[
 @@control floor_divisor
 Diggers keep coming until 1 / this of the map’s tiles are open. The demo: a third [[c04:25 t:96-97]].
 
-## What it produces, measured
+## Measured traits
 @@measured
 
 - **Talk says:** guaranteed to be contiguous [[t:99-100]].
 - **Drunkard’s walk:** holds. {{c04.regions.max}} region on every seed [[run:c04.regions.max]].
 - **Passages:** wide. Corridor ratio {{c04.corridor_ratio.median}} at the median, vs cellular automata’s {{c03.corridor_ratio.median}} [[run:c04.corridor_ratio.median c03.corridor_ratio.median]].
 
-## Where it fails
+## Failures
 @@fails
 
 - **No cap in the talk’s code:** its loop of diggers ends only when the open share is reached [[c04:25-48]].
 
-## What it combines with
+## Combinations
 @@combines
 
 - **Talk’s use:** limestone caverns and similar [[t:100-102]].
 
-## Checked against the talk’s code
+## Faithfulness
 @@checked

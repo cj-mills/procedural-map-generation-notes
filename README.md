@@ -54,10 +54,10 @@ and `[[run:c03.regions.median]]` for a measured value the sentence states as
 step-through, its measured table, its failing seeds, a rule's diagram. `page/gen.mjs` documents
 them.
 
-The text is distilled (one fact an item, in lists and tables under recurring lead-ins, with
+The text is distilled (one fact per item, in lists and tables under recurring lead-ins, with
 sentences kept for reasoning), so an item is a claim and carries its own citation. A rule is a
-numbered list with a citation a step. Where a rule is spatial, `@@diagram <name> alt="…"
-caption="…"` and rows of characters, a character a tile, make a figure the build draws for both
+numbered list with a citation per step. Where a rule is spatial, `@@diagram <name> alt="…"
+caption="…"` and rows of characters, one character per tile, make a figure the build draws for both
 themes (`diagram()` in `page/lib.mjs` lists the characters).
 
 In the talk's code `.` is the solid tile and `#` an open one. The page says so once, and
