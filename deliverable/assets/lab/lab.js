@@ -495,16 +495,19 @@ export async function mount(root, { params, fallback, reserve, report }) {
     const level = st.lab.start() >= 0 && st.lab.exit() >= 0 && st.path.length > 1;
     // A level whose key is behind its own locked door can't be finished, and nothing the button adds would mend it.
     const ok = level && st.finish.length > 1;
+    // What the button adds, and where, or why nothing it adds would make a level: the core's answer.
+    st.fix = level ? {} : JSON.parse(st.lab.make_walkable());
     walkBtn.hidden = !ok;
-    fixBtn.hidden = level;
-    walkWhy.textContent = ok ? `The shortest walk: ${count(st.finish.length - 1)} steps${st.door >= 0 ? ', by way of the key' : ''}` : level ? 'No walk: the key is behind its own door.' : `adds ${['cull', 'start', 'exit'].filter((name) => name !== 'cull' || !flat(st.recipe.pipeline).some((f) => f.s.stage === 'cull')).join(' → ')}`;
+    fixBtn.hidden = !st.fix.add;
+    walkWhy.textContent = ok ? `The shortest walk: ${count(st.finish.length - 1)} steps${st.door >= 0 ? ', by way of the key' : ''}` : level ? 'No walk: the key is behind its own door.' : st.fix.add ? `adds ${st.fix.add.map((a) => a[1]).join(' → ')}` : `No walk: ${st.fix.none}.`;
   }
   function addMissing() {
-    const have = new Set(flat(st.recipe.pipeline).map((f) => f.s.stage));
-    if (!have.has('cull')) st.recipe.pipeline.push({ stage: 'cull', mode: 'remove' });
-    if (!have.has('start')) st.recipe.pipeline.push({ stage: 'start' });
-    if (!have.has('exit')) st.recipe.pipeline.push({ stage: 'exit' });
-    st.sel = flat(st.recipe.pipeline).length - 1;
+    const added = st.fix.add.map(([at, stage]) => {
+      const s = { stage };
+      st.recipe.pipeline.splice(at, 0, s);
+      return s;
+    });
+    st.sel = flat(st.recipe.pipeline).findIndex((f) => f.s === added.at(-1));
     rebuild();
   }
   // Walking, the map stays where it is and the lab keeps its height: the pad takes the room of the step

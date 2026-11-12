@@ -133,6 +133,32 @@ impl Lab {
     pub fn finish(&self) -> Vec<u32> {
         level::finish(&self.b).iter().map(|&i| i as u32).collect()
     }
+    /// "Make it walkable", for a map that isn't a level, as JSON: the stages to add in order,
+    /// `{"add": [[index, "stage"], ...]}`, each index in the pipeline once those before it are
+    /// added and each stage with its defaults; or why adding them can't make a level,
+    /// `{"none": "..."}` (`map_lab_core::level::make_walkable`).
+    pub fn make_walkable(&mut self) -> String {
+        let mut s = String::new();
+        match level::make_walkable(&mut self.r) {
+            Ok(add) => {
+                s.push_str("{\"add\":[");
+                for (n, &(i, kind)) in add.iter().enumerate() {
+                    s.push_str(if n > 0 { ",[" } else { "[" });
+                    recipe::push_uint(&mut s, i as u64);
+                    s.push_str(",\"");
+                    s.push_str(recipe::STAGES[kind as usize].name);
+                    s.push_str("\"]");
+                }
+                s.push_str("]}");
+            }
+            Err(why) => {
+                s.push_str("{\"none\":\"");
+                s.push_str(why);
+                s.push_str("\"}");
+            }
+        }
+        s
+    }
     /// Whether the walker has the key.
     pub fn has_key(&self) -> bool {
         self.walk.as_ref().is_some_and(|w| w.has_key)

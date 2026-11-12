@@ -485,6 +485,114 @@ fn no_walk_without_a_level() {
     assert!(Walk::new(&b).is_none(), "no exit");
 }
 
+#[test]
+fn the_route_fits_the_finished_map() {
+    // Stages that change the map, or the start, after the exit stage has found its path.
+    let after = [
+        (r#"{"stage": "cellular"}"#, r#"{"stage": "dla-erode"}"#),
+        (r#"{"stage": "rooms"}"#, r#"{"stage": "prefab", "shape": "spine", "place": "center"}"#),
+        (r#"{"stage": "cellular"}"#, r#"{"stage": "cull", "mode": "remove"}"#),
+        (r#"{"stage": "rooms"}"#, r#"{"stage": "start", "at": "center"}"#),
+        (r#"{"stage": "cellular"}, {"stage": "cull", "mode": "remove"}"#, r#"{"stage": "hot-path", "radius": 10, "cull": 15}, {"stage": "dla-erode"}"#),
+    ];
+    let (mut moved, mut walled) = (0, 0);
+    for (map, then) in after {
+        for seed in 0..40 {
+            let src = |tail: &str| format!(r#"{{"format": "map-lab-recipe/1", "seed": {seed}, "pipeline": [{map}, {{"stage": "start"}}, {{"stage": "exit"}}{tail}]}}"#);
+            let before = build(&parse(&src("")).ok().unwrap(), false);
+            let b = build(&parse(&src(&format!(", {then}"))).ok().unwrap(), false);
+            let g = b.grid();
+            let (s, e) = (b.start.unwrap(), b.exit.unwrap());
+            let ends = walkable(g.t[s]) && walkable(g.t[e]);
+            walled += !ends as u32;
+            let route = if ends { shortest_path(&g, s, e) } else { Vec::new() };
+            assert_eq!(b.path, route, "{then}, seed {seed}: the route on the finished map");
+            assert_eq!(b.dist, distances(&g, &[s]), "{then}, seed {seed}: the distances from the start");
+            assert_eq!(b.stage_failures & map_lab_core::EXIT_UNREACHABLE != 0, b.path.is_empty(), "{then}, seed {seed}: exit-unreachable and the route");
+            moved += (before.path != b.path) as u32;
+            match Walk::new(&b) {
+                Some(mut w) => {
+                    assert!(moves_along(&g, &b.path).into_iter().all(|m| w.step(m)) && w.done(), "{then}, seed {seed}: the route walks");
+                }
+                None => assert!(b.path.is_empty(), "{then}, seed {seed}: a route and no walk"),
+            }
+        }
+    }
+    // The cases the rule is for: the exit stage's path was no longer the route, and a stage
+    // walled over the start or the exit.
+    assert!(moved > 50 && walled > 0, "{moved} routes moved, {walled} walled ends");
+    // A stage that only walls tiles off the route leaves it as it was (the talk's c20).
+    for seed in 0..40 {
+        let src = |tail: &str| format!(r#"{{"format": "map-lab-recipe/1", "seed": {seed}, "pipeline": [{{"stage": "cellular"}}, {{"stage": "cull", "mode": "remove"}}, {{"stage": "start"}}, {{"stage": "exit"}}{tail}]}}"#);
+        let before = build(&parse(&src("")).ok().unwrap(), false);
+        let b = build(&parse(&src(r#", {"stage": "hot-path", "radius": 10, "cull": 15}"#)).ok().unwrap(), false);
+        assert_eq!(before.path, b.path, "seed {seed}: the hot path's cull moved the route");
+    }
+}
+
+#[test]
+fn make_it_walkable_makes_a_level() {
+    let generators = ["rooms", "bsp", "cellular", "drunkard", "dla", "voronoi", "noise"];
+    // What follows the generator: nothing, part of a level, a level, a locked level, a level
+    // changed after its exit, and a second map after a first map's level.
+    let shapes = [
+        "",
+        r#"{"stage": "start"}"#,
+        r#"{"stage": "start"}, {"stage": "exit"}"#,
+        r#"{"stage": "start"}, {"stage": "exit", "at": "farthest"}, {"stage": "lock"}"#,
+        r#"{"stage": "cull", "mode": "mark"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "lock", "key": "anywhere"}"#,
+        r#"{"stage": "start"}, {"stage": "exit"}, {"stage": "hot-path", "radius": 10, "cull": 15}, {"stage": "lock"}"#,
+        r#"{"stage": "start"}, {"stage": "exit"}, {"stage": "dla-erode"}"#,
+        r#"{"stage": "start"}, {"stage": "exit"}, {"stage": "cellular"}, {"stage": "start"}"#,
+    ];
+    let (mut repaired, mut locked, mut single) = (0, 0, 0);
+    for g in generators {
+        for shape in shapes {
+            for seed in 0..12 {
+                let mut stages = vec![format!(r#"{{"stage": "{g}"}}"#)];
+                stages.extend(shape.split("}, ").filter(|s| !s.is_empty()).map(|s| if s.ends_with('}') { s.to_string() } else { format!("{s}}}") }));
+                let src = |st: &[String]| format!(r#"{{"format": "map-lab-recipe/1", "seed": {seed}, "pipeline": [{}]}}"#, st.join(", "));
+                let mut r = parse(&src(&stages)).map_err(|e| e.message()).unwrap();
+                if level::not_a_level(&build(&r, false)).is_none() {
+                    continue;
+                }
+                let add = level::repair(&r);
+                // As the page applies it: each stage by name, with its defaults.
+                for &(i, kind) in &add {
+                    stages.insert(i, format!(r#"{{"stage": "{}"}}"#, recipe::Stage::of(kind).spec().name));
+                }
+                let fixed = parse(&src(&stages)).map_err(|e| e.message()).unwrap_or_else(|e| panic!("{g}, {shape}, seed {seed}: {e}"));
+                let b = build(&fixed, false);
+                let why = level::not_a_level(&b);
+                assert_eq!(level::make_walkable(&mut r), why.map_or(Ok(add), Err), "{g}, {shape}, seed {seed}");
+                match why {
+                    // The talk's cull keeps the floor the center reaches, which can be one tile.
+                    Some(why) => {
+                        assert!(b.start == b.exit, "{g}, {shape}, seed {seed}: {why} after {stages:?}");
+                        single += 1;
+                    }
+                    None => {
+                        assert!(Walk::new(&b).is_some() || b.failures() & map_lab_core::KEY_BEHIND_DOOR != 0, "{g}, {shape}, seed {seed}: no walk");
+                        repaired += 1;
+                        locked += shape.contains("lock") as u32;
+                    }
+                }
+            }
+        }
+    }
+    // Locked pipelines whose exit the start couldn't reach were among them (the talk's caves).
+    assert!(repaired > 100 && locked > 10 && single < repaired / 20, "{repaired} repaired, {locked} with a lock, {single} on one tile");
+    let mut none = parse(&with(r#"{"stage": "cull"}"#)).ok().unwrap();
+    assert_eq!(level::make_walkable(&mut none), Err("the map has no floor to stand on"));
+    // A first map with no floor doesn't stand in the way of the map after it.
+    let mut later = parse(&with(r#"{"stage": "start"}, {"stage": "cellular"}"#)).ok().unwrap();
+    assert!(build(&later, false).stage_failures & map_lab_core::NO_FLOOR != 0);
+    assert!(level::make_walkable(&mut later).is_ok(), "a floorless first map hid the button");
+    // Measuring leaves the recipe's own seed as it was, which the button's answer is for.
+    measure(&mut later, 0, 3);
+    assert_eq!(later.seed, 3);
+}
+
 /// The talk's test for a locked door, run the slow way: close one tile and flood from the start.
 fn cuts_off(g: &Grid, tile: usize, from: usize, to: usize) -> bool {
     let mut closed = g.clone();

@@ -156,6 +156,32 @@ pub struct Stage {
 }
 
 impl Stage {
+    /// A stage of `kind` with every parameter at its default: the talk's version. A `combine`
+    /// made this way has no inputs.
+    pub fn of(kind: Kind) -> Stage {
+        let vals = STAGES[kind as usize]
+            .params
+            .iter()
+            .map(|p| match p.kind {
+                Param::Int { default, .. } => Val::Int(default),
+                Param::Num { default, .. } => Val::Num(default),
+                Param::Pick(_) => Val::Pick(0),
+                Param::Inputs(_) => Val::Inputs(Vec::new()),
+            })
+            .collect();
+        Stage { kind, variant: 0, vals }
+    }
+    /// Whether this stage, coming after a map's generator, may change its tiles: a prefab,
+    /// erosion, a cull that removes or a hot path that culls. The route is found again after
+    /// one (`run_stages`), and none may follow a lock stage (`check_order`).
+    pub fn changes_map(&self) -> bool {
+        match self.kind {
+            Kind::Prefab | Kind::DlaErode => true,
+            Kind::Cull => self.pick(1) == 0,
+            Kind::HotPath => self.int(1) > 0,
+            _ => false,
+        }
+    }
     pub fn spec(&self) -> &'static StageSpec {
         &STAGES[self.kind as usize]
     }
@@ -385,9 +411,8 @@ fn check_order(stages: &[Stage], at: &str) -> Result<(), RecipeError> {
             Kind::Lock if !exit => Some("lock needs an exit stage before it"),
             Kind::Lock if lock => Some("a map takes one lock stage: this is a second"),
             // The door and key belong to the finished map: nothing after them may change it.
-            Kind::Start | Kind::Exit | Kind::Prefab | Kind::DlaErode if lock => Some(AFTER_LOCK),
-            Kind::Cull if lock && s.pick(1) == 0 => Some(AFTER_LOCK),
-            Kind::HotPath if lock && s.int(1) > 0 => Some(AFTER_LOCK),
+            Kind::Start | Kind::Exit if lock => Some(AFTER_LOCK),
+            _ if lock && s.changes_map() => Some(AFTER_LOCK),
             Kind::Lock => {
                 lock = true;
                 None

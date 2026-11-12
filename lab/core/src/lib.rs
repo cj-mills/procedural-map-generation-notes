@@ -39,8 +39,11 @@ pub struct Ctx<'r> {
     pub made_rooms: bool,
     pub start: Option<usize>,
     pub exit: Option<usize>,
+    /// The route: a shortest path from the start to the exit on the map as it is after each
+    /// stage (`analyze::refresh`); empty when there is none.
     pub path: Vec<usize>,
-    /// Walking distance from the cull point or the start, whichever came last; -1 unreachable.
+    /// Walking distance from the start on the map as it is, or before a start, from the cull
+    /// point; -1 unreachable.
     pub dist: Vec<i32>,
     /// Walking distance from the path, after a hot-path stage.
     pub hot: Vec<i32>,
@@ -129,8 +132,9 @@ pub fn build(r: &Recipe, record: bool) -> Build {
 
 /// Build a recipe on each of `count` seeds from `from` and measure it: for each seed, a row of
 /// `traits::ROW` numbers, its values (`Traits::values`) and then its failure bits. The recipe's
-/// own seed is not used. `traits::summarize` reads the rows.
+/// own seed is not used, and is as it was afterwards. `traits::summarize` reads the rows.
 pub fn measure(r: &mut Recipe, from: u64, count: u32) -> Vec<f64> {
+    let own = r.seed;
     let mut rows = Vec::with_capacity(count as usize * traits::ROW);
     for seed in from..from + count as u64 {
         r.seed = seed;
@@ -138,6 +142,7 @@ pub fn measure(r: &mut Recipe, from: u64, count: u32) -> Vec<f64> {
         rows.extend(b.traits().values());
         rows.push(b.failures() as f64);
     }
+    r.seed = own;
     rows
 }
 
@@ -209,6 +214,9 @@ fn run_stages(c: &mut Ctx, stages: &[Stage]) {
             Kind::HotPath => analyze::hot_path(c, s),
             Kind::HotRooms => analyze::hot_rooms(c, s),
             Kind::Lock => analyze::lock(c, s),
+        }
+        if !s.kind.is_generator() && (s.changes_map() || matches!(s.kind, Kind::Start | Kind::Cull)) {
+            analyze::refresh(c);
         }
     }
 }

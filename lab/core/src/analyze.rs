@@ -86,7 +86,27 @@ pub fn start(c: &mut Ctx, s: &Stage) {
     c.rec.frame(&c.g, Note::StartDesired, 0, marks_of(&c.g, [want], TARGET));
     c.rec.frame(&c.g, Note::StartPlaced, 0, vec![pack(at, START)]);
     c.start = Some(at);
-    c.dist = distances(&c.g, &[at]);
+    // `refresh`, which runs after this stage, measures the distances from it.
+}
+
+/// After a stage that changes the map or the start (`lib::run_stages`): the distances from the
+/// start, and the route from it to the exit, found again on the map as it is now. Without this,
+/// a prefab or erosion after the exit stage would leave the exit stage's path, which the walk,
+/// the caches and the lock stage read, on a map it no longer fits. A stage that only walls tiles
+/// off the route leaves the route as it was: the same tiles, in the same order. There is no route
+/// when a stage has walled the start or the exit over. The failure `exit-unreachable` follows the
+/// route: erosion can open a way to an exit the exit stage couldn't reach, and a stage can close one.
+pub fn refresh(c: &mut Ctx) {
+    let Some(from) = c.start else { return };
+    c.dist = distances(&c.g, &[from]);
+    let Some(to) = c.exit else { return };
+    let ends = walkable(c.g.t[from]) && walkable(c.g.t[to]);
+    c.path = if ends { shortest_path(&c.g, from, to) } else { Vec::new() };
+    if c.path.is_empty() {
+        c.failures |= EXIT_UNREACHABLE;
+    } else {
+        c.failures &= !EXIT_UNREACHABLE;
+    }
 }
 
 /// The exit: the open tile nearest the right edge's middle, or the reachable tile farthest from
@@ -246,16 +266,14 @@ pub fn chokepoints(g: &Grid, from: usize, to: usize) -> Vec<usize> {
 /// The key is never on the start, the exit or the door. A map with no such door, or no tile for
 /// the key, gets neither.
 ///
-/// The route is the shortest one on the map as it is now, found again here: a stage between
-/// the exit and this one may have changed the map since the exit stage found its path. Nothing
-/// that changes the map, the start or the exit may come after this stage (`recipe`'s order
-/// rules), so the door and key always belong to the finished map.
+/// The route is the one on the map as it is now (`refresh`). Nothing that changes the map, the
+/// start or the exit may come after this stage (`recipe`'s order rules), so the door and key
+/// always belong to the finished map.
 pub fn lock(c: &mut Ctx, s: &Stage) {
-    let route = match (c.start, c.exit) {
-        (Some(from), Some(to)) => shortest_path(&c.g, from, to),
-        _ => Vec::new(),
-    };
+    let route = std::mem::take(&mut c.path);
     let placed = place_lock(c, &route, s.pick(0) == 1);
+    c.path = route;
+    let route = &c.path;
     if placed.is_none() {
         c.failures |= DOOR_NO_PLACE;
         c.rec.frame(&c.g, Note::LockNoDoor, 0, route.iter().map(|&i| pack(i, PATH)).collect());

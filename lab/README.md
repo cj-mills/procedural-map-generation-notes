@@ -134,6 +134,20 @@ gives no code for it; the rule is our own.
 A map with no path has none, and a map with little off its hot path has fewer. Every one of
 seeds 0..200 of c18, c19 and c20 has five; c21 has five on 198 seeds and four on two.
 
+The path is the route on the map as it is. After every stage that changes the map or the start
+(the stages `Stage::changes_map` names, a `start` and a `cull`), the core finds the distances
+from the start and the route to the exit again (`analyze::refresh`), so a prefab or erosion
+after the exit stage can't leave the walk, the caches or the lock on a path the map no longer
+has. A stage that only walls tiles off the route, as the talk's `c20` cull does, leaves the
+route as it was, tile for tile. A start or exit that a later stage walls over leaves no route.
+
+"Make it walkable", for a map that isn't a level, asks the core what to add
+(`level::make_walkable`): a `cull` that removes, just before the start or where the start goes,
+unless one is there; a `start` if there is none; an `exit` if there is none. Only the stages
+after the map's last generator count, and nothing is added after a `lock`. Where the map that
+makes still isn't a level, the core says why instead (`level::not_a_level`): on a seed whose
+center reaches only one tile, the start and the exit are the same tile.
+
 ## The locked door and its key
 
 The talk describes a locked door with its key before it (slide 31, and from 23:46 in the
@@ -156,8 +170,8 @@ and comes after an exit stage.
   `key-behind-door`), and that level can't be finished.
 - **No chokepoint:** no door and no key (failure `door-no-place`); the level keeps its one goal.
 
-The stage finds its route again on the map as it is, since a stage between the exit and the
-lock may have changed it. After it nothing may change the map, the start or the exit: the
+The stage reads the route on the map as it is, which a stage between the exit and the lock
+may have changed (the level, above). After it nothing may change the map, the start or the exit: the
 parser refuses a `prefab`, a `dla-erode`, a `cull` that removes, a `hot-path` that culls, a
 `start`, an `exit` or a second `lock` there, so the door and key always belong to the finished
 map. A `hot-rooms`, a `hot-path` without a cull or a `cull` that only marks may follow.
@@ -233,7 +247,9 @@ rooms, start, exit, path, caches, distance maps, field, traits and failures.
 
 The walk is `lab.walk()` to start it, or start it again, and `lab.step(direction)` for each
 move. After each one the page reads `lab.seen()` (a byte a tile: unseen, remembered, in view),
-`lab.route()`, `lab.found()` and `lab.walk_done()`.
+`lab.route()`, `lab.found()` and `lab.walk_done()`. For a map that isn't a level,
+`lab.make_walkable()` is the "Make it walkable" button's answer, as JSON: the stages to add and
+where, or why none would make a level.
 
 "Measure over 200 seeds" is `lab.measure(count)`: it builds the lab's recipe on the next `count`
 seeds, from seed 0, and returns how many are measured so far. The page calls it in slices, so it
