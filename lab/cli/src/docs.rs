@@ -20,7 +20,7 @@ pub const STAGES: &[(&str, &str, &str)] = &[
     ("exit", "Placement. The exit: the open tile nearest the middle of the right edge, or the reachable tile farthest from the start by walking distance; then the shortest path from the start to it.", "c18-ending-right, c19-ending-dijkstra"),
     ("hot-path", "Analysis. Walking distance from the start-to-exit path: tiles within the radius are on the hot path; with cull set, every tile that far or farther from the path, other than the path, becomes wall.", "c20-hot-path"),
     ("hot-rooms", "Analysis. Marks the rooms the start-to-exit path passes through (inside a room or on the row below it), and the rest.", "c21-hot-rooms"),
-    ("lock", "Placement, our own rule: the talk describes a locked door and its key (slide 31) and has no code for them. The door goes on the route where closing one tile cuts the exit off from the start: of those tiles, the one nearest the route's middle, moved to the doorway of its passage, its first tile with wall on two sides. The key goes before the door. A map with no such tile gets neither.", "none: described on the talk's slide 31, without code"),
+    ("lock", "Placement, our own rule: the talk describes a locked door and its key (slide 31) and has no code for them. The door goes on the route where closing one tile cuts the exit off from the start: of those tiles, the one nearest the route's middle, moved to the doorway of its passage, its first tile with wall on two sides, or its first tile if none has. The key goes before the door. A map with no such tile gets neither.", "none: described on the talk's slide 31, without code"),
 ];
 
 /// (stage, parameter, what it does)
@@ -53,6 +53,6 @@ pub const PARAMS: &[(&str, &str, &str)] = &[
     ("start", "at", "Where the start goes."),
     ("exit", "at", "Where the exit goes."),
     ("hot-path", "radius", "Tiles fewer than this many steps from the path are on the hot path."),
-    ("lock", "key", "Where the key goes: before-door, on the start's side of the closed door, on the floor tile farthest from the route by walking; or anywhere, a random tile the start can reach with the door open, which the talk warns against because the key can land behind its own door."),
+    ("lock", "key", "Where the key goes: before-door, on the start's side of the closed door, on the floor or grass tile farthest from the route by walking; or anywhere, a random tile the start can reach with the door open, which the talk warns against because the key can land behind its own door."),
     ("hot-path", "cull", "If above zero, tiles this many steps or more from the path, other than the path, become wall."),
 ];

@@ -2227,9 +2227,9 @@ Ours, on any map with a route from a start to an exit {% own /%}:
 
 1. Find the chokepoints: the route’s tiles, two steps or more from the start, that closed would cut the exit off from the start {% own /%}.
 2. Take the one nearest the route’s middle. Its passage is the unbroken run of chokepoints that holds it {% own /%}.
-3. The door goes in the passage’s doorway: its first tile with wall on two sides {% own /%}.
+3. The door goes in the passage’s doorway: its first tile with wall on two sides, or its first tile if none has {% own /%}.
 4. Close the door and flood from the start. What is reached is the start’s side {% own /%}.
-5. Put the key on the start’s side, on the floor tile farthest from the route by walking {% own /%}.
+5. Put the key on the start’s side, on the floor or grass tile farthest from the route by walking {% own /%}.
 
 - **No chokepoint:** no door and no key; the level keeps its one goal {% own /%}.
 - **Talk says:** hide bonus things in the rooms its route doesn’t need {% cite id="wolverson2020-talk/transcript#s269" /%}{% cite id="wolverson2020-talk/transcript#s270" /%}{% cite id="wolverson2020-talk/transcript#s271" /%}{% cite id="wolverson2020-slides/pdf#p30" /%}. Ours puts the key off the route {% own /%}.
@@ -2248,7 +2248,7 @@ The map before the next step.
 **The door:** in the doorway of the passage that holds the chokepoint nearest the route’s middle. What it cuts off is shaded {% own /%}. Steps from the start: {% value %}77{% /value %}.
 {% /step %}
 {% step src="assets/steps/door-0076-light.png" dark="assets/steps/door-0076-dark.png" alt="Rooms, a locked door (ours), seed 1: the map at step 76 of 76." key="lock.key" at=76 of=76 %}
-**The key:** on the start’s side of the door, shaded, on the floor tile farthest from the route {% own /%}. Talk says the key has to be before the door {% cite id="wolverson2020-talk/transcript#s293" /%}{% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}. Steps from the start: {% value %}35{% /value %}.
+**The key:** on the start’s side of the door, shaded, on the floor or grass tile farthest from the route {% own /%}. Talk says the key has to be before the door {% cite id="wolverson2020-talk/transcript#s293" /%}{% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}. Steps from the start: {% value %}35{% /value %}.
 {% /step %}
 {% /steps %}
 
@@ -2268,7 +2268,7 @@ Also in the step-through: Rooms, the key anywhere (ours); Caves, no place for a 
 {% /part %}
 
 {% part title="Controls" %}
-- `key` (`before-door`, `anywhere`; ours: the talk has no code for this stage) {% own /%}. `before-door`: on the start’s side, the floor tile farthest from the route {% own /%}. `anywhere`: a random tile the start can reach with the door open, which may be behind the door {% own /%}. Talk says a key behind the door leaves a map that can’t be solved {% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-talk/transcript#s295" /%}{% cite id="wolverson2020-talk/transcript#s296" /%}.
+- `key` (`before-door`, `anywhere`; ours: the talk has no code for this stage) {% own /%}. `before-door`: on the start’s side, the floor or grass tile farthest from the route {% own /%}. `anywhere`: a random tile the start can reach with the door open, which may be behind the door {% own /%}. Talk says a key behind the door leaves a map that can’t be solved {% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-talk/transcript#s295" /%}{% cite id="wolverson2020-talk/transcript#s296" /%}.
 {% /part %}
 
 {% part title="Measured traits" %}

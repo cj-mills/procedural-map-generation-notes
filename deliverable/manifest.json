@@ -1,7 +1,7 @@
 {
   "format": "0.1",
   "id": "procedural-map-generation-techniques-notes",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "title": "Procedural map generation: an interactive lab built on Herbert Wolverson’s talk",
   "summary": "Build a map from the techniques of Herbert Wolverson’s talk, measure it over 200 seeds, and walk it to its exit.",
   "pageType": "post",
@@ -81,6 +81,11 @@
       "date": "2026-11-11",
       "version": "0.9.0",
       "note": "Adds the talk’s locked door and key as a stage and a 16th card. The talk describes it and has no code for it, so the rule is ours and marked so: the door goes where closing one tile of the route cuts the exit off from the start, and the key before it. Measured over 200 seeds on nine pipelines, with a data file of its own. In the walk the door stays closed until you find the key. Two failure criteria are new: no place for a door, and a key behind its door."
+    },
+    {
+      "date": "2026-11-11",
+      "version": "0.9.1",
+      "note": "The locked door card now says where the door goes when its passage has no tile with wall on two sides, and that the key may go on grass. The 0.9.0 note left out that twelve lead-ins of the form “Talk says, of …” became “Talk says:”. In the lab, a stage that changes the map after the exit now moves the route with it, and “Make it walkable” adds its cull before the start, where it helps, and nothing after a lock."
     }
   ],
   "testedAgainst": [

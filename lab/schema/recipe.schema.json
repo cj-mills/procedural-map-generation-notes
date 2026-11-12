@@ -220,12 +220,12 @@
       "type": "object",
       "required": ["stage"],
       "additionalProperties": false,
-      "description": "Placement, our own rule: the talk describes a locked door and its key (slide 31) and has no code for them. The door goes on the route where closing one tile cuts the exit off from the start: of those tiles, the one nearest the route's middle, moved to the doorway of its passage, its first tile with wall on two sides. The key goes before the door. A map with no such tile gets neither.",
+      "description": "Placement, our own rule: the talk describes a locked door and its key (slide 31) and has no code for them. The door goes on the route where closing one tile cuts the exit off from the start: of those tiles, the one nearest the route's middle, moved to the doorway of its passage, its first tile with wall on two sides, or its first tile if none has. The key goes before the door. A map with no such tile gets neither.",
       "x-talk-demo": "none: described on the talk's slide 31, without code",
       "properties": {
         "stage": {"const": "lock"},
         "variant": {"enum": ["ours"], "default": "ours", "description": "Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it. \"ours\" marks a stage the talk describes without code: the rule is our own."},
-        "key": {"enum": ["before-door", "anywhere"], "default": "before-door", "description": "Where the key goes: before-door, on the start's side of the closed door, on the floor tile farthest from the route by walking; or anywhere, a random tile the start can reach with the door open, which the talk warns against because the key can land behind its own door."}
+        "key": {"enum": ["before-door", "anywhere"], "default": "before-door", "description": "Where the key goes: before-door, on the start's side of the closed door, on the floor or grass tile farthest from the route by walking; or anywhere, a random tile the start can reach with the door open, which the talk warns against because the key can land behind its own door."}
       }
     }
   }
