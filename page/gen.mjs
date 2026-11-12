@@ -212,7 +212,7 @@ export function generate() {
     blocks.set(`table.measured.${card.stage}`, rows.join('\n'));
     return `Seeds 0 to ${last}, our own runs: the median, then the range 8 of 10 seeds fall in {% own-run values="table.measured.${card.stage}" /%}.\n\n${rows.join('\n')}`;
   }
-  /** A card's failing seeds, as a table: a row a failure a demo. The criteria's wording is in "What counts as failing". */
+  /** A card's failing seeds, as a table: a row a failure a demo. The criteria's wording is in "Failure criteria". */
   function fails(card) {
     const rows = [`{% table label="${attr(`Failures: ${card.title}`)}" rowheads=true %}`, '* Failure', '* Demo', `* Seeds failing, of ${N}`, `* The talk’s code, of ${N}`, '* Watch it fail on'];
     let any = false;
@@ -223,13 +223,13 @@ export function generate() {
         // Where the talk's loop has no end, its code fails by never finishing: the harness stops waiting after 10 seconds.
         const talk = f === 'prefab-no-place' && un ? `${un[1]}, still looking after 10 seconds` : faith[d.id].failureRates?.[f] ? value(`${short(d.id)}.talkfails.${f}`) : '–';
         const links = seeds.slice(0, 3).map((x) => `[seed ${x}](${recipeLink(d.recipe, x)})`).join(', ');
-        rows.push('---', `* [${FAIL_NAMES[f]}](#what-counts-as-failing)`, `* ${SHORT[d.id]} (${short(d.id)})`, `* ${seeds.length}`, `* ${talk}`, `* ${links}${seeds.length > 3 ? `, ${seeds.length - 3} more in the data file` : ''}`);
+        rows.push('---', `* [${FAIL_NAMES[f]}](#failure-criteria)`, `* ${SHORT[d.id]} (${short(d.id)})`, `* ${seeds.length}`, `* ${talk}`, `* ${links}${seeds.length > 3 ? `, ${seeds.length - 3} more in the data file` : ''}`);
       }
     }
     rows.push('{% /table %}');
-    const none = `No seed from 0 to ${last} fails any of [our criteria](#what-counts-as-failing)`;
+    const none = `No seed from 0 to ${last} fails any of [our criteria](#failure-criteria)`;
     blocks.set(`list.fails.${card.stage}`, any ? rows.join('\n') : none);
-    return any ? `Seeds 0 to ${last} of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.${card.stage}" /%}:\n\n${rows.join('\n')}` : `${none} {% own-run values="list.fails.${card.stage}" /%}.`;
+    return any ? `Seeds 0 to ${last} of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.${card.stage}" /%}:\n\n${rows.join('\n')}` : `${none} {% own-run values="list.fails.${card.stage}" /%}.`;
   }
   function combines(card) {
     const list = traits.demos.filter((d) => { const st = flatStages(d.recipe.pipeline); return st.includes(card.stage) && new Set(st).size > 1; })
@@ -321,7 +321,7 @@ export function generate() {
       ['A long walk from start to exit', 'a path on every seed, and the three longest median paths', top(D.filter((d) => d.summary.path.nulls === 0), 'path'), 'path'],
       ['Culling before it can be played', 'more than one region on every seed', D.filter((d) => (d.failingSeeds.disconnected ?? []).length === N), 'regions'],
     ];
-    const rows = ['{% table label="Which technique meets which need" rowheads=true %}', '* If the map needs', '* Our criterion', '* The talk’s demos that meet it, each with its median'];
+    const rows = ['{% table label="Techniques by need" rowheads=true %}', '* If the map needs', '* Our criterion', '* The talk’s demos that meet it, each with its median'];
     for (const [need, criterion, ds, key] of needs) rows.push('---', `* ${need}`, `* ${criterion[0].toUpperCase()}${criterion.slice(1)}`, `* ${ds.map((d) => `[${SHORT[d.id]}](#${SUBJECT[d.id]}) ${fmt(s(d, key), key)}`).join(', ') || 'none'}`);
     rows.push('{% /table %}');
     blocks.set('table.guide', rows.join('\n'));
@@ -348,7 +348,7 @@ export function generate() {
     return rows.join('\n');
   }
   function failures() {
-    const rows = ['{% table label="What counts as failing" rowheads=true %}', '* Failure', '* Our criterion'];
+    const rows = ['{% table label="Failure criteria" rowheads=true %}', '* Failure', '* Our criterion'];
     for (const [k, v] of Object.entries(traits.failures)) rows.push('---', `* ${FAIL_NAMES[k]}`, `* ${curly(v[0].toUpperCase() + v.slice(1))}.`);
     rows.push('{% /table %}');
     return rows.join('\n');

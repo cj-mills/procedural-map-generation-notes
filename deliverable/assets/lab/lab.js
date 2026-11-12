@@ -463,7 +463,7 @@ export async function mount(root, { params, fallback, reserve, report }) {
       for (let i = 12; i < rowsOf.length; i += 13) for (const f of failKeys(rowsOf[i])) counts[f] = (counts[f] ?? 0) + 1;
       over = Object.entries(counts).map(([f, n]) => `${failName(f)} on ${n}`).join(', ') || 'no seed fails';
     }
-    failsBox.replaceChildren(h('span', { class: 'mlab-k' }, 'Fails: '), ...(fails.length ? fails.flatMap((f, i) => [i > 0 && ', ', h('a', { href: '#what-counts-as-failing' }, failName(f))]).filter(Boolean) : ['nothing']),
+    failsBox.replaceChildren(h('span', { class: 'mlab-k' }, 'Fails: '), ...(fails.length ? fails.flatMap((f, i) => [i > 0 && ', ', h('a', { href: '#failure-criteria' }, failName(f))]).filter(Boolean) : ['nothing']),
       '.', ...(isLab ? [' ', h('span', { class: 'mlab-k' }, `Over seeds 0 to ${SEEDS - 1}: `), over, '.'] : []));
     if (!isLab) report(Object.fromEntries(TRAITS.map((k, i) => [k, Number.isNaN(t[i]) ? null : t[i]])), demos[st.demo]?.id);
   }

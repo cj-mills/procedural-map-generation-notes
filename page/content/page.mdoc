@@ -5,9 +5,9 @@
 - **What this is:** a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, then algorithms that fix them and find out whether they are usable [[t:3-9]].
 - **A recipe:** a pipeline of those techniques and a seed. Same recipe, same map [[own]].
 - **The lab,** above: builds a recipe step by step. Edit it, measure it over 200 seeds, walk it [[own]].
-- **Each card,** below: the rule · its controls · what it produces over 200 seeds · the seeds where it fails · our version checked against the talk’s code [[own]].
+- **Each card,** below: the rule · step-through · controls · measured traits · failures · combinations · faithfulness to the talk’s code [[own]].
 
-## Which technique for which map
+## Choosing a technique
 
 - **Each row:** a criterion of our own, and the demos whose measured traits meet it [[run:table.guide]].
 
@@ -163,7 +163,7 @@ Each reads a map: what can be reached, where to start and end, and what lies nea
 * Not always a shortest one: longer than the shortest walk between the same start and exit on {{c18.astar.longer}} of 200 seeds in `c18`, and on {{c19.astar.longer}} in `c19` [[run:c18.astar.longer c19.astar.longer]]. Ours is a shortest path [[own]]
 {% /table %}
 
-## How this was measured
+## Method
 
 {% callout type="note" title="Our definitions, not the talk’s" %}
 The talk doesn’t measure its maps. Each trait, the probe and each failure criterion below is ours, applied the same way to our code and the talk’s [[own]].
@@ -182,7 +182,7 @@ What we measure on a finished map [[own]]:
 - **The probe:** for a map with no start and exit of its own. Its path runs between the open tiles nearest the middle of its left edge and of its right edge [[own]].
 - **Why those two:** they are where the talk’s demos look for a start and for an exit [[c17:69-86 c18:92-109]].
 
-### What counts as failing
+### Failure criteria
 
 A seed fails a demo when its map meets one of these [[own]]:
 

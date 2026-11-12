@@ -31,13 +31,13 @@ On the command line: `map-lab build recipes/c20-hot-path.json --seed 7`.
 - **What this is:** a lab for the techniques of Herbert Wolverson’s talk *Procedural Map Generation Techniques*: algorithms that generate maps, then algorithms that fix them and find out whether they are usable {% cite id="wolverson2020-talk/transcript#s3" /%}{% cite id="wolverson2020-talk/transcript#s4" /%}{% cite id="wolverson2020-talk/transcript#s5" /%}{% cite id="wolverson2020-talk/transcript#s6" /%}{% cite id="wolverson2020-talk/transcript#s7" /%}{% cite id="wolverson2020-talk/transcript#s8" /%}{% cite id="wolverson2020-talk/transcript#s9" /%}.
 - **A recipe:** a pipeline of those techniques and a seed. Same recipe, same map {% own /%}.
 - **The lab,** above: builds a recipe step by step. Edit it, measure it over 200 seeds, walk it {% own /%}.
-- **Each card,** below: the rule · its controls · what it produces over 200 seeds · the seeds where it fails · our version checked against the talk’s code {% own /%}.
+- **Each card,** below: the rule · step-through · controls · measured traits · failures · combinations · faithfulness to the talk’s code {% own /%}.
 
-## Which technique for which map
+## Choosing a technique
 
 - **Each row:** a criterion of our own, and the demos whose measured traits meet it {% own-run values="table.guide" /%}.
 
-{% table label="Which technique meets which need" rowheads=true %}
+{% table label="Techniques by need" rowheads=true %}
 * If the map needs
 * Our criterion
 * The talk’s demos that meet it, each with its median
@@ -365,7 +365,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.rooms" /%}.
+No seed from 0 to 199 fails any of [our criteria](#failure-criteria) {% own-run values="list.fails.rooms" /%}.
 
 - **No endless loop:** attempts are a fixed 20; corridors, one per room after the first {% cite id="wolverson2020-code/c01-rooms/src/main.rs#L20-L21" /%}{% cite id="wolverson2020-code/c01-rooms/src/main.rs#L67-L78" /%}.
 {% /part %}
@@ -479,7 +479,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.bsp" /%}.
+No seed from 0 to 199 fails any of [our criteria](#failure-criteria) {% own-run values="list.fails.bsp" /%}.
 {% /part %}
 
 {% part title="Combinations" %}
@@ -579,7 +579,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.cellular" /%}:
+Seeds 0 to 199 of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.cellular" /%}:
 
 {% table label="Failures: Cellular automata" rowheads=true %}
 * Failure
@@ -588,13 +588,13 @@ Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% 
 * The talk’s code, of 200
 * Watch it fail on
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * Cellular automata (c03)
 * 200
 * 200
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjowfQ), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH1dLCJzZWVkIjoyfQ), 197 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * Cellular automata (c03)
 * 72
 * 54
@@ -702,7 +702,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.drunkard" /%}.
+No seed from 0 to 199 fails any of [our criteria](#failure-criteria) {% own-run values="list.fails.drunkard" /%}.
 
 - **No cap in the talk’s code:** its loop of diggers ends only when the open share is reached {% cite id="wolverson2020-code/c04-drunkard/src/main.rs#L25-L48" /%}.
 {% /part %}
@@ -852,7 +852,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.dla" /%}:
+Seeds 0 to 199 of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.dla" /%}:
 
 {% table label="Failures: Diffusion-limited aggregation" rowheads=true %}
 * Failure
@@ -861,25 +861,25 @@ Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% 
 * The talk’s code, of 200
 * Watch it fail on
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * DLA, attractor (c06)
 * 200
 * 200
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6Mn0), 197 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * DLA, attractor (c06)
 * 44
 * 52
 * [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 8](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6OH0), [seed 12](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6ImF0dHJhY3RvciIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MTJ9), 41 more in the data file
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * DLA, symmetric (c07)
 * 200
 * 200
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiZGxhIiwibW9kZSI6InN5bW1ldHJpYyIsImZsb29yX2Rpdmlzb3IiOjN9XSwic2VlZCI6Mn0), 197 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * DLA, symmetric (c07)
 * 29
 * 19
@@ -1016,7 +1016,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.voronoi" /%}:
+Seeds 0 to 199 of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.voronoi" /%}:
 
 {% table label="Failures: Voronoi cells" rowheads=true %}
 * Failure
@@ -1025,13 +1025,13 @@ Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% 
 * The talk’s code, of 200
 * Watch it fail on
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * Voronoi cells (c08a)
 * 200
 * 200
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoidm9yb25vaSIsInNlZWRzIjoxNiwibWV0cmljIjoicHl0aGFnb3JhcyIsImVkZ2VzIjoid2FsbHMifV0sInNlZWQiOjJ9), 197 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * Voronoi cells (c08a)
 * 200
 * 200
@@ -1226,7 +1226,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.noise" /%}:
+Seeds 0 to 199 of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.noise" /%}:
 
 {% table label="Failures: Noise" rowheads=true %}
 * Failure
@@ -1235,49 +1235,49 @@ Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% 
 * The talk’s code, of 200
 * Watch it fail on
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * Noise: overworld (c11)
 * 197
 * 197
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjJ9), 194 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * Noise: overworld (c11)
 * 114
 * 137
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjB9), [seed 5](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjV9), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoib3ZlcndvcmxkIiwib2N0YXZlcyI6MTAsImdhaW4iOjAuMSwibGFjdW5hcml0eSI6NSwiZnJlcXVlbmN5IjoyfV0sInNlZWQiOjZ9), 111 more in the data file
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * Noise: zoom (c12)
 * 61
 * 56
 * [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MX0), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6M30), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6Nn0), 58 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * Noise: zoom (c12)
 * 44
 * 36
 * [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MX0), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6M30), [seed 6](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6Nn0), 41 more in the data file
 ---
-* [Short path](#what-counts-as-failing)
+* [Short path](#failure-criteria)
 * Noise: zoom (c12)
 * 59
 * 52
 * [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6NH0), [seed 11](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MTF9), [seed 15](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiem9vbSIsIm9jdGF2ZXMiOjMsImdhaW4iOjAuMDA1LCJsYWN1bmFyaXR5Ijo0LCJmcmVxdWVuY3kiOjAuMDh9XSwic2VlZCI6MTV9), 56 more in the data file
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * Noise: double (c13)
 * 128
 * 125
 * [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyfQ), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozfQ), 125 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * Noise: double (c13)
 * 86
 * 84
 * [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoxfQ), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjoyfQ), [seed 3](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoibm9pc2UiLCJtb2RlIjoiZG91YmxlIiwib2N0YXZlcyI6MywiZ2FpbiI6MC4wMDUsImxhY3VuYXJpdHkiOjQsImZyZXF1ZW5jeSI6MC4wOH1dLCJzZWVkIjozfQ), 83 more in the data file
 ---
-* [Short path](#what-counts-as-failing)
+* [Short path](#failure-criteria)
 * Noise: double (c13)
 * 14
 * 12
@@ -1393,7 +1393,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.dla-erode" /%}.
+No seed from 0 to 199 fails any of [our criteria](#failure-criteria) {% own-run values="list.fails.dla-erode" /%}.
 
 - **No cap in the talk’s code:** a particle’s walk runs until it reaches rock {% cite id="wolverson2020-code/c08-dla-erosion/src/main.rs#L100-L128" /%}.
 - **Our cap:** 0 of these seeds reach it {% own-run values="c08.fails.guard-hit" /%}.
@@ -1488,7 +1488,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.combine" /%}:
+Seeds 0 to 199 of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.combine" /%}:
 
 {% table label="Failures: Combining two maps" rowheads=true %}
 * Failure
@@ -1497,13 +1497,13 @@ Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% 
 * The talk’s code, of 200
 * Watch it fail on
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * BSP + caves + spine (c09)
 * 200
 * 200
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY29tYmluZSIsImpvaW4iOiJoYWx2ZXMiLCJpbnB1dHMiOltbeyJzdGFnZSI6ImJzcCIsImF0dGVtcHRzIjoyNDB9XSxbeyJzdGFnZSI6ImNlbGx1bGFyIiwid2FsbF9wZXJjZW50Ijo1NSwiaXRlcmF0aW9ucyI6NH1dXX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoic3BpbmUiLCJwbGFjZSI6ImNlbnRlciJ9XSwic2VlZCI6Mn0), 197 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * BSP + caves + spine (c09)
 * 47
 * 50
@@ -1627,7 +1627,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.prefab" /%}:
+Seeds 0 to 199 of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.prefab" /%}:
 
 {% table label="Failures: Prefabs" rowheads=true %}
 * Failure
@@ -1636,25 +1636,25 @@ Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% 
 * The talk’s code, of 200
 * Watch it fail on
 ---
-* [No place for the prefab](#what-counts-as-failing)
+* [No place for the prefab](#failure-criteria)
 * Vault in a room (c14)
 * 10
 * 18, still looking after 10 seconds
 * [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjR9), [seed 71](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjcxfQ), [seed 81](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6MjAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6InJvb20ifV0sInNlZWQiOjgxfQ), 7 more in the data file
 ---
-* [No place for the prefab](#what-counts-as-failing)
+* [No place for the prefab](#failure-criteria)
 * Vault on open floor (c15)
 * 130
 * 142, still looking after 10 seconds
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0), [seed 4](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6NH0), 127 more in the data file
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * Vault on open floor (c15)
 * 200
 * 200
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MH0), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6MX0), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InByZWZhYiIsInNoYXBlIjoidmF1bHQiLCJwbGFjZSI6Im9wZW4tYXJlYSJ9XSwic2VlZCI6Mn0), 197 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * Vault on open floor (c15)
 * 72
 * 52
@@ -1763,7 +1763,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% own-run values="list.fails.cull" /%}:
+Seeds 0 to 199 of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.cull" /%}:
 
 {% table label="Failures: Culling what can’t be reached" rowheads=true %}
 * Failure
@@ -1772,13 +1772,13 @@ Seeds 0 to 199 of each demo, against [our criteria](#what-counts-as-failing) {% 
 * The talk’s code, of 200
 * Watch it fail on
 ---
-* [Not one region](#what-counts-as-failing)
+* [Not one region](#failure-criteria)
 * Caves, unreachable marked (c16)
 * 200
 * 200
 * [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjB9), [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjF9), [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6Im1hcmsifV0sInNlZWQiOjJ9), 197 more in the data file
 ---
-* [No path](#what-counts-as-failing)
+* [No path](#failure-criteria)
 * Caves, unreachable marked (c16)
 * 72
 * 54
@@ -1879,7 +1879,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.start" /%}.
+No seed from 0 to 199 fails any of [our criteria](#failure-criteria) {% own-run values="list.fails.start" /%}.
 {% /part %}
 
 {% part title="Combinations" %}
@@ -1997,7 +1997,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.exit" /%}.
+No seed from 0 to 199 fails any of [our criteria](#failure-criteria) {% own-run values="list.fails.exit" /%}.
 
 - **Without the cull:** in a recipe of our own, the exit lands in a cave the start can’t reach on 72 of 200 seeds {% own-run values="nocull.fails.exit-unreachable" /%}. [Seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6InN0YXJ0IiwiYXQiOiJsZWZ0In0seyJzdGFnZSI6ImV4aXQiLCJhdCI6InJpZ2h0In1dLCJzZWVkIjowfQ) is one.
 {% /part %}
@@ -2098,7 +2098,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.hot-path" /%}.
+No seed from 0 to 199 fails any of [our criteria](#failure-criteria) {% own-run values="list.fails.hot-path" /%}.
 {% /part %}
 
 {% part title="Combinations" %}
@@ -2191,7 +2191,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 {% /part %}
 
 {% part title="Failures" %}
-No seed from 0 to 199 fails any of [our criteria](#what-counts-as-failing) {% own-run values="list.fails.hot-rooms" /%}.
+No seed from 0 to 199 fails any of [our criteria](#failure-criteria) {% own-run values="list.fails.hot-rooms" /%}.
 {% /part %}
 
 {% part title="Combinations" %}
@@ -2334,7 +2334,7 @@ Our stage against the talk’s own code, each run on seeds 0 to 199 and [measure
 * Not always a shortest one: longer than the shortest walk between the same start and exit on 15 of 200 seeds in `c18`, and on 29 in `c19` {% own-run values="c18.astar.longer c19.astar.longer" /%}. Ours is a shortest path {% own /%}
 {% /table %}
 
-## How this was measured
+## Method
 
 {% callout type="note" title="Our definitions, not the talk’s" %}
 The talk doesn’t measure its maps. Each trait, the probe and each failure criterion below is ours, applied the same way to our code and the talk’s {% own /%}.
@@ -2383,11 +2383,11 @@ What we measure on a finished map {% own /%}:
 - **The probe:** for a map with no start and exit of its own. Its path runs between the open tiles nearest the middle of its left edge and of its right edge {% own /%}.
 - **Why those two:** they are where the talk’s demos look for a start and for an exit {% cite id="wolverson2020-code/c17-starting-left/src/main.rs#L69-L86" /%}{% cite id="wolverson2020-code/c18-ending-right/src/main.rs#L92-L109" /%}.
 
-### What counts as failing
+### Failure criteria
 
 A seed fails a demo when its map meets one of these {% own /%}:
 
-{% table label="What counts as failing" rowheads=true %}
+{% table label="Failure criteria" rowheads=true %}
 * Failure
 * Our criterion
 ---
