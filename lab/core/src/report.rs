@@ -22,6 +22,18 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("rooms", "Rooms placed, for maps built from rooms; null otherwise."),
 ];
 
+/// A lock stage's per-seed columns (`level::lock_values`), in order. A map that is not a level
+/// has null in every one.
+pub const LOCK_COLUMNS: &[(&str, &str)] = &[
+    ("chokepoints", "Tiles of the route, two steps or more from the start, that closed would cut the exit off from the start: the places the talk's flood fill would pass for a locked door."),
+    ("door", "1 when the lock stage placed a door and its key, 0 when it found no place."),
+    ("door_at", "Steps from the start to the door over the route's steps: 0.5 is the route's middle. Null without a door."),
+    ("start_side", "Of the tiles the start can walk to, the share it still can with the door closed. Null without a door."),
+    ("key_off_route", "Steps from the key to the nearest tile of the route, by walking. Null without a door."),
+    ("finish", "Steps on the shortest walk that finishes the level: to the key with the door closed, then to the exit. Null without a door, or when the key is behind its door."),
+    ("finish_ratio", "finish over the route's steps. Null where finish is."),
+];
+
 /// One seed's values, in `COLUMNS` order; `None` is null.
 pub struct Row {
     pub seed: u64,

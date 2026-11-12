@@ -25,7 +25,9 @@
     "disconnected": "the walkable tiles form more than one region",
     "no-path": "no walk from start to exit (the map's own, or the standard probe's)",
     "short-path": "start and exit fewer than a quarter of the map's width apart, in steps",
-    "few-rooms": "a room generator placed fewer than four rooms"
+    "few-rooms": "a room generator placed fewer than four rooms",
+    "door-no-place": "a lock stage found no tile on the route that, closed, cuts the exit off from the start",
+    "key-behind-door": "a lock stage's key can't be reached without passing its own door"
   },
   "demos": [
     {

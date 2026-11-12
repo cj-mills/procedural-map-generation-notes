@@ -1,0 +1,15 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Drunkard's walk, a lock",
+  "note": "Measured for the lock stage, which is our own rule for the locked door the talk describes without code: the talk's c04-drunkard with a cull, a start on the left, an exit on the right and a lock stage.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "drunkard", "lifetime": 200, "floor_divisor": 3},
+    {"stage": "cull", "from": "center", "mode": "remove"},
+    {"stage": "start", "at": "left"},
+    {"stage": "exit", "at": "right"},
+    {"stage": "lock", "key": "before-door"}
+  ]
+}

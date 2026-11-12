@@ -1,17 +1,17 @@
 {
  "format": "slib-checking@1",
  "source": "index.mdoc",
- "source_sha256": "2ccf9a6b06ba719034817ea41c1497baf3872d0e778f6ce3fac6ad807538195d",
+ "source_sha256": "287c3baa59608c7d6b19fedd96a854c87808c1e168bdafc3fa961779153fe9a5",
  "checked": "2026-11-11",
  "claims": {
-  "cited": 314,
-  "verified": 314,
-  "own": 208,
-  "own_run": 88
+  "cited": 325,
+  "verified": 325,
+  "own": 240,
+  "own_run": 96
  },
  "context": {
   "passages": 2,
-  "claims": 314
+  "claims": 325
  },
  "verifiers": [
   {

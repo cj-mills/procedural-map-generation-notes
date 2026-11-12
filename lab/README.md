@@ -21,11 +21,12 @@ wasm/       map-lab-wasm: the page's binding (wasm-bindgen)
 cli/        map-lab: the command line for agents and for the build
 recipes/    one recipe per demo of the talk, with the talk's parameters
 recipes/own/        recipes that aren't demos of the talk: what it describes without code
+recipes/lock/       the pipelines the lock stage, which is our own, is measured on
 schema/     recipe.schema.json, the published JSON Schema (written by `map-lab schema`)
-data/       traits.json and faithfulness.json, the measurement data (written by measure.mjs)
-golden-hashes.txt   every recipe's map and caches for seeds 0..5: the regression check
+data/       traits.json, faithfulness.json and lock.json, the measurement data (written by measure.mjs)
+golden-hashes.txt   every recipe's map, caches and locked door for seeds 0..5: the regression check
 measure-size.mjs    builds the WebAssembly binding and measures it gzipped; writes sizes.json
-check-wasm.mjs      checks the WebAssembly build against the native build: maps, caches, walks, traits
+check-wasm.mjs      checks the WebAssembly build against the native build: maps, caches, locks, walks, traits
 measure.mjs         regenerates data/ (or, with --check, checks it regenerates byte for byte)
 check.mjs           the repo's checks: all of the above (npm run check)
 time-measure.mjs    times "Measure over 200 seeds" in headless Chromium under a 4x CPU slowdown
@@ -58,8 +59,9 @@ serde_json took the WebAssembly module from 27,899 to 67,805 bytes gzipped. It r
 keys, values out of range and stages out of order, and says where:
 `pipeline[3]: exit needs a start stage before it`.
 
-Every stage takes `"variant"`. Today the only variant is `"talk"`, the talk's version. Labeled
-variants go after it, each with its own source and a measured difference.
+Every stage takes `"variant"`. For a stage of the talk's the only variant today is `"talk"`, the
+talk's version; labeled variants go after it, each with its own source and a measured
+difference. The `lock` stage is not from the talk's code, and its one variant is `"ours"`.
 
 | stage | from the talk's demo | what it does |
 |---|---|---|
@@ -76,6 +78,7 @@ variants go after it, each with its own source and a measured difference.
 | `cull` | c16, c17 | mark or remove what the center can't reach |
 | `start`, `exit` | c17–c19 | placed by nearest open tile or by walking distance |
 | `hot-path`, `hot-rooms` | c20, c21 | distance from the path; the rooms it passes through |
+| `lock` | none: slide 31, no code | our own rule: a locked door at a chokepoint of the route, and its key before it |
 
 ## The CLI
 
@@ -86,13 +89,14 @@ cargo run --profile fast -p map-lab -- build recipes/c03-cellular.json --json --
 cargo run --profile fast -p map-lab -- walk recipes/c20-hot-path.json --seed 7 --moves RRRRUULD
 cargo run --profile fast -p map-lab -- traits recipes/c15-still-not-a-trap.json --seeds 0..20
 cargo run --profile fast -p map-lab -- measure recipes/*.json --seeds 0..200 --out traits.json
+cargo run --profile fast -p map-lab -- lock recipes/own/locked-door.json recipes/lock/*.json --seeds 0..200
 cargo run --profile fast -p map-lab -- schema
 cargo run --profile fast -p map-lab -- stages
 ```
 
 `build` prints the map (`#` wall, `.` floor, `~` water, `"` grass, `^` mountain, `$` treasure,
-`!` trap, `@` start, `>` exit, `&` a cache, `*` the path with `--path`), its traits and its
-failures. With `--json` the same is JSON; `--frames` adds every step.
+`!` trap, `@` start, `>` exit, `&` a cache, `+` a locked door, `k` its key, `*` the path with
+`--path`), its traits and its failures. With `--json` the same is JSON; `--frames` adds every step.
 
 ## Voronoi edges: walls or roads
 
@@ -130,6 +134,44 @@ gives no code for it; the rule is our own.
 A map with no path has none, and a map with little off its hot path has fewer. Every one of
 seeds 0..200 of c18, c19 and c20 has five; c21 has five on 198 seeds and four on two.
 
+## The locked door and its key
+
+The talk describes a locked door with its key before it (slide 31, and from 23:46 in the
+recording): a door where a flood fill finds no way around it, and the key somewhere before the
+door. It has no code for it. The `lock` stage (`core/src/analyze.rs`) is our own rule for it,
+and comes after an exit stage.
+
+- **Chokepoints:** the route's tiles, two steps or more from the start, that closed would cut
+  the exit off from the start. `chokepoints` finds them in one depth-first search; a test checks
+  it against closing each tile and flooding.
+- **The door** goes in the passage that holds the chokepoint nearest the route's middle (the
+  earlier on a tie). A passage is an unbroken run of chokepoints along the route, and the door
+  stands in its doorway: its first tile with wall on two sides, or its first tile when it has
+  none. A passage's first tile is often a room's own, at a corridor's mouth, since closing it
+  cuts the corridor off too.
+- **The key, `before-door`** (the default): on the start's side of the closed door, the floor
+  or grass tile farthest from the route by walking, the first in row order on a tie.
+- **The key, `anywhere`:** a random floor or grass tile the start can reach with the door open.
+  The talk warns against this: the key can land behind its own door (failure
+  `key-behind-door`), and that level can't be finished.
+- **No chokepoint:** no door and no key (failure `door-no-place`); the level keeps its one goal.
+
+The stage finds its route again on the map as it is, since a stage between the exit and the
+lock may have changed it. After it nothing may change the map, the start or the exit: the
+parser refuses a `prefab`, a `dla-erode`, a `cull` that removes, a `hot-path` that culls, a
+`start`, an `exit` or a second `lock` there, so the door and key always belong to the finished
+map. A `hot-rooms`, a `hot-path` without a cull or a `cull` that only marks may follow.
+
+`recipes/own/locked-door.json` is the talk's `c21-hot-rooms` with the stage after it, and
+`recipes/own/locked-door-key-anywhere.json` the same with the unchecked key. `map-lab lock`
+measures the stage over seeds (`data/lock.json`): the chokepoints on the route, whether a door
+was placed, where along the route, the start's side, how far the key is from the route, and
+the shortest walk that finishes the level. A door has a place on every one of seeds 0..200 of
+the room recipes, and on 82 of the talk's `c18` caves; the unchecked key is behind its door on
+92 of 200 room maps.
+
+A level's caches keep more than 12 steps from the key, as if it were a cache placed first.
+
 ## The walk
 
 The walk through a level is the core's too (`core/src/walk.rs`): the page sends each step and
@@ -140,13 +182,18 @@ has no walk; these rules are our own.
 - The walker starts on the start and takes one step at a time: left, right, up or down, written
   `L`, `R`, `U`, `D`. A step onto a tile that can't be walked on is refused.
 - Stepping on a cache finds it. Standing on the exit ends the walk.
+- **A locked door** can't be stepped through, and blocks the view as a wall does, until the
+  walker has stepped on the key. A level whose key is behind its door has no walk.
+- The shortest walk that finishes a level (`level::finish`) is its path, or with a door, the
+  shortest way to the key with the door closed and on from the key to the exit.
 - **The field of view:** a tile is in view when it is within nine tiles of the walker in a
   straight line and every tile on the line between them can be walked on. A tile that can't be
   walked on is also in view when it touches a tile in view that can, corners included. Without
   that second rule a corridor's walls show only in patches.
 - A tile that was in view stays remembered. The map the walker knows is what they have seen.
 
-`map-lab walk` prints that map (unseen tiles blank; the exit and the caches only once seen),
+`map-lab walk` prints that map (unseen tiles blank; the exit, the caches, a locked door and its
+key only once seen),
 then the steps taken against the shortest walk and the caches found. With `--json` it adds the
 route and every tile's state.
 
@@ -165,8 +212,8 @@ These are defined once in `core/src/traits.rs`, and their wording is in `data/tr
 
 Failures are the criteria a seed can fail: a prefab with no place, an exit that can't be
 reached, the walkable tiles split into regions, no path, start and exit less than a quarter of
-the map's width apart, fewer than four rooms, or a loop the talk leaves uncapped that hits our
-cap. `data/traits.json` lists every value, with the recipe and seed behind it, and the seeds
+the map's width apart, fewer than four rooms, a loop the talk leaves uncapped that hits our
+cap, a lock stage with no place for its door, or a key behind its own door. `data/traits.json` lists every value, with the recipe and seed behind it, and the seeds
 where each failure happens.
 
 ## The page's binding

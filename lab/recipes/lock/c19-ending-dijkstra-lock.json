@@ -1,0 +1,15 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Caves, the least accessible exit, a lock",
+  "note": "Measured for the lock stage, which is our own rule for the locked door the talk describes without code: the talk's c19-ending-dijkstra with a lock stage after it.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "cellular", "wall_percent": 55, "iterations": 10},
+    {"stage": "cull", "from": "center", "mode": "remove"},
+    {"stage": "start", "at": "center"},
+    {"stage": "exit", "at": "farthest"},
+    {"stage": "lock", "key": "before-door"}
+  ]
+}

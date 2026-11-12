@@ -3,6 +3,9 @@
 //! checks, so a recipe and a list of moves give the same walk everywhere.
 //!
 //! The talk has no walk; these rules are our own.
+//!
+//! A level with a locked door (`analyze::lock`) has two goals: the door can't be walked through,
+//! and blocks the view as a wall does, until the walker has stepped on the key.
 
 use crate::generate::line;
 use crate::grid::*;
@@ -21,6 +24,11 @@ pub const MOVES: [u8; 4] = *b"LRUD";
 pub struct Walk {
     g: Grid,
     exit: usize,
+    /// The locked door, while it is closed: it opens once the walker has the key.
+    door: Option<usize>,
+    key: Option<usize>,
+    /// Whether the walker has stepped on the key.
+    pub has_key: bool,
     /// The level's caches (`level::caches`).
     pub caches: Vec<usize>,
     /// For each cache, whether the walker has stepped on it.
@@ -33,14 +41,14 @@ pub struct Walk {
 
 impl Walk {
     /// A walk from the level's start. `None` when the map has no start, no exit or no path
-    /// between them: there is no level to walk.
+    /// between them, or its key is behind its locked door: there is no level to walk.
     pub fn new(b: &Build) -> Option<Walk> {
         let (start, exit) = (b.start?, b.exit?);
-        if b.path.is_empty() {
+        if level::finish(b).is_empty() {
             return None;
         }
         let caches = level::caches(b);
-        let mut w = Walk { g: b.grid(), exit, found: vec![false; caches.len()], caches, route: vec![start], seen: vec![UNSEEN; b.tiles.len()] };
+        let mut w = Walk { g: b.grid(), exit, door: b.door, key: b.key, has_key: false, found: vec![false; caches.len()], caches, route: vec![start], seen: vec![UNSEEN; b.tiles.len()] };
         w.look();
         Some(w)
     }
@@ -53,20 +61,28 @@ impl Walk {
         self.at() == self.exit
     }
     /// One step left, right, up or down (0 to 3, `MOVES`). False, and nothing changes, when
-    /// the tile there can't be walked on or the walk is over. Stepping on a cache finds it.
+    /// the tile there can't be walked on, is the locked door while the walker has no key, or
+    /// the walk is over. Stepping on a cache finds it; stepping on the key takes it.
     pub fn step(&mut self, dir: u8) -> bool {
         let (x, y) = self.g.xy(self.at());
         let (nx, ny) = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)][dir as usize & 3];
-        if self.done() || !walkable(self.g.get(nx, ny)) {
+        if self.done() || !self.open(nx, ny) {
             return false;
         }
         let to = self.g.idx(nx, ny);
+        if self.key == Some(to) {
+            self.has_key = true;
+        }
         self.route.push(to);
         if let Some(n) = self.caches.iter().position(|&c| c == to) {
             self.found[n] = true;
         }
         self.look();
         true
+    }
+    /// Whether a tile can be walked on now: a closed door can't, and blocks the view as a wall does.
+    fn open(&self, x: i32, y: i32) -> bool {
+        walkable(self.g.get(x, y)) && (self.has_key || self.door != Some(self.g.idx(x, y)))
     }
     /// The field of view. A tile is in view when it is within `SIGHT` of the walker in a
     /// straight line and every tile between them, on the line from the walker to it, can be
@@ -85,7 +101,7 @@ impl Walk {
                     continue;
                 }
                 let between = line((px, py), (x, y));
-                if between.iter().skip(1).rev().skip(1).all(|&(bx, by)| walkable(self.g.get(bx, by))) {
+                if between.iter().skip(1).rev().skip(1).all(|&(bx, by)| self.open(bx, by)) {
                     let i = self.g.idx(x, y);
                     self.seen[i] = IN_VIEW;
                 }
@@ -93,10 +109,10 @@ impl Walk {
         }
         for y in py - SIGHT - 1..=py + SIGHT + 1 {
             for x in px - SIGHT - 1..=px + SIGHT + 1 {
-                if !self.g.inside(x, y) || walkable(self.g.get(x, y)) {
+                if !self.g.inside(x, y) || self.open(x, y) {
                     continue;
                 }
-                let lit = |(nx, ny): (i32, i32)| walkable(self.g.get(nx, ny)) && self.seen[self.g.idx(nx, ny)] == IN_VIEW;
+                let lit = |(nx, ny): (i32, i32)| self.open(nx, ny) && self.seen[self.g.idx(nx, ny)] == IN_VIEW;
                 if (-1..=1).any(|dy| (-1..=1).any(|dx| lit((x + dx, y + dy)))) {
                     let i = self.g.idx(x, y);
                     self.seen[i] = IN_VIEW;

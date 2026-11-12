@@ -1,0 +1,15 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "A key placed without the check",
+  "note": "Not one of the talk's demos: the talk describes a locked door and its key (slide 31) and has no code for them. The lock stage's rule is our own. This is the talk's c21-hot-rooms with a lock stage whose key goes on any reachable tile, to show what the talk's check is for: the key can land behind its own door.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "rooms", "attempts": 50, "min_size": 2, "max_size": 9},
+    {"stage": "start", "at": "left"},
+    {"stage": "exit", "at": "right"},
+    {"stage": "hot-rooms"},
+    {"stage": "lock", "key": "anywhere"}
+  ]
+}

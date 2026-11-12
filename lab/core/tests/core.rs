@@ -1,9 +1,10 @@
 //! The core's checks: every demo recipe builds the same map every time and matches the
 //! committed golden hashes; frames replay to the map; the parser refuses what it should, and
 //! where; the talk's conventions the stages rely on hold; the stage table says what the parser
-//! reads; the level's caches keep to their rule; and the walk keeps to its rules.
+//! reads; the level's caches keep to their rule; the walk keeps to its rules; and the locked door
+//! and its key keep to theirs.
 
-use map_lab_core::analyze::{distances, shortest_path};
+use map_lab_core::analyze::{chokepoints, distances, shortest_path};
 use map_lab_core::grid::*;
 use map_lab_core::recipe::{self, parse, Param};
 use map_lab_core::walk::{Walk, IN_VIEW, REMEMBERED, SIGHT, UNSEEN};
@@ -25,6 +26,13 @@ fn own_recipes() -> Vec<(String, String)> {
     recipes_in("recipes/own")
 }
 
+/// The pipelines the lock stage is measured on (`data/lock.json`), beside its two own recipes.
+fn lock_recipes() -> Vec<(String, String)> {
+    let mut v = recipes_in("recipes/lock");
+    v.extend(own_recipes().into_iter().filter(|(n, _)| n.starts_with("locked-door")));
+    v
+}
+
 fn recipes_in(dir: &str) -> Vec<(String, String)> {
     let mut v: Vec<_> = fs::read_dir(lab().join(dir))
         .unwrap()
@@ -43,8 +51,9 @@ fn twenty_two_demo_recipes() {
     assert!(names.contains(&"c08a-voronoi".to_string()));
 }
 
-/// `golden-hashes.txt`: recipe, seed, tiles hash, frame count and the level's caches (cell
-/// indices, or `-` for none), for seeds 0..5, written by
+/// `golden-hashes.txt`: recipe, seed, tiles hash, frame count, the level's caches (cell
+/// indices, or `-` for none) and its locked door and key (two cell indices, or `-`), for seeds
+/// 0..5, written by
 /// `map-lab hashes recipes/*.json recipes/own/*.json --seeds 0..5`. A change here changes
 /// published maps or levels: it needs a reason in the commit.
 #[test]
@@ -60,11 +69,15 @@ fn maps_and_levels_match_the_golden_hashes() {
         let b = build(&r, true);
         let caches: Vec<String> = level::caches(&b).iter().map(|i| i.to_string()).collect();
         let caches = if caches.is_empty() { "-".to_string() } else { caches.join(",") };
-        assert_eq!(format!("{} {} {}", tiles_hash(&b.tiles), b.frames.len(), caches), format!("{} {} {}", f[2], f[3], f[4]), "{line}");
+        let lock = match (b.door, b.key) {
+            (Some(d), Some(k)) => format!("{d},{k}"),
+            _ => "-".to_string(),
+        };
+        assert_eq!(format!("{} {} {} {}", tiles_hash(&b.tiles), b.frames.len(), caches, lock), format!("{} {} {} {}", f[2], f[3], f[4], f[5]), "{line}");
         n += 1;
     }
     assert_eq!(n, all.len() * 5);
-    assert_eq!(all.len(), 24);
+    assert_eq!(all.len(), 26);
 }
 
 #[test]
@@ -116,6 +129,17 @@ fn parser_refuses_with_where() {
         err(&with(r#"{"stage": "combine", "inputs": [[{"stage": "cellular"}], [{"stage": "exit"}]]}"#)),
         "pipeline[0].inputs[1][0]: exit needs a start stage before it"
     );
+    assert_eq!(err(&with(r#"{"stage": "rooms"}, {"stage": "start"}, {"stage": "lock"}"#)), "pipeline[2]: lock needs an exit stage before it");
+    // Nothing after a lock stage may change the map, the start or the exit: the door and key belong to the finished map.
+    let locked = r#"{"stage": "rooms"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "lock"}"#;
+    let after = "this stage changes the map, the start or the exit: it must come before the lock stage";
+    for later in [r#"{"stage": "prefab", "place": "center"}"#, r#"{"stage": "dla-erode"}"#, r#"{"stage": "cull"}"#, r#"{"stage": "hot-path", "cull": 15}"#, r#"{"stage": "start"}"#, r#"{"stage": "exit"}"#] {
+        assert_eq!(err(&with(&format!("{locked}, {later}"))), format!("pipeline[4]: {after}"), "{later}");
+    }
+    assert_eq!(err(&with(&format!("{locked}, {{\"stage\": \"lock\"}}"))), "pipeline[4]: a map takes one lock stage: this is a second");
+    for later in [r#"{"stage": "hot-rooms"}"#, r#"{"stage": "hot-path"}"#, r#"{"stage": "cull", "mode": "mark"}"#, r#"{"stage": "cellular"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "lock"}"#] {
+        assert!(parse(&with(&format!("{locked}, {later}"))).is_ok(), "{later}");
+    }
     assert_eq!(err(&with(r#"{"stage": "prefab", "shape": "spine", "place": "room"}"#)).split(':').next(), Some("pipeline[0].place"));
     assert_eq!(err("{\"seed\": 1,\n  \"pipeline\": [}"), "line 2, column 16: expected a value");
     assert_eq!(err(r#"{"seed": 1, "seed": 2}"#), "line 1, column 13: repeated key");
@@ -185,6 +209,7 @@ fn every_stage_named_in_the_table_runs() {
             "exit" => r#"{"stage": "cellular"}, {"stage": "start"}, {"stage": "exit"}"#.to_string(),
             "hot-path" => r#"{"stage": "cellular"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "hot-path"}"#.into(),
             "hot-rooms" => r#"{"stage": "rooms"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "hot-rooms"}"#.into(),
+            "lock" => r#"{"stage": "rooms"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "lock"}"#.into(),
             "prefab" | "dla-erode" => format!(r#"{{"stage": "rooms"}}, {{"stage": "{}"}}"#, s.name),
             "combine" => r#"{"stage": "combine", "inputs": [[{"stage": "rooms"}], [{"stage": "drunkard"}]]}"#.into(),
             n => format!(r#"{{"stage": "{n}"}}"#),
@@ -231,7 +256,9 @@ fn the_stage_table_says_what_the_parser_reads() {
     assert!(table.contains(r#"{"name":"gain","kind":"num","min":0,"max":4,"default":0.1}"#), "{table}");
     assert!(table.contains(r#"{"name":"edges","kind":"pick","options":["walls","roads"],"default":"walls"}"#), "{table}");
     assert!(table.contains(r#"{"name":"combine","generator":true,"variants":["talk"],"params":[{"name":"join","kind":"pick","options":["halves"],"default":"halves"},{"name":"inputs","kind":"inputs","count":2}]}"#), "{table}");
-    assert!(table.ends_with(r#"{"name":"hot-rooms","generator":false,"variants":["talk"],"params":[]}]}"#), "{table}");
+    assert!(table.contains(r#"{"name":"hot-rooms","generator":false,"variants":["talk"],"params":[]}"#), "{table}");
+    // The one stage that isn't the talk's code: its only variant says whose rule it is.
+    assert!(table.ends_with(r#"{"name":"lock","generator":false,"variants":["ours"],"params":[{"name":"key","kind":"pick","options":["before-door","anywhere"],"default":"before-door"}]}]}"#), "{table}");
     for s in recipe::STAGES {
         assert_eq!(table.matches(&format!(r#"{{"name":"{}","generator":"#, s.name)).count(), 1, "{}", s.name);
         // Every decimal in the table reads back as the same `f32`.
@@ -427,6 +454,8 @@ fn the_walker_sees_nine_tiles_and_not_through_walls() {
         hot: Vec::new(),
         hot_radius: 10,
         field: Vec::new(),
+        door: None,
+        key: None,
         stage_failures: 0,
     };
     let mut walk = Walk::new(&b).unwrap();
@@ -454,4 +483,159 @@ fn no_walk_without_a_level() {
     assert!(Walk::new(&b).is_none(), "no start and no exit");
     let b = build(&parse(&with(r#"{"stage": "cellular"}, {"stage": "start"}"#)).ok().unwrap(), false);
     assert!(Walk::new(&b).is_none(), "no exit");
+}
+
+/// The talk's test for a locked door, run the slow way: close one tile and flood from the start.
+fn cuts_off(g: &Grid, tile: usize, from: usize, to: usize) -> bool {
+    let mut closed = g.clone();
+    closed.t[tile] = WALL;
+    distances(&closed, &[from])[to] < 0
+}
+
+#[test]
+fn the_locked_door_and_its_key_keep_to_their_rule() {
+    let (mut doors, mut none, mut behind, mut walled_doors, mut room_doors, mut no_route) = (0, 0, 0, 0, 0, 0);
+    // Beside the measured pipelines: maps changed between the exit and the lock, where the exit
+    // stage's own path is no longer the route.
+    let changed = [
+        ("eroded-caves", r#"{"stage": "cellular"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "dla-erode"}, {"stage": "lock"}"#),
+        ("eroded-rooms", r#"{"stage": "rooms", "attempts": 50}, {"stage": "start"}, {"stage": "exit"}, {"stage": "dla-erode", "iterations": 3000}, {"stage": "lock"}"#),
+        ("spine-rooms", r#"{"stage": "rooms"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "prefab", "shape": "spine", "place": "center"}, {"stage": "lock"}"#),
+        // And caves without a cull, where the exit often can't be reached at all.
+        ("caves-no-cull", r#"{"stage": "cellular"}, {"stage": "start"}, {"stage": "exit"}, {"stage": "lock"}"#),
+    ];
+    let all = lock_recipes().into_iter().chain(changed.iter().map(|(n, p)| (n.to_string(), with(p))));
+    for (name, text) in all {
+        let anywhere = name.ends_with("anywhere");
+        for seed in 0..12 {
+            let mut r = parse(&text).ok().unwrap();
+            r.seed = seed;
+            let b = build(&r, false);
+            let recorded = build(&r, true);
+            assert_eq!((b.door, b.key, &b.tiles), (recorded.door, recorded.key, &recorded.tiles), "{name} seed {seed}: the same level every time");
+            assert_eq!(recorded.stage_names.last(), Some(&"lock"));
+            assert_eq!(recorded.frames.last().unwrap().stage as usize, recorded.stage_names.len() - 1, "{name} seed {seed}: the lock stage shows a step");
+            let (Some(start), Some(exit)) = (b.start, b.exit) else { continue };
+            let g = b.grid();
+            // The route the stage works from: the shortest on the finished map.
+            let route = shortest_path(&g, start, exit);
+            if route.is_empty() {
+                assert!(b.door.is_none() && b.key.is_none() && b.failures() & map_lab_core::DOOR_NO_PLACE != 0, "{name} seed {seed}");
+                no_route += 1;
+                continue;
+            }
+            let d = distances(&g, &[start]);
+            let steps = route.len() as i32 - 1;
+            // The one-pass search finds exactly the tiles the flood fill passes, all on the route, in order.
+            let found = chokepoints(&g, start, exit);
+            let slow: Vec<usize> = route[1..route.len() - 1].iter().copied().filter(|&i| cuts_off(&g, i, start, exit)).collect();
+            assert_eq!(found, slow, "{name} seed {seed}");
+            let off_route = (0..g.len()).filter(|i| walkable(g.t[*i]) && d[*i] >= 0 && !route.contains(i) && *i % 7 == 0).take(40);
+            for i in off_route {
+                assert!(!cuts_off(&g, i, start, exit), "{name} seed {seed}: a tile off the route cuts the exit off");
+            }
+            let cut = |i: usize| d[i] >= 2 && found.contains(&i);
+            let Some(door) = b.door else {
+                none += 1;
+                assert!(!found.iter().any(|&i| cut(i)) && b.key.is_none(), "{name} seed {seed}: a place for a door, and no door");
+                assert!(b.failures() & map_lab_core::DOOR_NO_PLACE != 0);
+                assert_eq!(level::finish(&b), b.path, "{name} seed {seed}: without a door the level is the route's");
+                continue;
+            };
+            doors += 1;
+            assert!(b.failures() & map_lab_core::DOOR_NO_PLACE == 0);
+            // The door: the passage holding the chokepoint nearest the route's middle, at its first tile.
+            let nearest = found.iter().copied().filter(|&i| cut(i)).min_by_key(|&i| ((2 * d[i] - steps).abs(), d[i])).unwrap();
+            let mut first = d[nearest] as usize;
+            while cut(route[first - 1]) {
+                first -= 1;
+            }
+            let passage: Vec<usize> = route[first..].iter().copied().take_while(|&i| cut(i)).collect();
+            assert!(passage.contains(&nearest) && passage.contains(&door), "{name} seed {seed}");
+            let mut nb = [0usize; 4];
+            let mut walled = |i: usize| {
+                let n = g.neighbors(i, &mut nb);
+                nb[..n].iter().filter(|&&j| walkable(g.t[j])).count() == 2
+            };
+            let doorway = passage.iter().copied().find(|&i| walled(i)).unwrap_or(passage[0]);
+            assert_eq!(door, doorway, "{name} seed {seed}: the door is in its passage's doorway");
+            // On maps of rooms the doorway has wall on two sides; a cave's pinch may be open on a third.
+            let rooms = name.starts_with("locked-door") || name.starts_with("bsp");
+            room_doors += rooms as u32;
+            walled_doors += (rooms && walled(door)) as u32;
+            // The key.
+            let key = b.key.unwrap();
+            assert!(matches!(g.t[key], FLOOR | GRASS) && ![start, exit, door].contains(&key), "{name} seed {seed}");
+            let mut closed = g.clone();
+            closed.t[door] = WALL;
+            let side = distances(&closed, &[start]);
+            let is_behind = side[key] < 0;
+            assert_eq!(b.failures() & map_lab_core::KEY_BEHIND_DOOR != 0, is_behind, "{name} seed {seed}");
+            assert_eq!(Walk::new(&b).is_none(), is_behind, "{name} seed {seed}: a level is walked unless its key is behind its door");
+            assert_eq!(level::finish(&b).is_empty(), is_behind);
+            if anywhere {
+                assert!(d[key] >= 0, "{name} seed {seed}: the key where the start can't walk");
+                behind += is_behind as u32;
+            } else {
+                assert!(!is_behind, "{name} seed {seed}: the key behind its door");
+                let off = distances(&g, &route);
+                let free = |i: usize| side[i] >= 0 && matches!(g.t[i], FLOOR | GRASS) && ![start, exit, door].contains(&i);
+                let farthest = (0..g.len()).filter(|&i| free(i)).map(|i| off[i]).max().unwrap();
+                assert_eq!(off[key], farthest, "{name} seed {seed}: the key is the tile farthest from the route");
+                assert_eq!(key, (0..g.len()).find(|&i| free(i) && off[i] == farthest).unwrap(), "{name} seed {seed}: the first in row order");
+            }
+            // The shortest walk that finishes: to the key with the door closed, then to the exit.
+            if !is_behind {
+                let walk = level::finish(&b);
+                let to_key = shortest_path(&closed, start, key).len() - 1;
+                let on = distances(&g, &[key])[exit] as usize;
+                assert_eq!(walk.len() - 1, to_key + on, "{name} seed {seed}");
+                assert_eq!((walk[0], walk[to_key], *walk.last().unwrap()), (start, key, exit));
+            }
+            // The caches keep clear of the key.
+            let from_key = distances(&g, &[key]);
+            for c in level::caches(&b) {
+                assert!(from_key[c] > level::CACHE_SPACING, "{name} seed {seed}: a cache {} steps from the key", from_key[c]);
+            }
+            let v = level::lock_values(&b).unwrap();
+            assert_eq!((v[1], v[2]), (1.0, d[door] as f64 / steps as f64));
+        }
+    }
+    assert_eq!(walled_doors, room_doors, "{walled_doors} of {room_doors} doors on room maps have wall on two sides");
+    assert!(no_route >= 1, "no map whose exit the start can't reach was checked");
+    assert!(doors >= 60 && none >= 10 && behind >= 3, "{doors} doors, {none} maps without one, {behind} keys behind their doors");
+}
+
+#[test]
+fn the_walk_has_two_goals_with_a_locked_door() {
+    let text = &own_recipes().into_iter().find(|(n, _)| n == "locked-door").unwrap().1;
+    for seed in 0..6 {
+        let mut r = parse(text).ok().unwrap();
+        r.seed = seed;
+        let b = build(&r, false);
+        let (g, door, key) = (b.grid(), b.door.unwrap(), b.key.unwrap());
+        // Straight along the route: the door refuses the walker, who has no key.
+        let mut w = Walk::new(&b).unwrap();
+        let before = b.path.iter().position(|&i| i == door).unwrap();
+        let moves = moves_along(&g, &b.path);
+        for &m in &moves[..before - 1] {
+            assert!(w.step(m));
+        }
+        assert_eq!(w.at(), b.path[before - 1]);
+        assert!(!w.step(moves[before - 1]) && !w.has_key && !w.done(), "seed {seed}: through a locked door");
+        assert_eq!(w.route.len(), before, "seed {seed}: a refused step is not on the route");
+        assert_eq!(w.seen[door], IN_VIEW, "seed {seed}: the door is seen from beside it, as a wall is");
+        // The shortest walk that finishes: the key on the way, then the door opens.
+        let finish = level::finish(&b);
+        let mut w = Walk::new(&b).unwrap();
+        let mut had = false;
+        for (n, &m) in moves_along(&g, &finish).iter().enumerate() {
+            assert!(w.step(m), "seed {seed}: step {n} of the finishing walk");
+            assert_eq!(w.has_key, had || w.at() == key);
+            had = w.has_key;
+        }
+        assert!(w.done() && w.has_key);
+        assert_eq!(w.route, finish);
+        assert!(finish.len() > b.path.len(), "seed {seed}: the key is off the route");
+    }
 }

@@ -18,8 +18,8 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  DEMOS, EXTRA_TRAITS, FAIL_NAMES, GROUPS, N, OWN, SCALE, SHORT, SUBJECT, TRAITS, build, cleanRecipe, failuresOf, faith, faithTally, flatStages, fmt, pickFrames,
-  pipelineWords, recipeLink, root, short, stageTable, traits, value,
+  DEMOS, EXTRA_TRAITS, FAIL_NAMES, GROUPS, LOCKED, N, OWN, SCALE, SHORT, SUBJECT, TRAITS, build, cleanRecipe, failuresOf, faith, faithTally, flatStages, fmt, pickFrames,
+  pipelineWords, recipeLink, root, short, stageTable, traits, value, fmtLock,
 } from './lib.mjs';
 import { RESERVE } from '../deliverable/assets/lab/rows.js';
 
@@ -29,7 +29,7 @@ const content = join(root, 'page/content');
  *  the claim as partly ours and as stating a measured value. `backend` is the demos' shared map code, and
  *  data:<file> a file of the bundle's own. */
 const SOURCES = { talk: 'wolverson2020-talk/transcript', slides: 'wolverson2020-slides/pdf', code: 'wolverson2020-code' };
-const DATA = { traits: 'assets/lab/traits.json', faithfulness: 'assets/lab/faithfulness.json', checks: 'assets/lab/talk-checks.json', talktraits: 'assets/lab/talk-traits.json', schema: 'assets/lab/recipe.schema.json' };
+const DATA = { traits: 'assets/lab/traits.json', faithfulness: 'assets/lab/faithfulness.json', checks: 'assets/lab/talk-checks.json', talktraits: 'assets/lab/talk-traits.json', lock: 'assets/lab/lock.json', schema: 'assets/lab/recipe.schema.json' };
 const demoDir = (id) => Object.keys(DEMOS).find((d) => short(d) === id);
 function citations(text, file) {
   // The values after run: are its list, to the next token of another kind.
@@ -174,9 +174,11 @@ export function generate() {
     if (!p) throw new Error(`${card.stage} has no parameter ${name}`);
     // The talk's value, from each of the talk's demos of this technique: every value it gives the stage.
     const given = demosOf(card.stage).map((d) => [d.id, [...new Set(findStages(d.recipe.pipeline, card.stage).map((s) => s[name] ?? p.default))]]);
+    const range = p.kind === 'pick' ? p.options.map((o) => `\`${o}\``).join(', ') : `${p.min.toLocaleString('en-US')} to ${p.max.toLocaleString('en-US')}`;
+    // A stage of our own has no value of the talk's to give.
+    if (!given.length) return `- \`${name}\` (${range}; ours: the talk has no code for this stage) {% own /%}. ${text}`;
     const same = given.every(([, v]) => JSON.stringify(v) === JSON.stringify(given[0][1]));
     const talk = same ? given[0][1].map((v) => `\`${v}\``).join(', ') : given.map(([id, v]) => `${v.map((x) => `\`${x}\``).join(', ')} in \`${short(id)}\``).join(', ');
-    const range = p.kind === 'pick' ? p.options.map((o) => `\`${o}\``).join(', ') : `${p.min.toLocaleString('en-US')} to ${p.max.toLocaleString('en-US')}`;
     // The control's range is our stage's and the talk's value is read from our recipe of its demo: ours, apart from the text's own citations.
     return `- \`${name}\` (${range}; the talk’s: ${talk}) {% own /%}. ${text}`;
   }
@@ -231,6 +233,44 @@ export function generate() {
     blocks.set(`list.fails.${card.stage}`, any ? rows.join('\n') : none);
     return any ? `Seeds 0 to ${last} of each demo, against [our criteria](#failure-criteria) {% own-run values="list.fails.${card.stage}" /%}:\n\n${rows.join('\n')}` : `${none} {% own-run values="list.fails.${card.stage}" /%}.`;
   }
+  // ---------------------------------------------------------------- the lock stage's parts: ours, from lab/data/lock.json
+  const lockLink = (l, seed) => recipeLink(cleanRecipe(l.d.recipe), seed);
+  const spread = (l, column) => {
+    const s = l.d.summary[column];
+    return s.n ? `${fmtLock(s.median, column)}, ${fmtLock(s.p10, column)} to ${fmtLock(s.p90, column)}` : '–';
+  };
+  /** The talk's four demos that end in a level, each with our lock stage after it. */
+  function lockMeasured() {
+    const columns = [['chokepoints', 'Chokepoints on the route'], ['door_at', 'Door, along the route'], ['key_off_route', 'Key, steps off the route'], ['finish_ratio', 'Finishing walk, over the route']];
+    const rows = ['{% table label="Measured traits: Locked door and key" rowheads=true %}', '* The talk’s demo, with our lock stage after it', `* Door placed, of ${N}`, ...columns.map(([, label]) => `* ${label}`)];
+    for (const k of ['rooms', 'c20', 'c19', 'c18']) {
+      const l = LOCKED[k];
+      rows.push('---', `* ${l.label}`, `* ${l.places}`, ...columns.map(([c]) => `* ${spread(l, c)}`));
+    }
+    rows.push('{% /table %}');
+    blocks.set('table.lock.measured', rows.join('\n'));
+    return `Seeds 0 to ${last}, our own runs: the median, then the range 8 of 10 seeds fall in. The last three columns count only seeds with a door {% own-run values="table.lock.measured" /%}.\n\n${rows.join('\n')}`;
+  }
+  function lockFails() {
+    const rows = ['{% table label="Failures: Locked door and key" rowheads=true %}', '* Failure', '* Pipeline', `* Seeds failing, of ${N}`, '* Watch it fail on'];
+    for (const [f, keys] of [['door-no-place', ['c18', 'c19', 'c20']], ['key-behind-door', ['anywhere']]]) {
+      for (const k of keys) {
+        const l = LOCKED[k], seeds = l.d.failingSeeds[f];
+        rows.push('---', `* [${FAIL_NAMES[f]}](#failure-criteria)`, `* ${l.label}, then \`lock\``, `* ${seeds.length}`, `* [seed ${seeds[0]}](${lockLink(l, seeds[0])})${seeds.length > 1 ? `, ${seeds.length - 1} more in the data file` : ''}`);
+      }
+    }
+    rows.push('{% /table %}');
+    blocks.set('list.fails.lock', rows.join('\n'));
+    return `Seeds 0 to ${last} of each pipeline, against [our criteria](#failure-criteria) {% own-run values="list.fails.lock" /%}:\n\n${rows.join('\n')}`;
+  }
+  /** Which generator gives a door a place: each with a start on the left, an exit on the right and our lock stage. */
+  function lockPlaces() {
+    const list = ['rooms', 'bsp', 'dla', 'roads', 'drunkard', 'c18'].map((k) => LOCKED[k]).sort((a, b) => b.places - a.places)
+      .map((l) => `- [${l.label}](#${l.card}): a door on ${l.places}, ${fmtLock(l.d.summary.chokepoints.median, 'chokepoints')} chokepoints at the median`);
+    blocks.set('list.lock.places', list.join('\n'));
+    return `After each generator, with a start on the left and an exit on the right: seeds of ${N} on which \`lock\` places a door {% own-run values="list.lock.places" /%}:\n\n${list.join('\n')}`;
+  }
+
   function combines(card) {
     const list = traits.demos.filter((d) => { const st = flatStages(d.recipe.pipeline); return st.includes(card.stage) && new Set(st).size > 1; })
       .map((d) => `- [${pipelineWords(d.recipe.pipeline)}](${recipeLink(d.recipe)}) \`${short(d.id)}\`: ${d.recipe.title[0].toLowerCase()}${d.recipe.title.slice(1)}`);
@@ -252,7 +292,9 @@ export function generate() {
   function card(stage, kind) {
     const c = cards[stage];
     const demos = demosOf(stage);
-    const out = [`{% card title="${attr(c.title)}" id="${stage}" kind="${kind}" %}`, c.parts.get(''), '', `Stage \`${stage}\`. The talk’s ${demos.length > 1 ? 'demos' : 'demo'}: ${demos.map((d) => `\`${d.id}\``).join(', ')}.`, ''];
+    // A stage of our own has no demo of the talk's to name.
+    const whose = demos.length ? `The talk’s ${demos.length > 1 ? 'demos' : 'demo'}: ${demos.map((d) => `\`${d.id}\``).join(', ')}.` : 'Ours: the talk has no demo of it {% own /%}.';
+    const out = [`{% card title="${attr(c.title)}" id="${stage}" kind="${kind}" %}`, c.parts.get(''), '', `Stage \`${stage}\`. ${whose}`, ''];
     const given = [...c.parts.keys()].filter(Boolean);
     if (JSON.stringify(given) !== JSON.stringify(PARTS)) throw new Error(`cards/${stage}.mdoc: its parts are ${given.join(' | ')}; a card has ${PARTS.join(' | ')}`);
     for (const part of PARTS) {
@@ -282,6 +324,9 @@ export function generate() {
         else if (m[1] === 'fails') out.push(fails(c));
         else if (m[1] === 'combines') out.push(combines(c));
         else if (m[1] === 'checked') out.push(checked(c));
+        else if (m[1] === 'lock-measured') out.push(lockMeasured());
+        else if (m[1] === 'lock-fails') out.push(lockFails());
+        else if (m[1] === 'lock-places') out.push(lockPlaces());
         else throw new Error(`cards/${stage}.mdoc: no directive @@${m[1]}`);
       }
       out.push('{% /part %}', '');
@@ -321,8 +366,11 @@ export function generate() {
       ['A long walk from start to exit', 'a path on every seed, and the three longest median paths', top(D.filter((d) => d.summary.path.nulls === 0), 'path'), 'path'],
       ['Culling before it can be played', 'more than one region on every seed', D.filter((d) => (d.failingSeeds.disconnected ?? []).length === N), 'regions'],
     ];
+    // Our lock stage, after a generator, a start and an exit: where it places a door on every seed.
+    const doors = ['rooms', 'bsp', 'dla', 'roads', 'drunkard', 'c18'].map((k) => LOCKED[k]).filter((l) => l.places === N);
     const rows = ['{% table label="Techniques by need" rowheads=true %}', '* If the map needs', '* Our criterion', '* The talk’s demos that meet it, each with its median'];
     for (const [need, criterion, ds, key] of needs) rows.push('---', `* ${need}`, `* ${criterion[0].toUpperCase()}${criterion.slice(1)}`, `* ${ds.map((d) => `[${SHORT[d.id]}](#${SUBJECT[d.id]}) ${fmt(s(d, key), key)}`).join(', ') || 'none'}`);
+    rows.push('---', '* [A locked door](#lock) on every seed', `* Our \`lock\` stage places a door on all ${N} seeds; with its median chokepoints`, `* ${doors.map((l) => `[${l.label}](#${l.card}) ${fmtLock(l.d.summary.chokepoints.median, 'chokepoints')}`).join(', ') || 'none'}`);
     rows.push('{% /table %}');
     blocks.set('table.guide', rows.join('\n'));
     return rows.join('\n');

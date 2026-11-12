@@ -221,7 +221,10 @@ pub const DISCONNECTED: u32 = 1 << 4;
 pub const NO_PATH: u32 = 1 << 5;
 pub const SHORT_PATH: u32 = 1 << 6;
 pub const FEW_ROOMS: u32 = 1 << 7;
-pub const FAILURES: [(&str, &str); 8] = [
+/// Set by the lock stage as it runs.
+pub const DOOR_NO_PLACE: u32 = 1 << 8;
+pub const KEY_BEHIND_DOOR: u32 = 1 << 9;
+pub const FAILURES: [(&str, &str); 10] = [
     ("prefab-no-place", "a prefab stage found no place for its prefab (the talk's loop would run forever)"),
     ("exit-unreachable", "the exit stage's exit can't be walked to from the start"),
     ("no-floor", "a stage needed a walkable tile and the map had none"),
@@ -230,6 +233,8 @@ pub const FAILURES: [(&str, &str); 8] = [
     ("no-path", "no walk from start to exit (the map's own, or the standard probe's)"),
     ("short-path", "start and exit fewer than a quarter of the map's width apart, in steps"),
     ("few-rooms", "a room generator placed fewer than four rooms"),
+    ("door-no-place", "a lock stage found no tile on the route that, closed, cuts the exit off from the start"),
+    ("key-behind-door", "a lock stage's key can't be reached without passing its own door"),
 ];
 
 pub fn failures(g: &Grid, t: &Traits) -> u32 {

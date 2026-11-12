@@ -1,0 +1,15 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Caves, an exit on the right, a lock",
+  "note": "Measured for the lock stage, which is our own rule for the locked door the talk describes without code: the talk's c18-ending-right with a lock stage after it.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "cellular", "wall_percent": 55, "iterations": 10},
+    {"stage": "cull", "from": "center", "mode": "remove"},
+    {"stage": "start", "at": "left"},
+    {"stage": "exit", "at": "right"},
+    {"stage": "lock", "key": "before-door"}
+  ]
+}

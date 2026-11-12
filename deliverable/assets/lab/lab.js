@@ -45,7 +45,7 @@ export const NEW_TINT = 0.6; // how strongly a step's new tiles are tinted; the 
 const TRAITS = ['floor_share', 'regions', 'dead_ends', 'corridor_ratio', 'path', 'probed', 'water', 'grass', 'mountain', 'field_mean', 'field_sd', 'rooms'];
 const WALKABLE = [0, 1, 0, 1, 0, 1, 1]; // by tile: wall, floor, water, grass, mountain, treasure, trap
 const TERRAIN = { 2: 'water', 3: 'grass', 4: 'mountain' };
-const MARKS = { 1: 'new', 2: 'rejected', 3: 'point', 4: 'start', 5: 'exit', 6: 'path', 7: 'hot path', 8: 'unreachable', 9: 'on the route', 10: 'off the route', 11: 'target', 32: 'rooms or cells' };
+const MARKS = { 1: 'new', 2: 'rejected', 3: 'point', 4: 'start', 5: 'exit', 6: 'path', 7: 'hot path', 8: 'unreachable', 9: 'on the route', 10: 'off the route', 11: 'target', 12: 'locked door', 13: 'key', 14: 'start’s side', 32: 'rooms or cells' };
 
 function h(tag, props = {}, ...kids) {
   const el = document.createElement(tag);
@@ -96,7 +96,7 @@ function palette(el) {
   const field = ramp(32, (t) => `color-mix(in oklab, var(--figure-light) ${Math.round(t * 100)}%, var(--figure-dark))`);
   const c = {
     tiles: [get('var(--figure-dark)'), get('var(--figure-light)'), get('var(--color-blue)'), tint('green', 65), get('color-mix(in oklab, var(--color-muted) 70%, var(--figure-dark))'), get('var(--color-yellow)'), get('var(--color-red)')],
-    marks: { 1: get('var(--color-primary)'), 2: get('var(--color-red)'), 3: get('var(--color-magenta)'), 4: get('var(--color-green)'), 5: get('var(--color-yellow)'), 6: get('var(--color-primary)'), 7: tint('yellow', 55), 8: tint('red', 65), 9: tint('green', 60), 10: tint('muted', 40), 11: get('var(--color-magenta)') },
+    marks: { 1: get('var(--color-primary)'), 2: get('var(--color-red)'), 3: get('var(--color-magenta)'), 4: get('var(--color-green)'), 5: get('var(--color-yellow)'), 6: get('var(--color-primary)'), 7: tint('yellow', 55), 8: tint('red', 65), 9: tint('green', 60), 10: tint('muted', 40), 11: get('var(--color-magenta)'), 12: get('var(--color-cyan)'), 13: get('var(--color-magenta)'), 14: tint('green', 45) },
     groups: ['blue', 'green', 'yellow', 'magenta', 'cyan', 'red'].map((n) => tint(n, 75)),
     fog: get('color-mix(in oklab, var(--figure-dark) 60%, var(--color-surface))'),
     focus: get('var(--color-focus)'),
@@ -239,6 +239,9 @@ export async function mount(root, { params, fallback, reserve, report }) {
     st.stageOf = Uint16Array.from({ length: st.n }, (_, i) => lab.frame_stage(i));
     st.final = lab.tiles();
     st.path = lab.path();
+    // The shortest walk that finishes the level: the path, or with a locked door, by way of its key.
+    st.finish = lab.finish();
+    st.door = lab.door();
     st.cur = -1;
     canvas.width = st.w * PX;
     canvas.height = st.h * PX;
@@ -334,7 +337,9 @@ export async function mount(root, { params, fallback, reserve, report }) {
       for (const i of st.path) cell(i, C.marks[6], 2);
       cell(st.lab.start(), C.marks[4]);
       if (st.lab.exit() >= 0) cell(st.lab.exit(), C.marks[5]);
-      [4, ...(st.lab.exit() >= 0 ? [5] : []), ...(st.path.length ? [6] : [])].forEach((m) => used.add(m));
+      // A locked door and its key, where a lock stage placed them.
+      if (st.door >= 0) (cell(st.door, C.marks[12]), cell(st.lab.key(), C.marks[13], 2));
+      [4, ...(st.lab.exit() >= 0 ? [5] : []), ...(st.path.length ? [6] : []), ...(st.door >= 0 ? [12, 13] : [])].forEach((m) => used.add(m));
     }
     legend.replaceChildren(
       ...[...land].sort().map((t) => h('li', {}, h('i', { style: `background:${C.tiles[t]}` }), TERRAIN[t])),
@@ -487,10 +492,12 @@ export async function mount(root, { params, fallback, reserve, report }) {
 
   // ---------------------------------------------------------------- the walk: the core's, drawn here
   function renderWalkButton() {
-    const ok = st.lab.start() >= 0 && st.lab.exit() >= 0 && st.path.length > 1;
+    const level = st.lab.start() >= 0 && st.lab.exit() >= 0 && st.path.length > 1;
+    // A level whose key is behind its own locked door can't be finished, and nothing the button adds would mend it.
+    const ok = level && st.finish.length > 1;
     walkBtn.hidden = !ok;
-    fixBtn.hidden = ok;
-    walkWhy.textContent = ok ? `The shortest walk: ${count(st.path.length - 1)} steps` : `adds ${['cull', 'start', 'exit'].filter((name) => name !== 'cull' || !flat(st.recipe.pipeline).some((f) => f.s.stage === 'cull')).join(' → ')}`;
+    fixBtn.hidden = level;
+    walkWhy.textContent = ok ? `The shortest walk: ${count(st.finish.length - 1)} steps${st.door >= 0 ? ', by way of the key' : ''}` : level ? 'No walk: the key is behind its own door.' : `adds ${['cull', 'start', 'exit'].filter((name) => name !== 'cull' || !flat(st.recipe.pipeline).some((f) => f.s.stage === 'cull')).join(' → ')}`;
   }
   function addMissing() {
     const have = new Set(flat(st.recipe.pipeline).map((f) => f.s.stage));
@@ -537,9 +544,10 @@ export async function mount(root, { params, fallback, reserve, report }) {
   function renderWalk() {
     drawWalk();
     const steps = st.lab.route().length - 1;
-    if (walkStatus?.isConnected) return (walkStatus.textContent = `${count(steps)} steps · caches ${found()} of ${st.caches.length}`);
-    walkStatus = h('strong', {}, `${count(steps)} steps · caches ${found()} of ${st.caches.length}`);
-    walkSays.replaceChildren(h('span', { class: 'mlab-n' }, 'The walk'), walkStatus, '. Reach the exit.');
+    const says = `${count(steps)} steps · ${st.door < 0 ? '' : st.lab.has_key() ? 'key found · ' : 'no key yet · '}caches ${found()} of ${st.caches.length}`;
+    if (walkStatus?.isConnected) return (walkStatus.textContent = says);
+    walkStatus = h('strong', {}, says);
+    walkSays.replaceChildren(h('span', { class: 'mlab-n' }, 'The walk'), walkStatus, st.door < 0 ? '. Reach the exit.' : '. Find the key, open the door, reach the exit.');
     walkBox.replaceChildren(
       h('div', { class: 'mlab-pad', role: 'group', 'aria-label': 'Move' }, [['Up', 2, '↑'], ['Left', 0, '←'], ['Down', 3, '↓'], ['Right', 1, '→']].map(([name, dir, arrow]) => h('button', { type: 'button', class: `q mlab-${name.toLowerCase()}`, 'aria-label': name, onclick: () => act(dir) }, arrow))),
       h('p', { class: 'mlab-note' }, 'The arrow keys or the pad move you. You see nine tiles around you in straight lines, and remember what you have seen.'),
@@ -547,7 +555,7 @@ export async function mount(root, { params, fallback, reserve, report }) {
   }
   function drawWalk() {
     // The camera follows the walker and stops at the map's edges: a window of 32 by 20 tiles, large enough to read on a phone.
-    const route = st.lab.route(), seen = st.lab.seen(), at = route.at(-1), got = st.lab.found();
+    const route = st.lab.route(), seen = st.lab.seen(), at = route.at(-1), got = st.lab.found(), locked = st.door >= 0 && !st.lab.has_key();
     const cols = 32, rows = 20, T = canvas.width / cols, edge = (v, most) => Math.max(0, Math.min(most, v));
     const x0 = edge((at % st.w) - (cols >> 1), st.w - cols), y0 = edge(((at / st.w) | 0) - (rows >> 1), st.h - rows);
     ctx.fillStyle = C.fog;
@@ -561,6 +569,10 @@ export async function mount(root, { params, fallback, reserve, report }) {
       if (i === st.lab.exit()) (ctx.fillStyle = C.yellow), ctx.fillRect(c * T + 3, r * T + 3, T - 6, T - 6);
       const cache = st.caches.indexOf(i);
       if (cache >= 0 && !((got >> cache) & 1)) (ctx.fillStyle = C.focus), ctx.fillRect(c * T + T * 0.3, r * T + T * 0.3, T * 0.4, T * 0.4);
+      // The door while it is locked, and the key until it is taken.
+      if (!locked) continue;
+      if (i === st.door) (ctx.fillStyle = C.marks[12]), ctx.fillRect(c * T, r * T, T, T);
+      if (i === st.lab.key()) (ctx.fillStyle = C.marks[13]), ctx.fillRect(c * T + T * 0.25, r * T + T * 0.25, T * 0.5, T * 0.5);
     }
     ctx.globalAlpha = 1;
     ctx.fillStyle = C.primary;
@@ -575,22 +587,23 @@ export async function mount(root, { params, fallback, reserve, report }) {
     let far = 1;
     for (const d of dist) if (d > far) far = d;
     for (let i = 0; i < st.final.length; i++) cell(i, WALKABLE[st.final[i]] && dist[i] >= 0 ? C.dist(dist[i] / far) : C.tiles[st.final[i]]);
-    for (const i of st.path) cell(i, C.primary, 2);
+    for (const i of st.finish) cell(i, C.primary, 2);
     for (const i of route) cell(i, C.focus, 3);
     st.caches.forEach((c, n) => cell(c, (got >> n) & 1 ? C.green : C.yellow, 1));
     cell(st.lab.exit(), C.yellow);
     cell(route[0], C.green);
-    const mine = route.length - 1, best = st.path.length - 1;
+    const lock = st.door >= 0, key = (color, label) => h('li', {}, h('i', { style: `background:${color}` }), label);
+    if (lock) (cell(st.door, C.marks[12]), cell(st.lab.key(), C.marks[13], 1));
+    const mine = route.length - 1, best = st.finish.length - 1;
     canvas.setAttribute('aria-label', 'The whole map: your route and the shortest route, over walking distance from the start');
     walkStatus = null;
     walkSays.replaceChildren(
       h('strong', {}, reached ? `You reached the exit in ${count(mine)} steps. ` : `You stopped after ${count(mine)} steps. `),
-      `The shortest walk is ${count(best)}${reached ? `, so yours was ${(mine / best).toFixed(2)} times as long` : ''}. You found ${found()} of ${st.caches.length} caches.`);
+      `The shortest walk${lock ? ', by way of the key,' : ''} is ${count(best)}${reached ? `, so yours was ${(mine / best).toFixed(2)} times as long` : ''}. You found ${lock && !reached ? (st.lab.has_key() ? 'the key and ' : 'no key and ') : ''}${found()} of ${st.caches.length} caches.`);
     // What the map now shows, as a key where the pad was: the colors are the drawing's own, in either theme.
-    const key = (color, label) => h('li', {}, h('i', { style: `background:${color}` }), label);
     walkBox.replaceChildren(
       h('ul', { class: 'mlab-key' }, key(C.focus, 'your route'), key(C.primary, 'the shortest route'), key(C.green, st.caches.length ? 'the start, and each cache you found' : 'the start'),
-        key(C.yellow, st.caches.length ? 'the exit, and each cache you missed' : 'the exit'), key(C.dist(0.8), 'floor: the bluer, the farther from the start on foot')),
+        key(C.yellow, st.caches.length ? 'the exit, and each cache you missed' : 'the exit'), lock && key(C.marks[12], 'the locked door'), lock && key(C.marks[13], 'its key'), key(C.dist(0.8), 'floor: the bluer, the farther from the start on foot')),
       h('div', { class: 'mlab-acts' }, btn('Walk it again', () => (leaveWalk(), startWalk()), ''), btn('Back to the build', () => (leaveWalk(), draw()))));
   }
 

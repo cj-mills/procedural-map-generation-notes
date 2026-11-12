@@ -5,7 +5,7 @@
 use crate::grid::*;
 use crate::record::*;
 use crate::recipe::Stage;
-use crate::{Ctx, EXIT_UNREACHABLE, NO_FLOOR};
+use crate::{Ctx, DOOR_NO_PLACE, EXIT_UNREACHABLE, KEY_BEHIND_DOOR, NO_FLOOR};
 
 /// Steps from the nearest source to every tile; -1 where none reaches. Sources count as reached
 /// whatever they are; every other tile must be walkable.
@@ -170,4 +170,167 @@ pub fn hot_rooms(c: &mut Ctx, _s: &Stage) {
         })
         .collect();
     c.rec.frame(&c.g, Note::HotRooms, c.important.iter().filter(|&&b| b).count() as i32, marks);
+}
+
+/// Every tile that, closed, leaves `to` unreachable from `from`: the tiles the talk's flood
+/// fill would pass as a place for a locked door (at 23:59 in the recording), in order from
+/// `from`. `from` and `to` themselves are left out. Found in one pass, by a depth-first search
+/// from `from` that keeps, for each tile, the earliest tile its subtree reaches back to; a test
+/// checks it against closing each tile and flooding.
+pub fn chokepoints(g: &Grid, from: usize, to: usize) -> Vec<usize> {
+    let n = g.len();
+    const NONE: usize = usize::MAX;
+    // `seen[i]` is when the search first reached tile `i`, from 1; 0 is not reached.
+    let mut seen = vec![0u32; n];
+    let mut low = vec![0u32; n];
+    let mut parent = vec![NONE; n];
+    let mut stack = vec![(from, 0usize)];
+    let mut clock = 1;
+    seen[from] = 1;
+    low[from] = 1;
+    let mut nb = [0usize; 4];
+    while let Some(&(i, k)) = stack.last() {
+        let m = g.neighbors(i, &mut nb);
+        if k < m {
+            stack.last_mut().unwrap().1 += 1;
+            let j = nb[k];
+            if !walkable(g.t[j]) {
+                continue;
+            }
+            if seen[j] == 0 {
+                clock += 1;
+                seen[j] = clock;
+                low[j] = clock;
+                parent[j] = i;
+                stack.push((j, 0));
+            } else if j != parent[i] {
+                low[i] = low[i].min(seen[j]);
+            }
+        } else {
+            stack.pop();
+            if parent[i] != NONE {
+                low[parent[i]] = low[parent[i]].min(low[i]);
+            }
+        }
+    }
+    let mut out = Vec::new();
+    if seen[to] == 0 {
+        return out;
+    }
+    let mut child = to;
+    while parent[child] != NONE && parent[child] != from {
+        let v = parent[child];
+        if low[child] >= seen[v] {
+            out.push(v);
+        }
+        child = v;
+    }
+    out.reverse();
+    out
+}
+
+/// The locked door and its key. The talk describes them (from 23:46 in the recording, and its
+/// slide 31) and has no code for them: a door where a flood fill finds no way around, and the
+/// key somewhere before it. Which tile each goes on is our own rule.
+/// - The door: of the route's tiles that, closed, cut the exit off from the start
+///   (`chokepoints`) and are two steps or more from the start, the one nearest the route's
+///   middle in steps, the earlier on a tie. Its passage is the unbroken run of such tiles
+///   along the route that holds it, and the door goes in the passage's doorway: its first tile
+///   with wall on two sides (exactly two neighbors that can be walked on), or its first tile
+///   when it has none. A passage's first tile is often a room's own, at a corridor's mouth.
+/// - The key, `before-door`: on the start's side of the closed door, the floor or grass tile
+///   farthest from the route by walking, the first in row order on a tie.
+/// - The key, `anywhere`: a random floor or grass tile the start can reach with the door open.
+///   This is the placement the talk warns against: the key can land behind the door.
+///
+/// The key is never on the start, the exit or the door. A map with no such door, or no tile for
+/// the key, gets neither.
+///
+/// The route is the shortest one on the map as it is now, found again here: a stage between
+/// the exit and this one may have changed the map since the exit stage found its path. Nothing
+/// that changes the map, the start or the exit may come after this stage (`recipe`'s order
+/// rules), so the door and key always belong to the finished map.
+pub fn lock(c: &mut Ctx, s: &Stage) {
+    let route = match (c.start, c.exit) {
+        (Some(from), Some(to)) => shortest_path(&c.g, from, to),
+        _ => Vec::new(),
+    };
+    let placed = place_lock(c, &route, s.pick(0) == 1);
+    if placed.is_none() {
+        c.failures |= DOOR_NO_PLACE;
+        c.rec.frame(&c.g, Note::LockNoDoor, 0, route.iter().map(|&i| pack(i, PATH)).collect());
+    }
+}
+
+fn place_lock(c: &mut Ctx, route: &[usize], anywhere: bool) -> Option<()> {
+    let (from, to) = (*route.first()?, *route.last()?);
+    let d = distances(&c.g, &[from]);
+    let mut cut = vec![false; c.g.len()];
+    let cuts: Vec<usize> = chokepoints(&c.g, from, to).into_iter().filter(|&i| d[i] >= 2).collect();
+    let steps = route.len() as i32 - 1;
+    let mut door = *cuts.first()?;
+    for &i in &cuts {
+        cut[i] = true;
+        if (2 * d[i] - steps).abs() < (2 * d[door] - steps).abs() {
+            door = i;
+        }
+    }
+    // Every way from the start to the exit passes the door, so the route does, `d[door]` steps in.
+    let mut first = d[door] as usize;
+    while cut[route[first - 1]] {
+        first -= 1;
+    }
+    let mut nb = [0usize; 4];
+    let walled = |i: usize, nb: &mut [usize; 4]| {
+        let n = c.g.neighbors(i, nb);
+        nb[..n].iter().filter(|&&j| walkable(c.g.t[j])).count() == 2
+    };
+    let mut at = first;
+    while cut[route[at]] && !walled(route[at], &mut nb) {
+        at += 1;
+    }
+    let door = route[if cut[route[at]] { at } else { first }];
+    // The start's side: what the start reaches with the door closed.
+    let was = c.g.t[door];
+    c.g.t[door] = WALL;
+    let side = distances(&c.g, &[from]);
+    c.g.t[door] = was;
+    let free = |i: usize| matches!(c.g.t[i], FLOOR | GRASS) && i != from && i != to && i != door;
+    let key = if anywhere {
+        let open: Vec<usize> = (0..c.g.len()).filter(|&i| d[i] >= 0 && free(i)).collect();
+        open[c.rng.pick(open.len())?]
+    } else {
+        let off = distances(&c.g, route);
+        let mut best: Option<usize> = None;
+        for i in 0..c.g.len() {
+            if side[i] >= 0 && free(i) && best.is_none_or(|j| off[i] > off[j]) {
+                best = Some(i);
+            }
+        }
+        best?
+    };
+    c.door = Some(door);
+    c.key = Some(key);
+    let behind = side[key] < 0;
+    if behind {
+        c.failures |= KEY_BEHIND_DOOR;
+    }
+    if c.rec.on {
+        let ends = [pack(from, START), pack(to, EXIT)];
+        let mut marks: Vec<u32> = route.iter().map(|&i| pack(i, PATH)).collect();
+        marks.extend(cuts.iter().map(|&i| pack(i, POINT)));
+        marks.extend(ends);
+        c.rec.frame(&c.g, Note::LockChokepoints, cuts.len() as i32, marks);
+        // What the closed door cuts off.
+        let far = (0..c.g.len()).filter(|&i| d[i] >= 0 && side[i] < 0 && i != door).map(|i| pack(i, UNREACHABLE));
+        let mut marks: Vec<u32> = far.clone().collect();
+        marks.push(pack(door, DOOR));
+        marks.extend(ends);
+        c.rec.frame(&c.g, Note::LockDoor, d[door], marks);
+        let mut marks: Vec<u32> = if behind { far.collect() } else { (0..c.g.len()).filter(|&i| side[i] >= 0).map(|i| pack(i, SIDE)).collect() };
+        marks.extend([pack(door, DOOR), pack(key, KEY)]);
+        marks.extend(ends);
+        c.rec.frame(&c.g, if behind { Note::LockKeyBehind } else { Note::LockKey }, d[key], marks);
+    }
+    Some(())
 }

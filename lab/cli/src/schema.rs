@@ -40,7 +40,7 @@ pub fn schema() -> String {
     pipe.raw("type", &string("array")).raw("minItems", "1");
     pipe.raw(
         "description",
-        &string("Stages run in order on one map. A generator starts a new map and forgets what was placed on the old one. Order rules the parser enforces: exit needs a start before it; hot-path needs an exit; hot-rooms needs a rooms or bsp generator and an exit; prefab with place=room needs a rooms or bsp generator; dla-erode needs a stage before it."),
+        &string("Stages run in order on one map. A generator starts a new map and forgets what was placed on the old one. Order rules the parser enforces: exit needs a start before it; hot-path needs an exit; hot-rooms needs a rooms or bsp generator and an exit; prefab with place=room needs a rooms or bsp generator; dla-erode needs a stage before it; lock needs an exit, and after it nothing may change the map, the start or the exit (prefab, dla-erode, cull with mode=remove, hot-path with a cull, start, exit, a second lock)."),
     );
     let refs = STAGES.iter().map(|s| {
         let mut o = Obj::new();
@@ -66,7 +66,7 @@ pub fn schema() -> String {
         ps.raw("stage", &name.end());
         let mut v = Obj::new();
         v.raw("enum", &list(s.variants.iter().map(|x| string(x)))).raw("default", &string(s.variants[0]));
-        v.raw("description", &string("Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it."));
+        v.raw("description", &string("Which version of the technique: \"talk\" is the talk's own. Labeled variants, each with its own source and a measured difference, come after it. \"ours\" marks a stage the talk describes without code: the rule is our own."));
         ps.raw("variant", &v.end());
         for prm in s.params {
             let (_, _, d) = docs::PARAMS.iter().find(|d| d.0 == s.name && d.1 == prm.name).expect("docs for every parameter");

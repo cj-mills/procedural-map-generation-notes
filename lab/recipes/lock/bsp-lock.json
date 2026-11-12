@@ -1,0 +1,14 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Rooms in subdivided space, a lock",
+  "note": "Measured for the lock stage, which is our own rule for the locked door the talk describes without code: the talk's c02-bsprooms with a start on the left, an exit on the right and a lock stage.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "bsp", "attempts": 240},
+    {"stage": "start", "at": "left"},
+    {"stage": "exit", "at": "right"},
+    {"stage": "lock", "key": "before-door"}
+  ]
+}

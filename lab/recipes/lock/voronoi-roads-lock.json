@@ -1,0 +1,15 @@
+{
+  "format": "map-lab-recipe/1",
+  "title": "Voronoi roads, a lock",
+  "note": "Measured for the lock stage, which is our own rule for the locked door the talk describes without code: our Voronoi roads with a cull, a start on the left, an exit on the right and a lock stage.",
+  "seed": 1,
+  "width": 80,
+  "height": 50,
+  "pipeline": [
+    {"stage": "voronoi", "seeds": 16, "metric": "pythagoras", "edges": "roads"},
+    {"stage": "cull", "from": "center", "mode": "remove"},
+    {"stage": "start", "at": "left"},
+    {"stage": "exit", "at": "right"},
+    {"stage": "lock", "key": "before-door"}
+  ]
+}

@@ -1,14 +1,17 @@
 // Checks the WebAssembly build (lab/target/web/, from measure-size.mjs) against the native
-// build, over every recipe in lab/recipes/ and lab/recipes/own/ and a range of seeds:
+// build, over every recipe in lab/recipes/, lab/recipes/own/ and lab/recipes/lock/ and a range
+// of seeds:
 //
 //   - each map, tile for tile: the same tiles hash and the same number of frames as
 //     `map-lab hashes` prints, and frames that replay to the final map;
-//   - each level: the same caches, and the same walk along its path (`Lab.step` against
-//     `map-lab walk`): the route, what the walker has seen, the caches found;
+//   - each level: the same caches, the same locked door and key, and the same walk (`Lab.step`
+//     against `map-lab walk`) along the shortest walk that finishes it and, with a door, along
+//     the route the door refuses: the route, what the walker has seen, the caches found, the key;
 //   - each seed's measured traits and failures from `Lab.measure`, taken in two slices, against
 //     `map-lab traits`;
 //   - with --data, `Lab.summary` over seeds 0..200 against the committed lab/data/traits.json,
 //     for the talk's demos: the page's "Measure over 200 seeds" gives the data file's numbers;
+//     and the lock stage's two failures against lab/data/lock.json;
 //   - the stage table against `map-lab stages`;
 //   - a bad recipe throws with where it is wrong.
 //
@@ -27,7 +30,7 @@ glue.initSync({ module: readFileSync(join(dir, 'map_lab_wasm_bg.wasm')) });
 
 const list = (sub) => readdirSync(join(here, sub)).filter((f) => f.endsWith('.json')).sort().map((f) => join(here, sub, f));
 const demos = list('recipes');
-const recipes = [...demos, ...list(join('recipes', 'own'))];
+const recipes = [...demos, ...list(join('recipes', 'own')), ...list(join('recipes', 'lock'))];
 const idOf = (file) => file.split('/').pop().replace(/\.json$/, '');
 const cli = join(here, 'target', 'fast', 'map-lab');
 execFileSync('cargo', ['build', '--profile', 'fast', '-p', 'map-lab'], { cwd: here, stdio: ['ignore', 'ignore', 'inherit'] });
@@ -41,10 +44,11 @@ const fail = (msg) => {
 
 const native = new Map();
 for (const line of run('hashes', ...recipes, '--seeds', `0..${seeds}`).trim().split('\n')) {
-  const [id, seed, hash, frames, caches] = line.split(' ');
-  native.set(`${id} ${seed}`, `${hash} ${frames} ${caches}`);
+  const [id, seed, hash, frames, caches, lock] = line.split(' ');
+  native.set(`${id} ${seed}`, `${hash} ${frames} ${caches} ${lock}`);
 }
-const failureKeys = Array.from({ length: 8 }, (_, bit) => glue.failure_key(bit));
+const failureKeys = [];
+for (let bit = 0; glue.failure_key(bit); bit++) failureKeys.push(glue.failure_key(bit));
 const same = (a, b) => a === b || (a == null && Number.isNaN(b));
 
 let maps = 0;
@@ -54,7 +58,7 @@ for (const file of recipes) {
   const id = idOf(file);
   for (let seed = 0; seed < seeds; seed++) {
     const lab = new glue.Lab(JSON.stringify({ ...recipe, seed }));
-    const got = `${lab.tiles_hash()} ${lab.frame_count()} ${lab.caches().join(',') || '-'}`;
+    const got = `${lab.tiles_hash()} ${lab.frame_count()} ${lab.caches().join(',') || '-'} ${lab.door() < 0 ? '-' : `${lab.door()},${lab.key()}`}`;
     // Replaying every frame's changes from an all-wall start must give the final tiles.
     const tiles = new Uint8Array(lab.width() * lab.height()).fill(255);
     for (let i = 0; i < lab.frame_count(); i++) for (const c of lab.frame_changes(i)) tiles[c >>> 8] = c & 0xff;
@@ -64,23 +68,31 @@ for (const file of recipes) {
     maps++;
     if (got !== want || !replayed) fail(`${id} seed ${seed}: wasm ${got}, native ${want}${replayed ? '' : ', frames do not replay to the final map'}`);
 
-    // The walk: along the level's path. The first move is made twice, so its second may be
-    // refused, and one more comes after the exit, which always is.
+    // The walk: along the shortest walk that finishes the level, which with a locked door goes
+    // by way of the key: once with its first move made twice, so its second may be refused, and
+    // once as it is, which must finish. One more move comes after the exit, which always is
+    // refused. A level with a door is also walked straight along its route, where the door
+    // refuses a walker who has no key.
     const path = lab.path();
+    const finish = lab.finish();
     if (!lab.walk()) {
-      if (path.length) fail(`${id} seed ${seed}: a level with no walk`);
+      if (finish.length) fail(`${id} seed ${seed}: a level with no walk`);
     } else {
       const w = lab.width();
-      const letters = Array.from(path.slice(1), (to, n) => ({ [-1]: 'L', 1: 'R', [-w]: 'U', [w]: 'D' })[to - path[n]]);
-      const moves = [...letters.slice(0, 1), ...letters, 'L'];
-      let taken = 0;
-      for (const m of moves) taken += lab.step('LRUD'.indexOf(m));
-      const mine = { steps: lab.route().length - 1, done: lab.walk_done(), found: lab.found(), seen: lab.seen().join('') };
-      const theirs = JSON.parse(run('walk', file, '--seed', String(seed), '--moves', moves.join(''), '--json'));
-      const want = { steps: theirs.steps, done: theirs.done, found: theirs.found.reduce((a, f, n) => a | (f << n), 0), seen: theirs.seen.join('') };
-      const route = Array.from(lab.route(), (i) => `${i % w},${Math.floor(i / w)}`).join(' ');
-      if (JSON.stringify(mine) !== JSON.stringify(want) || route !== theirs.route.map((p) => p.join(',')).join(' ') || taken !== theirs.steps) fail(`${id} seed ${seed}: the walk differs from the native one`);
-      walks++;
+      for (const [way, twice] of lab.door() < 0 ? [[finish, true], [finish, false]] : [[finish, true], [finish, false], [path, false]]) {
+        lab.walk();
+        const letters = Array.from(way.slice(1), (to, n) => ({ [-1]: 'L', 1: 'R', [-w]: 'U', [w]: 'D' })[to - way[n]]);
+        const moves = [...letters.slice(0, twice ? 1 : 0), ...letters, 'L'];
+        let taken = 0;
+        for (const m of moves) taken += lab.step('LRUD'.indexOf(m));
+        const mine = { steps: lab.route().length - 1, done: lab.walk_done(), found: lab.found(), key: lab.has_key(), shortest: finish.length - 1, seen: lab.seen().join('') };
+        const theirs = JSON.parse(run('walk', file, '--seed', String(seed), '--moves', moves.join(''), '--json'));
+        const want = { steps: theirs.steps, done: theirs.done, found: theirs.found.reduce((a, f, n) => a | (f << n), 0), key: theirs.hasKey, shortest: theirs.shortest, seen: theirs.seen.join('') };
+        const route = Array.from(lab.route(), (i) => `${i % w},${Math.floor(i / w)}`).join(' ');
+        if (JSON.stringify(mine) !== JSON.stringify(want) || route !== theirs.route.map((p) => p.join(',')).join(' ') || taken !== theirs.steps) fail(`${id} seed ${seed}: the walk differs from the native one`);
+        if (way === finish && !twice && !mine.done) fail(`${id} seed ${seed}: the shortest finishing walk does not finish`);
+        walks++;
+      }
     }
     lab.free();
   }
@@ -127,6 +139,19 @@ if (withData) {
     lab.free();
   }
   console.log(`${data.demos.length} demos measured over seeds ${data.seeds.from}..${data.seeds.to} give the data file's summaries and failing-seed counts (${Math.round(performance.now() - t0)} ms in Node)`);
+  // The lock stage's two failures, counted by the page's measure, against its own data file.
+  const lock = JSON.parse(readFileSync(join(here, 'data', 'lock.json'), 'utf8'));
+  for (const demo of lock.demos) {
+    const lab = new glue.Lab(JSON.stringify(demo.recipe));
+    lab.measure(lock.seeds.to - lock.seeds.from);
+    const s = lab.summary();
+    for (const key of Object.keys(lock.failures)) {
+      const got = s[columns.length * 8 + failureKeys.indexOf(key)];
+      if (got !== demo.failingSeeds[key].length) fail(`${demo.id}: ${got} seeds fail ${key}, lock.json ${demo.failingSeeds[key].length}`);
+    }
+    lab.free();
+  }
+  console.log(`${lock.demos.length} lock recipes measured over seeds ${lock.seeds.from}..${lock.seeds.to} give lock.json's failing-seed counts`);
 }
 
 const table = run('stages').trim();
@@ -145,5 +170,5 @@ if (failed) {
   console.error(`${failed} checks failed against the native build`);
   process.exit(1);
 }
-console.log(`${maps} maps (${recipes.length} recipes x ${seeds} seeds) match the native build tile for tile, frame for frame and cache for cache, replay from their frames, and measure the same`);
-console.log(`${walks} levels walk the same as the native build: the route, what was seen, the caches found`);
+console.log(`${maps} maps (${recipes.length} recipes x ${seeds} seeds) match the native build tile for tile, frame for frame, cache for cache and lock for lock, replay from their frames, and measure the same`);
+console.log(`${walks} levels walk the same as the native build: the route, what was seen, the caches found, the key and the locked door`);

@@ -20,9 +20,13 @@ pub const UNREACHABLE: u8 = 8;
 pub const IMPORTANT: u8 = 9;
 pub const QUIET: u8 = 10;
 pub const TARGET: u8 = 11;
+pub const DOOR: u8 = 12;
+pub const KEY: u8 = 13;
+/// The start's side of a locked door: what the start reaches while it is closed.
+pub const SIDE: u8 = 14;
 pub const GROUP: u8 = 32;
-pub const MARK_NAMES: [&str; 12] =
-    ["", "new", "rejected", "point", "start", "exit", "path", "hot", "unreachable", "important", "quiet", "target"];
+pub const MARK_NAMES: [&str; 15] =
+    ["", "new", "rejected", "point", "start", "exit", "path", "hot", "unreachable", "important", "quiet", "target", "door", "key", "side"];
 
 /// A cell index and a value in one `u32`: index in the high 24 bits, value in the low 8.
 #[inline]
@@ -131,4 +135,9 @@ notes! {
     HotPath = "hot-path.marked",
     HotPathCulled = "hot-path.culled",
     HotRooms = "hot-rooms.marked",
+    LockChokepoints = "lock.chokepoints",
+    LockDoor = "lock.door",
+    LockNoDoor = "lock.no-door",
+    LockKey = "lock.key",
+    LockKeyBehind = "lock.key-behind",
 }

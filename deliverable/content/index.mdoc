@@ -69,6 +69,10 @@ On the command line: `map-lab build recipes/c20-hot-path.json --seed 7`.
 * Culling before it can be played
 * More than one region on every seed
 * [Cellular automata](#cellular) 17, [DLA, attractor](#dla) 26, [DLA, symmetric](#dla) 25, [Voronoi cells](#voronoi) 16, [BSP + caves + spine](#combine) 11, [Vault on open floor](#prefab) 17, [Caves, unreachable marked](#cull) 17
+---
+* [A locked door](#lock) on every seed
+* Our `lock` stage places a door on all 200 seeds; with its median chokepoints
+* [Rooms, hot rooms (c21)](#rooms) 105, [BSP rooms](#bsp) 88.5, [DLA, walking](#dla) 11
 {% /table %}
 
 - **Each row below:** one of the talk’s 22 demos, built on seeds 0 to 199 {% own-run values="table.comparison" /%}.
@@ -472,7 +476,7 @@ Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in {
 * {% now trait="rooms" digits=0 /%}
 {% /table %}
 
-- **Talk says,** of its animation: absolutely no rejections {% cite id="wolverson2020-talk/transcript#s70" /%}{% cite id="wolverson2020-talk/transcript#s71" /%}{% cite id="wolverson2020-talk/transcript#s72" /%}.
+- **Talk says:** its animation shows absolutely no rejections {% cite id="wolverson2020-talk/transcript#s70" /%}{% cite id="wolverson2020-talk/transcript#s71" /%}{% cite id="wolverson2020-talk/transcript#s72" /%}.
 - **BSP rooms:** of 240 attempts, 18 place a room at the median {% own-run values="c02.rooms.median" /%}.
   - **Why none are seen:** the demo records a frame only for a room that fits {% cite id="wolverson2020-code/c02-bsprooms/src/main.rs#L41-L55" /%}.
 - **vs random rooms:** 18 rooms vs 13; floor share 0.233 vs 0.162 {% own-run values="c02.rooms.median c01.rooms.median c02.floor_share.median c01.floor_share.median" /%}.
@@ -1547,8 +1551,8 @@ Stage `prefab`. The talk’s demos: `c14-not-a-trap`, `c15-still-not-a-trap`.
 * stamp it over the center columns of the map {% cite id="wolverson2020-code/c09-combination/src/main.rs#L116-L133" /%}
 {% /table %}
 
-- **Talk says,** with rooms: go through the room list and find a room that’s bigger than the prefab {% cite id="wolverson2020-talk/transcript#s203" /%}{% cite id="wolverson2020-talk/transcript#s204" /%}{% cite id="wolverson2020-talk/transcript#s205" /%}.
-- **Talk says,** without rooms: pick random locations and see if the prefab will fit {% cite id="wolverson2020-talk/transcript#s205" /%}{% cite id="wolverson2020-talk/transcript#s206" /%}{% cite id="wolverson2020-talk/transcript#s207" /%}.
+- **Talk says:** on a map with rooms, go through the room list and find a room that’s bigger than the prefab {% cite id="wolverson2020-talk/transcript#s203" /%}{% cite id="wolverson2020-talk/transcript#s204" /%}{% cite id="wolverson2020-talk/transcript#s205" /%}.
+- **Talk says:** on a map without rooms, pick random locations and see if the prefab will fit {% cite id="wolverson2020-talk/transcript#s205" /%}{% cite id="wolverson2020-talk/transcript#s206" /%}{% cite id="wolverson2020-talk/transcript#s207" /%}.
 {% /part %}
 
 {% part title="Step-through" %}
@@ -1685,7 +1689,7 @@ Our stage against the talk’s own code, each run on seeds 0 to 199 and [measure
 
 ## Analysis and placement
 
-Each reads a map: what can be reached, where to start and end, and what lies near the way between {% own /%}. The talk’s next set of algorithms all rely on Dijkstra maps {% cite id="wolverson2020-talk/transcript#s209" /%}{% cite id="wolverson2020-talk/transcript#s210" /%}{% cite id="wolverson2020-talk/transcript#s211" /%}.
+Each reads a map: what can be reached, where to start and end, and what lies near the way between {% own /%}. The talk’s next set of algorithms all rely on Dijkstra maps {% cite id="wolverson2020-talk/transcript#s209" /%}{% cite id="wolverson2020-talk/transcript#s210" /%}{% cite id="wolverson2020-talk/transcript#s211" /%}. The last card, the locked door, is a rule of our own for what the talk describes without code {% own /%}.
 
 {% card title="Culling what can’t be reached" id="cull" kind="Analysis" %}
 Find the parts of a map that can’t be reached, then delete them or put them to use {% cite id="wolverson2020-talk/transcript#s222" /%}{% cite id="wolverson2020-talk/transcript#s223" /%}{% cite id="wolverson2020-talk/transcript#s230" /%}{% cite id="wolverson2020-talk/transcript#s231" /%}{% cite id="wolverson2020-talk/transcript#s232" /%}{% cite id="wolverson2020-talk/transcript#s233" /%}{% cite id="wolverson2020-talk/transcript#s234" /%}{% cite id="wolverson2020-slides/pdf#p24" /%}.
@@ -1702,7 +1706,7 @@ Stage `cull`. The talk’s demo: `c16-unreachable`.
 
 {% figure src="assets/rules/cull-flood-light.png" dark="assets/rules/cull-flood-dark.png" alt="A small cave with one tile numbered 0. Every tile that can be walked to from it carries its number of steps, up to 5. A pocket of two open tiles at the right is walled off; it has no number and is marked." caption="A Dijkstra map from one tile (0): each tile it can walk to gets its number of steps. The pocket at the right gets none, so it can’t be reached (small squares)." /%}
 
-- **Talk says,** of Dijkstra maps: start from one or more points and mark the rest of the map with a sentinel value, meaning you can’t go there. Then number every walkable tile by its steps from the start {% cite id="wolverson2020-talk/transcript#s214" /%}{% cite id="wolverson2020-talk/transcript#s215" /%}{% cite id="wolverson2020-talk/transcript#s216" /%}{% cite id="wolverson2020-talk/transcript#s217" /%}{% cite id="wolverson2020-talk/transcript#s218" /%}{% cite id="wolverson2020-talk/transcript#s219" /%}{% cite id="wolverson2020-talk/transcript#s220" /%}{% cite id="wolverson2020-talk/transcript#s221" /%}{% cite id="wolverson2020-slides/pdf#p23" /%}.
+- **Talk says:** to make a Dijkstra map, start from one or more points and mark the rest of the map with a sentinel value, meaning you can’t go there. Then number every walkable tile by its steps from the start {% cite id="wolverson2020-talk/transcript#s214" /%}{% cite id="wolverson2020-talk/transcript#s215" /%}{% cite id="wolverson2020-talk/transcript#s216" /%}{% cite id="wolverson2020-talk/transcript#s217" /%}{% cite id="wolverson2020-talk/transcript#s218" /%}{% cite id="wolverson2020-talk/transcript#s219" /%}{% cite id="wolverson2020-talk/transcript#s220" /%}{% cite id="wolverson2020-talk/transcript#s221" /%}{% cite id="wolverson2020-slides/pdf#p23" /%}.
 {% /part %}
 
 {% part title="Step-through" %}
@@ -1922,8 +1926,8 @@ Then the route from the start to the exit is found {% cite id="wolverson2020-cod
 - **Demo:** the route is the one its library’s A* search returns {% cite id="wolverson2020-code/c18-ending-right/src/main.rs#L111" /%}{% cite id="wolverson2020-code/c19-ending-dijkstra/src/main.rs#L103" /%}.
 - **Ours:** always a shortest path; the demo’s [isn’t always](#exit-faithfulness) {% own /%}.
 
-- **Talk says,** of `farthest`: the least accessible part of the map, for when you really dislike your player {% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}.
-- **Talk says,** with a start in the middle: a really bad idea for an exit, and a great way to hide something {% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}{% cite id="wolverson2020-talk/transcript#s251" /%}{% cite id="wolverson2020-talk/transcript#s252" /%}{% cite id="wolverson2020-talk/transcript#s253" /%}{% cite id="wolverson2020-talk/transcript#s254" /%}{% cite id="wolverson2020-talk/transcript#s255" /%}{% cite id="wolverson2020-talk/transcript#s256" /%}.
+- **Talk says:** `farthest` is the least accessible part of the map, for when you really dislike your player {% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}.
+- **Talk says:** with a start in the middle, that part is a really bad idea for an exit, and a great way to hide something {% cite id="wolverson2020-talk/transcript#s249" /%}{% cite id="wolverson2020-talk/transcript#s250" /%}{% cite id="wolverson2020-talk/transcript#s251" /%}{% cite id="wolverson2020-talk/transcript#s252" /%}{% cite id="wolverson2020-talk/transcript#s253" /%}{% cite id="wolverson2020-talk/transcript#s254" /%}{% cite id="wolverson2020-talk/transcript#s255" /%}{% cite id="wolverson2020-talk/transcript#s256" /%}.
 {% /part %}
 
 {% part title="Step-through" %}
@@ -2130,8 +2134,9 @@ Stage `hot-rooms`. The talk’s demo: `c21-hot-rooms`.
    - **Ours:** the same test {% own /%}.
 3. Highlight the rooms on the route, and gray the rest {% cite id="wolverson2020-code/c21-hot-rooms/src/main.rs#L131-L154" /%}.
 
-- **Talk says,** of the gray rooms: cull them for a room-to-room game, or hide bonus things in them {% cite id="wolverson2020-talk/transcript#s269" /%}{% cite id="wolverson2020-talk/transcript#s270" /%}{% cite id="wolverson2020-talk/transcript#s271" /%}.
-- **Talk says,** of the rooms on the route: order a story along them, since the player will probably pass through them in order {% cite id="wolverson2020-talk/transcript#s274" /%}{% cite id="wolverson2020-talk/transcript#s275" /%}{% cite id="wolverson2020-talk/transcript#s276" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}.
+- **Talk says:** cull the gray rooms for a room-to-room game, or hide bonus things in them {% cite id="wolverson2020-talk/transcript#s269" /%}{% cite id="wolverson2020-talk/transcript#s270" /%}{% cite id="wolverson2020-talk/transcript#s271" /%}.
+- **Talk says:** order a story along the rooms on the route, since the player will probably pass through them in order {% cite id="wolverson2020-talk/transcript#s274" /%}{% cite id="wolverson2020-talk/transcript#s275" /%}{% cite id="wolverson2020-talk/transcript#s276" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}.
+- **Next in the talk:** a [locked door](#lock), on room five {% cite id="wolverson2020-talk/transcript#s289" /%}{% cite id="wolverson2020-talk/transcript#s290" /%}{% cite id="wolverson2020-talk/transcript#s291" /%}.
 {% /part %}
 
 {% part title="Step-through" %}
@@ -2204,6 +2209,163 @@ The talk’s demos that run it with other stages {% own /%}:
 Our stage against the talk’s own code, each run on seeds 0 to 199 and [measured the same way](#faithfulness-to-the-talks-code) {% own-run values="list.checked.hot-rooms" /%}:
 
 - `c21-hot-rooms`: 8 of 8 traits consistent with the talk’s own code.
+{% /part %}
+
+{% /card %}
+
+{% card title="Locked door and key" id="lock" kind="Analysis" %}
+A locked door, with its key somewhere on the map {% cite id="wolverson2020-talk/transcript#s289" /%}{% cite id="wolverson2020-talk/transcript#s290" /%}. The talk describes it and has no code for it, so this stage’s rule is ours {% own /%}.
+
+Stage `lock`. Ours: the talk has no demo of it {% own /%}.
+
+{% part title="The rule" %}
+- **Talk says:** a good place for the door is a room’s exit that a flood fill shows has no way around it {% cite id="wolverson2020-talk/transcript#s290" /%}{% cite id="wolverson2020-talk/transcript#s291" /%}{% cite id="wolverson2020-talk/transcript#s292" /%}{% cite id="wolverson2020-talk/transcript#s293" /%}.
+- **Talk says:** the key has to be in the rooms before the door, or the map can’t be solved {% cite id="wolverson2020-talk/transcript#s293" /%}{% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-talk/transcript#s295" /%}{% cite id="wolverson2020-talk/transcript#s296" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}.
+- **Talk’s point:** guide the randomness, then use algorithms to check it {% cite id="wolverson2020-talk/transcript#s297" /%}{% cite id="wolverson2020-talk/transcript#s298" /%}.
+
+Ours, on any map with a route from a start to an exit {% own /%}:
+
+1. Find the chokepoints: the route’s tiles, two steps or more from the start, that closed would cut the exit off from the start {% own /%}.
+2. Take the one nearest the route’s middle. Its passage is the unbroken run of chokepoints that holds it {% own /%}.
+3. The door goes in the passage’s doorway: its first tile with wall on two sides {% own /%}.
+4. Close the door and flood from the start. What is reached is the start’s side {% own /%}.
+5. Put the key on the start’s side, on the floor tile farthest from the route by walking {% own /%}.
+
+- **No chokepoint:** no door and no key; the level keeps its one goal {% own /%}.
+- **Talk says:** hide bonus things in the rooms its route doesn’t need {% cite id="wolverson2020-talk/transcript#s269" /%}{% cite id="wolverson2020-talk/transcript#s270" /%}{% cite id="wolverson2020-talk/transcript#s271" /%}{% cite id="wolverson2020-slides/pdf#p30" /%}. Ours puts the key off the route {% own /%}.
+{% /part %}
+
+{% part title="Step-through" %}
+{% interactive id="lab" caption="Step through Rooms, a locked door (ours); Rooms, the key anywhere (ours); Caves, no place for a door (ours): seed 1, 80 by 50 tiles. Change the seed or a control and the map is built again." params={mode: "card", stage: "lock", demos: ["door", "anywhere", "nodoor"]} %}
+{% steps %}
+{% step src="assets/steps/door-0073-light.png" dark="assets/steps/door-0073-dark.png" alt="Rooms, a locked door (ours), seed 1: the map at step 73 of 76." at=73 of=76 %}
+The map before the next step.
+{% /step %}
+{% step src="assets/steps/door-0074-light.png" dark="assets/steps/door-0074-dark.png" alt="Rooms, a locked door (ours), seed 1: the map at step 74 of 76." key="lock.chokepoints" at=74 of=76 %}
+**Chokepoints:** the route’s tiles that, closed, would cut the exit off from the start {% own /%}. Talk says a flood fill finds such a place for a door {% cite id="wolverson2020-talk/transcript#s291" /%}{% cite id="wolverson2020-talk/transcript#s292" /%}{% cite id="wolverson2020-talk/transcript#s293" /%}. Chokepoints: {% value %}132{% /value %}.
+{% /step %}
+{% step src="assets/steps/door-0075-light.png" dark="assets/steps/door-0075-dark.png" alt="Rooms, a locked door (ours), seed 1: the map at step 75 of 76." key="lock.door" at=75 of=76 %}
+**The door:** in the doorway of the passage that holds the chokepoint nearest the route’s middle. What it cuts off is shaded {% own /%}. Steps from the start: {% value %}77{% /value %}.
+{% /step %}
+{% step src="assets/steps/door-0076-light.png" dark="assets/steps/door-0076-dark.png" alt="Rooms, a locked door (ours), seed 1: the map at step 76 of 76." key="lock.key" at=76 of=76 %}
+**The key:** on the start’s side of the door, shaded, on the floor tile farthest from the route {% own /%}. Talk says the key has to be before the door {% cite id="wolverson2020-talk/transcript#s293" /%}{% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}. Steps from the start: {% value %}35{% /value %}.
+{% /step %}
+{% /steps %}
+
+On the command line: `map-lab build recipes/own/locked-door.json`, `map-lab build recipes/own/locked-door-key-anywhere.json`, `map-lab build recipes/lock/c18-ending-right-lock.json`.
+{% /interactive %}
+
+Also in the step-through: Rooms, the key anywhere (ours); Caves, no place for a door (ours). The steps that differ, and each one’s last:
+
+{% steps %}
+{% step src="assets/steps/anywhere-0076-light.png" dark="assets/steps/anywhere-0076-dark.png" alt="Rooms, the key anywhere (ours), seed 1: the map at step 76 of 76." key="lock.key-behind" at=76 of=76 %}
+**The key, unchecked:** on a random tile, which here is behind the door {% own /%}. Talk says such a map can’t be solved {% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-talk/transcript#s295" /%}{% cite id="wolverson2020-talk/transcript#s296" /%}. Steps from the start: {% value %}106{% /value %}.
+{% /step %}
+{% step src="assets/steps/nodoor-0017-light.png" dark="assets/steps/nodoor-0017-dark.png" alt="Caves, no place for a door (ours), seed 1: the map at step 17 of 17." key="lock.no-door" at=17 of=17 %}
+**No door:** closing any one tile of the route leaves another way around. This map has no place for a locked door, and no key {% own /%}.
+{% /step %}
+{% /steps %}
+{% /part %}
+
+{% part title="Controls" %}
+- `key` (`before-door`, `anywhere`; ours: the talk has no code for this stage) {% own /%}. `before-door`: on the start’s side, the floor tile farthest from the route {% own /%}. `anywhere`: a random tile the start can reach with the door open, which may be behind the door {% own /%}. Talk says a key behind the door leaves a map that can’t be solved {% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-talk/transcript#s295" /%}{% cite id="wolverson2020-talk/transcript#s296" /%}.
+{% /part %}
+
+{% part title="Measured traits" %}
+Seeds 0 to 199, our own runs: the median, then the range 8 of 10 seeds fall in. The last three columns count only seeds with a door {% own-run values="table.lock.measured" /%}.
+
+{% table label="Measured traits: Locked door and key" rowheads=true %}
+* The talk’s demo, with our lock stage after it
+* Door placed, of 200
+* Chokepoints on the route
+* Door, along the route
+* Key, steps off the route
+* Finishing walk, over the route
+---
+* Rooms, hot rooms (c21)
+* 200
+* 105, 76.9 to 144.1
+* 0.48, 0.42 to 0.51
+* 25, 19 to 32.1
+* 1.27, 1.18 to 1.39
+---
+* Caves, hot path cull (c20)
+* 126
+* 1, 0 to 8
+* 0.64, 0.12 to 0.99
+* 14, 14 to 14
+* 1.25, 1.16 to 1.29
+---
+* Caves, exit farthest (c19)
+* 126
+* 1, 0 to 8
+* 0.97, 0.60 to 0.99
+* 64, 59.5 to 68
+* 2.61, 2.22 to 2.89
+---
+* Caves, exit at right (c18)
+* 82
+* 0, 0 to 2
+* 0.99, 0.03 to 0.99
+* 44.5, 3.1 to 58
+* 1.42, 1.07 to 1.86
+{% /table %}
+
+- **Rooms:** a door on every seed. The route has 105 chokepoints at the median, and the door sits 0.48 of the way along it {% own-run values="lock.rooms.chokepoints.median lock.rooms.door_at.median" /%}.
+- **Caves:** `c18` has a door on 82 of 200 seeds, 0.99 of the way along the route at the median: the exit’s doorstep {% own-run values="lock.c18.places lock.c18.door_at.median" /%}.
+  - **After the hot path’s cull:** a door on 126, 0.64 of the way along {% own-run values="lock.c20.places lock.c20.door_at.median" /%}.
+- **The key,** on rooms: 25 steps off the route at the median. The shortest walk that finishes is 1.27 times the route {% own-run values="lock.rooms.key_off_route.median lock.rooms.finish_ratio.median" /%}.
+{% /part %}
+
+{% part title="Failures" %}
+Seeds 0 to 199 of each pipeline, against [our criteria](#failure-criteria) {% own-run values="list.fails.lock" /%}:
+
+{% table label="Failures: Locked door and key" rowheads=true %}
+* Failure
+* Pipeline
+* Seeds failing, of 200
+* Watch it fail on
+---
+* [No place for a door](#failure-criteria)
+* Caves, exit at right (c18), then `lock`
+* 118
+* [seed 1](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9LHsic3RhZ2UiOiJsb2NrIiwia2V5IjoiYmVmb3JlLWRvb3IifV0sInNlZWQiOjF9), 117 more in the data file
+---
+* [No place for a door](#failure-criteria)
+* Caves, exit farthest (c19), then `lock`
+* 74
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoiY2VudGVyIn0seyJzdGFnZSI6ImV4aXQiLCJhdCI6ImZhcnRoZXN0In0seyJzdGFnZSI6ImxvY2siLCJrZXkiOiJiZWZvcmUtZG9vciJ9XSwic2VlZCI6MH0), 73 more in the data file
+---
+* [No place for a door](#failure-criteria)
+* Caves, hot path cull (c20), then `lock`
+* 74
+* [seed 2](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoiY2VsbHVsYXIiLCJ3YWxsX3BlcmNlbnQiOjU1LCJpdGVyYXRpb25zIjoxMH0seyJzdGFnZSI6ImN1bGwiLCJmcm9tIjoiY2VudGVyIiwibW9kZSI6InJlbW92ZSJ9LHsic3RhZ2UiOiJzdGFydCIsImF0IjoibGVmdCJ9LHsic3RhZ2UiOiJleGl0IiwiYXQiOiJyaWdodCJ9LHsic3RhZ2UiOiJob3QtcGF0aCIsInJhZGl1cyI6MTAsImN1bGwiOjE1fSx7InN0YWdlIjoibG9jayIsImtleSI6ImJlZm9yZS1kb29yIn1dLCJzZWVkIjoyfQ), 73 more in the data file
+---
+* [Key behind its door](#failure-criteria)
+* Rooms, the key anywhere, then `lock`
+* 92
+* [seed 0](#recipe=eyJmb3JtYXQiOiJtYXAtbGFiLXJlY2lwZS8xIiwicGlwZWxpbmUiOlt7InN0YWdlIjoicm9vbXMiLCJhdHRlbXB0cyI6NTAsIm1pbl9zaXplIjoyLCJtYXhfc2l6ZSI6OX0seyJzdGFnZSI6InN0YXJ0IiwiYXQiOiJsZWZ0In0seyJzdGFnZSI6ImV4aXQiLCJhdCI6InJpZ2h0In0seyJzdGFnZSI6ImhvdC1yb29tcyJ9LHsic3RhZ2UiOiJsb2NrIiwia2V5IjoiYW55d2hlcmUifV0sInNlZWQiOjB9), 91 more in the data file
+{% /table %}
+
+- **The talk’s warning, counted:** placed anywhere, the key is behind its door on 92 of 200 room maps {% own-run values="lock.anywhere.behind" /%}.
+{% /part %}
+
+{% part title="Combinations" %}
+After each generator, with a start on the left and an exit on the right: seeds of 200 on which `lock` places a door {% own-run values="list.lock.places" /%}:
+
+- [Rooms, hot rooms (c21)](#rooms): a door on 200, 105 chokepoints at the median
+- [BSP rooms](#bsp): a door on 200, 88.5 chokepoints at the median
+- [DLA, walking](#dla): a door on 200, 11 chokepoints at the median
+- [Voronoi roads](#voronoi): a door on 197, 35 chokepoints at the median
+- [Drunkard’s walk](#drunkard): a door on 155, 3 chokepoints at the median
+- [Caves, exit at right (c18)](#cellular): a door on 82, 0 chokepoints at the median
+
+- **In the walk:** a second goal. Find the key, open the door, reach the exit {% own /%}.
+{% /part %}
+
+{% part title="Faithfulness" %}
+- **Nothing to check against:** the talk’s code has no locked door, so this stage isn’t in [the faithfulness check](#faithfulness-to-the-talks-code) {% own /%}.
+- **Checked instead:** the core’s tests close each tile of a route in turn, flood from the start, and compare what that cuts off with the chokepoints the stage found {% own /%}.
 {% /part %}
 
 {% /card %}
@@ -2343,6 +2505,7 @@ The talk doesn’t measure its maps. Each trait, the probe and each failure crit
 - **What is measured:** each of the talk’s 22 demos, as a recipe {% own /%}.
 - **Seeds:** 0 to 199, each built once, by the same core that runs in this page {% own /%}.
 - **The data file:** every value, with the recipe and the seed behind it {% ref source="this" path="assets/lab/traits.json" lines="1-6" /%}.
+- **Also measured:** our `lock` stage, on 9 pipelines over the same seeds, in a data file of its own {% ref source="this" path="assets/lab/lock.json" lines="1-6" /%}.
 
 ### Our definitions
 
@@ -2414,16 +2577,24 @@ A seed fails a demo when its map meets one of these {% own /%}:
 ---
 * Few rooms
 * A room generator placed fewer than four rooms.
+---
+* No place for a door
+* A lock stage found no tile on the route that, closed, cuts the exit off from the start.
+---
+* Key behind its door
+* A lock stage’s key can’t be reached without passing its own door.
 {% /table %}
 
 ### The walk
 
 - **Talk says:** hide something at the least accessible point of a map, for a treasure hunt {% cite id="wolverson2020-talk/transcript#s253" /%}{% cite id="wolverson2020-talk/transcript#s254" /%}{% cite id="wolverson2020-talk/transcript#s255" /%}{% cite id="wolverson2020-talk/transcript#s256" /%}.
 - **Talk says:** hide bonus things in the gray rooms, the ones its route doesn’t need {% cite id="wolverson2020-talk/transcript#s267" /%}{% cite id="wolverson2020-talk/transcript#s268" /%}{% cite id="wolverson2020-talk/transcript#s269" /%}{% cite id="wolverson2020-talk/transcript#s270" /%}{% cite id="wolverson2020-talk/transcript#s271" /%}.
+- **Talk says:** a locked door needs its key before it {% cite id="wolverson2020-talk/transcript#s293" /%}{% cite id="wolverson2020-talk/transcript#s294" /%}{% cite id="wolverson2020-slides/pdf#p31" /%}.
 - **The lab’s walk:** borrows that, as caches to find on the way to the exit. The talk has no walk, and these rules are ours {% own /%}:
   - **Caches:** up to 5, on floor or grass, at least the hot path’s radius from the route by walking. The first: the tile farthest from the route. Each later one: the tile farthest from those placed, more than 12 steps from them {% own /%}.
   - **Sight:** up to 9 tiles away in straight lines, over tiles that can be walked on, plus the walls that touch what you see. What you have seen stays on the map {% own /%}.
-  - **Afterward:** the lab draws your route over the shortest one, on the map shaded by walking distance from the start {% own /%}.
+  - **A locked door:** on a level where a `lock` stage placed one. It stays closed, and blocks your view, until you step on the key. Caches keep more than 12 steps from the key {% own /%}.
+  - **Afterward:** the lab draws your route over the shortest one, which with a door goes by way of the key, on the map shaded by walking distance from the start {% own /%}.
 
 ### Faithfulness to the talk’s code
 
@@ -2552,5 +2723,5 @@ A seed fails a demo when its map meets one of these {% own /%}:
 * –
 {% /table %}
 
-- **Also with this page:** the comparison’s numbers, the talk’s code’s own traits and counts, and the recipe format’s schema {% ref source="this" path="assets/lab/faithfulness.json" lines="1-6" /%}{% ref source="this" path="assets/lab/talk-traits.json" lines="1-6" /%}{% ref source="this" path="assets/lab/talk-checks.json" lines="1-6" /%}{% ref source="this" path="assets/lab/recipe.schema.json" lines="1-6" /%}.
+- **Also with this page:** the comparison’s numbers, the talk’s code’s own traits and counts, and the recipe format’s schema {% ref source="this" path="assets/lab/faithfulness.json" lines="1-6" /%}{% ref source="this" path="assets/lab/talk-traits.json" lines="1-6" /%}{% ref source="this" path="assets/lab/talk-checks.json" lines="1-6" /%}{% ref source="this" path="assets/lab/lock.json" lines="1-6" /%}{% ref source="this" path="assets/lab/recipe.schema.json" lines="1-6" /%}.
 - **On the command line:** the core is also `map-lab`, in this page’s repository. `map-lab build`, `traits`, `measure` and `walk` take the same recipes {% own /%}.

@@ -1,7 +1,7 @@
 {
   "format": "0.1",
   "id": "procedural-map-generation-techniques-notes",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "title": "Procedural map generation: an interactive lab built on Herbert Wolverson’s talk",
   "summary": "Build a map from the techniques of Herbert Wolverson’s talk, measure it over 200 seeds, and walk it to its exit.",
   "pageType": "post",
@@ -76,18 +76,23 @@
       "date": "2026-11-11",
       "version": "0.8.1",
       "note": "Three headings are shorter, so links to them change: “Which technique for which map” is now “Choosing a technique”, “How this was measured” is “Method”, and “What counts as failing” is “Failure criteria”. The lab’s line on what each card holds names the cards’ seven parts. No claim changes."
+    },
+    {
+      "date": "2026-11-11",
+      "version": "0.9.0",
+      "note": "Adds the talk’s locked door and key as a stage and a 16th card. The talk describes it and has no code for it, so the rule is ours and marked so: the door goes where closing one tile of the route cuts the exit off from the start, and the key before it. Measured over 200 seeds on nine pipelines, with a data file of its own. In the walk the door stays closed until you find the key. Two failure criteria are new: no place for a door, and a key behind its door."
     }
   ],
   "testedAgainst": [
     {
       "name": "Rust (the map lab core, native and WebAssembly)",
       "version": "1.99.1",
-      "date": "2026-11-10"
+      "date": "2026-11-11"
     },
     {
       "name": "Node.js (the build: the page, its step figures and its checks)",
       "version": "26.13.0",
-      "date": "2026-11-10"
+      "date": "2026-11-11"
     }
   ],
   "hardware": [],
@@ -153,7 +158,7 @@
     {
       "id": "lab",
       "module": "assets/lab/lab.js",
-      "description": "The map lab: builds a recipe (a pipeline of the talk’s techniques and a seed) with the deterministic core in WebAssembly, steps through the build, measures the pipeline over 200 seeds, and walks the finished level. Mounted once as the lab and once in each technique’s card."
+      "description": "The map lab: builds a recipe (a pipeline of the talk’s techniques and a seed) with the deterministic core in WebAssembly, steps through the build, measures the pipeline over 200 seeds, and walks the finished level, through a locked door if the pipeline placed one. Mounted once as the lab and once in each technique’s card."
     }
   ]
 }

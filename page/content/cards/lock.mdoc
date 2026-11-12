@@ -1,0 +1,50 @@
+---
+extras: ["door", "anywhere", "nodoor"]
+title: Locked door and key
+---
+A locked door, with its key somewhere on the map [[t:289-290]]. The talk describes it and has no code for it, so this stage’s rule is ours [[own]].
+
+## The rule
+- **Talk says:** a good place for the door is a room’s exit that a flood fill shows has no way around it [[t:290-293]].
+- **Talk says:** the key has to be in the rooms before the door, or the map can’t be solved [[t:293-296 s:31]].
+- **Talk’s point:** guide the randomness, then use algorithms to check it [[t:297-298]].
+
+Ours, on any map with a route from a start to an exit [[own]]:
+
+1. Find the chokepoints: the route’s tiles, two steps or more from the start, that closed would cut the exit off from the start [[own]].
+2. Take the one nearest the route’s middle. Its passage is the unbroken run of chokepoints that holds it [[own]].
+3. The door goes in the passage’s doorway: its first tile with wall on two sides [[own]].
+4. Close the door and flood from the start. What is reached is the start’s side [[own]].
+5. Put the key on the start’s side, on the floor tile farthest from the route by walking [[own]].
+
+- **No chokepoint:** no door and no key; the level keeps its one goal [[own]].
+- **Talk says:** hide bonus things in the rooms its route doesn’t need [[t:269-271 s:30]]. Ours puts the key off the route [[own]].
+
+## Step-through
+@@steps limit=4
+
+## Controls
+@@control key
+`before-door`: on the start’s side, the floor tile farthest from the route [[own]]. `anywhere`: a random tile the start can reach with the door open, which may be behind the door [[own]]. Talk says a key behind the door leaves a map that can’t be solved [[t:294-296]].
+
+## Measured traits
+@@lock-measured
+
+- **Rooms:** a door on every seed. The route has {{lock.rooms.chokepoints.median}} chokepoints at the median, and the door sits {{lock.rooms.door_at.median}} of the way along it [[run:lock.rooms.chokepoints.median lock.rooms.door_at.median]].
+- **Caves:** `c18` has a door on {{lock.c18.places}} of 200 seeds, {{lock.c18.door_at.median}} of the way along the route at the median: the exit’s doorstep [[run:lock.c18.places lock.c18.door_at.median]].
+  - **After the hot path’s cull:** a door on {{lock.c20.places}}, {{lock.c20.door_at.median}} of the way along [[run:lock.c20.places lock.c20.door_at.median]].
+- **The key,** on rooms: {{lock.rooms.key_off_route.median}} steps off the route at the median. The shortest walk that finishes is {{lock.rooms.finish_ratio.median}} times the route [[run:lock.rooms.key_off_route.median lock.rooms.finish_ratio.median]].
+
+## Failures
+@@lock-fails
+
+- **The talk’s warning, counted:** placed anywhere, the key is behind its door on {{lock.anywhere.behind}} of 200 room maps [[run:lock.anywhere.behind]].
+
+## Combinations
+@@lock-places
+
+- **In the walk:** a second goal. Find the key, open the door, reach the exit [[own]].
+
+## Faithfulness
+- **Nothing to check against:** the talk’s code has no locked door, so this stage isn’t in [the faithfulness check](#faithfulness-to-the-talks-code) [[own]].
+- **Checked instead:** the core’s tests close each tile of a route in turn, flood from the start, and compare what that cuts off with the chokepoints the stage found [[own]].

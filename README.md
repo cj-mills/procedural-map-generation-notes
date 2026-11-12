@@ -112,7 +112,8 @@ stages the bundle in `dist/bundle/`:
 - every step figure drawn from the core's own frames, in the site's figure colors for both
   themes;
 - the measurement data, the talk's own code measured and counted over the same seeds
-  (`faithfulness/talk-traits.json`, `faithfulness/talk-checks.json`) and the recipe schema, and
+  (`faithfulness/talk-traits.json`, `faithfulness/talk-checks.json`), our lock stage's own data
+  (`lab/data/lock.json`) and the recipe schema, and
   `code.commit` set to `HEAD` when the working tree is clean.
 
 The two JSON files beside the page stay out of the bundle. They hold ids, locators, counts and

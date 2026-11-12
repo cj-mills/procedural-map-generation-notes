@@ -6,6 +6,7 @@
 //!   map-lab measure <recipe.json>... [--seeds FROM..TO] [--out FILE]
 //!   map-lab compare <ours.json> <theirs.json> [--out FILE]
 //!   map-lab hashes <recipe.json>... [--seeds FROM..TO]
+//!   map-lab lock <recipe.json>... [--seeds FROM..TO] [--out FILE]
 //!   map-lab schema
 //!   map-lab stages
 //!
@@ -20,9 +21,9 @@ mod schema;
 use map_lab_core::grid::{GLYPHS, TILE_KINDS, TILE_NAMES};
 use map_lab_core::recipe::{self, Recipe};
 use map_lab_core::record::{MARK_NAMES, NOTE_KEYS};
-use map_lab_core::report::{self, failure_names, list, string, Obj, Row, COLUMNS};
+use map_lab_core::report::{self, failure_names, list, string, Obj, Row, COLUMNS, LOCK_COLUMNS};
 use map_lab_core::walk::{Walk, IN_VIEW, MOVES, UNSEEN};
-use map_lab_core::{build, level, tiles_hash, Build};
+use map_lab_core::{build, level, tiles_hash, traits, Build};
 use std::process::exit;
 
 fn main() {
@@ -36,6 +37,7 @@ fn main() {
         "measure" => cmd_measure(rest),
         "compare" => compare::cmd(rest),
         "hashes" => cmd_hashes(rest),
+        "lock" => cmd_lock(rest),
         "schema" => {
             println!("{}", schema::schema());
             Ok(())
@@ -55,7 +57,7 @@ fn main() {
 
 fn usage() -> ! {
     eprintln!(
-        "usage:\n  map-lab build <recipe.json> [--seed N] [--json] [--path] [--frames]\n  map-lab walk <recipe.json> [--seed N] [--moves LRUD...] [--json]\n  map-lab traits <recipe.json> [--seeds FROM..TO]\n  map-lab measure <recipe.json>... [--seeds FROM..TO] [--out FILE]\n  map-lab compare <ours.json> <theirs.json> [--out FILE]\n  map-lab hashes <recipe.json>... [--seeds FROM..TO]\n  map-lab schema\n  map-lab stages"
+        "usage:\n  map-lab build <recipe.json> [--seed N] [--json] [--path] [--frames]\n  map-lab walk <recipe.json> [--seed N] [--moves LRUD...] [--json]\n  map-lab traits <recipe.json> [--seeds FROM..TO]\n  map-lab measure <recipe.json>... [--seeds FROM..TO] [--out FILE]\n  map-lab compare <ours.json> <theirs.json> [--out FILE]\n  map-lab hashes <recipe.json>... [--seeds FROM..TO]\n  map-lab lock <recipe.json>... [--seeds FROM..TO] [--out FILE]\n  map-lab schema\n  map-lab stages"
     );
     exit(2)
 }
@@ -143,6 +145,8 @@ fn cmd_build(a: &[String]) -> Result<(), String> {
         o.raw("start", &point(&b, b.start));
         o.raw("exit", &point(&b, b.exit));
         o.raw("caches", &list(level::caches(&b).into_iter().map(|i| point(&b, Some(i)))));
+        o.raw("door", &point(&b, b.door));
+        o.raw("key", &point(&b, b.key));
         o.raw("stages", &list(b.stage_names.iter().map(|s| string(s))));
         o.raw("tilesHash", &tiles_hash(&b.tiles).to_string());
         if a.has("frames") {
@@ -193,7 +197,7 @@ fn cmd_walk(a: &[String]) -> Result<(), String> {
         r.seed = s.parse().map_err(|_| "bad --seed")?;
     }
     let b = build(&r, false);
-    let mut w = Walk::new(&b).ok_or("this map is not a level: a walk needs a start, an exit and a path between them")?;
+    let mut w = Walk::new(&b).ok_or("this map is not a level: a walk needs a start, an exit and a path between them, and a key that isn't behind its own door")?;
     let mut refused = 0;
     for m in a.get("moves").unwrap_or("").bytes() {
         let dir = MOVES.iter().position(|&l| l == m.to_ascii_uppercase()).ok_or("--moves is letters from L, R, U and D")?;
@@ -211,10 +215,18 @@ fn cmd_walk(a: &[String]) -> Result<(), String> {
     if let Some(e) = b.exit.filter(|&e| w.seen[e] != UNSEEN) {
         chars[e] = b'>';
     }
+    // The door while it is locked, and the key until it is taken, once seen.
+    if !w.has_key {
+        for (i, glyph) in [(b.door, b'+'), (b.key, b'k')] {
+            if let Some(i) = i.filter(|&i| w.seen[i] != UNSEEN) {
+                chars[i] = glyph;
+            }
+        }
+    }
     chars[w.at()] = b'@';
     let rows: Vec<String> = chars.chunks(b.width as usize).map(|r| String::from_utf8(r.to_vec()).unwrap()).collect();
     let steps = w.route.len() - 1;
-    let shortest = b.path.len() - 1;
+    let shortest = level::finish(&b).len() - 1;
     let found = w.found.iter().filter(|&&f| f).count();
     if a.has("json") {
         let mut o = Obj::new();
@@ -227,6 +239,9 @@ fn cmd_walk(a: &[String]) -> Result<(), String> {
         o.raw("route", &list(w.route.iter().map(|&i| point(&b, Some(i)))));
         o.raw("caches", &list(w.caches.iter().map(|&i| point(&b, Some(i)))));
         o.raw("found", &list(w.found.iter().map(|&f| if f { "true".to_string() } else { "false".to_string() })));
+        o.raw("door", &point(&b, b.door));
+        o.raw("key", &point(&b, b.key));
+        o.raw("hasKey", if w.has_key { "true" } else { "false" });
         o.raw("inView", &w.seen.iter().filter(|&&s| s == IN_VIEW).count().to_string());
         o.raw("seenAbout", &string("one digit a tile, row by row: 0 unseen, 1 seen earlier and remembered, 2 in view now"));
         o.raw("seen", &list(w.seen.chunks(b.width as usize).map(|row| string(&row.iter().map(|s| (b'0' + s) as char).collect::<String>()))));
@@ -238,20 +253,25 @@ fn cmd_walk(a: &[String]) -> Result<(), String> {
         }
         println!();
         println!(
-            "seed {}  steps {}  refused moves {}  the shortest walk {}  caches found {} of {}  {}",
+            "seed {}  steps {}  refused moves {}  the shortest walk {}  caches found {} of {}{}  {}",
             r.seed,
             steps,
             refused,
             shortest,
             found,
             w.caches.len(),
+            match (b.door, w.has_key) {
+                (None, _) => "",
+                (_, true) => "  has the key",
+                _ => "  the door is locked",
+            },
             if w.done() { "at the exit" } else { "not at the exit" }
         );
     }
     Ok(())
 }
 
-/// The map as text rows; `@` the start, `>` the exit and `&` each cache, `*` the path with
+/// The map as text rows; `@` the start, `>` the exit, `&` each cache, `+` the locked door and `k` its key, `*` the path with
 /// `--path`.
 fn render(b: &Build, with_path: bool) -> Vec<String> {
     let mut chars: Vec<u8> = b.tiles.iter().map(|&t| GLYPHS[t as usize]).collect();
@@ -262,6 +282,12 @@ fn render(b: &Build, with_path: bool) -> Vec<String> {
     }
     for i in level::caches(b) {
         chars[i] = b'&';
+    }
+    if let Some(d) = b.door {
+        chars[d] = b'+';
+    }
+    if let Some(k) = b.key {
+        chars[k] = b'k';
     }
     if let Some(s) = b.start {
         chars[s] = b'@';
@@ -280,6 +306,8 @@ fn legend() -> String {
     o.raw("@", &string("start"));
     o.raw(">", &string("exit"));
     o.raw("&", &string("cache"));
+    o.raw("+", &string("locked door"));
+    o.raw("k", &string("key"));
     o.raw("*", &string("path (with --path)"));
     o.end()
 }
@@ -396,8 +424,77 @@ fn cmd_hashes(a: &[String]) -> Result<(), String> {
             let b = build(&r, true);
             let caches: Vec<String> = level::caches(&b).iter().map(|i| i.to_string()).collect();
             let caches = if caches.is_empty() { "-".into() } else { caches.join(",") };
-            println!("{} {} {} {} {}", id_of(file), seed, tiles_hash(&b.tiles), b.frames.len(), caches);
+            let lock = match (b.door, b.key) {
+                (Some(d), Some(k)) => format!("{d},{k}"),
+                _ => "-".into(),
+            };
+            println!("{} {} {} {} {} {}", id_of(file), seed, tiles_hash(&b.tiles), b.frames.len(), caches, lock);
         }
     }
     Ok(())
+}
+
+/// What a lock stage does to each recipe's level over many seeds, as a data file of its own:
+/// per-seed values (`level::lock_values`, `report::LOCK_COLUMNS`), their summaries and the
+/// seeds failing the stage's two criteria.
+fn cmd_lock(a: &[String]) -> Result<(), String> {
+    let a = parse_args(a, &["seeds", "out"])?;
+    if a.files.is_empty() {
+        return Err("lock takes recipe files".into());
+    }
+    let seeds = a.seeds(DEFAULT_SEEDS)?;
+    let lock_failures = [(map_lab_core::DOOR_NO_PLACE, 8), (map_lab_core::KEY_BEHIND_DOOR, 9)];
+    let mut demos = Vec::new();
+    for file in &a.files {
+        let (text, mut r) = load(file)?;
+        let mut rows = Vec::new();
+        for seed in seeds.0..seeds.1 {
+            r.seed = seed;
+            let b = build(&r, false);
+            let values = level::lock_values(&b).unwrap_or([f64::NAN; level::LOCK_VALUES]);
+            rows.push((seed, values, b.failures()));
+        }
+        let mut o = Obj::lines(6);
+        o.raw("id", &string(&id_of(file)));
+        o.raw("recipeFile", &string(file));
+        o.raw("recipe", text.trim());
+        let mut sums = Obj::lines(8);
+        for (c, (name, _)) in LOCK_COLUMNS.iter().enumerate() {
+            let vals: Vec<f64> = rows.iter().map(|r| r.1[c]).filter(|v| !v.is_nan()).collect();
+            sums.raw(name, &report::summary(&vals, rows.len() - vals.len()));
+        }
+        o.raw("summary", &sums.end());
+        let mut fails = Obj::new();
+        for (bit, n) in lock_failures {
+            let failing: Vec<String> = rows.iter().filter(|r| r.2 & bit != 0).map(|r| r.0.to_string()).collect();
+            fails.raw(traits::FAILURES[n].0, &list(failing));
+        }
+        o.raw("failingSeeds", &fails.end());
+        let lines = rows.iter().map(|(seed, values, _)| {
+            let mut cells = vec![seed.to_string()];
+            cells.extend(values.iter().map(|v| if v.is_nan() { "null".into() } else { report::num((v * 1e6).round() / 1e6) }));
+            list(cells)
+        });
+        o.raw("rows", &format!("[\n        {}\n      ]", lines.collect::<Vec<_>>().join(",\n        ")));
+        demos.push(o.end());
+    }
+    let mut o = Obj::lines(2);
+    o.raw("format", &string("map-lab-lock/1"));
+    o.raw("generatedBy", &string("map-lab lock, map-lab-core 0.1.0: each recipe built once per seed, the recipe's own seed replaced"));
+    let mut s = Obj::new();
+    s.raw("from", &seeds.0.to_string()).raw("to", &seeds.1.to_string()).raw("note", &string("seeds from..to, to exclusive"));
+    o.raw("seeds", &s.end());
+    let mut cols = Obj::lines(4);
+    for (k, v) in LOCK_COLUMNS {
+        cols.raw(k, &string(v));
+    }
+    o.raw("columns", &cols.end());
+    o.raw("rowLayout", &string("each row: [seed, then the columns in order]; ratios rounded to six places"));
+    let mut f = Obj::lines(4);
+    for (_, n) in lock_failures {
+        f.raw(traits::FAILURES[n].0, &string(traits::FAILURES[n].1));
+    }
+    o.raw("failures", &f.end());
+    o.raw("demos", &format!("[\n    {}\n  ]", demos.join(",\n    ")));
+    write_out(a.get("out"), &o.end())
 }

@@ -64,6 +64,7 @@ pub enum Kind {
     Exit,
     HotPath,
     HotRooms,
+    Lock,
 }
 
 const fn int(name: &'static str, min: i64, max: i64, default: i64) -> ParamSpec {
@@ -76,6 +77,8 @@ const fn pick(name: &'static str, options: &'static [&'static str]) -> ParamSpec
     ParamSpec { name, kind: Param::Pick(options) }
 }
 const TALK: &[&str] = &["talk"];
+/// A stage the talk describes and has no code for: the rule is our own.
+const OURS: &[&str] = &["ours"];
 
 /// In `Kind` order. Each default is the talk's own value.
 pub const STAGES: &[StageSpec] = &[
@@ -136,6 +139,7 @@ pub const STAGES: &[StageSpec] = &[
     StageSpec { name: "exit", params: &[pick("at", &["right", "farthest"])], variants: TALK },
     StageSpec { name: "hot-path", params: &[int("radius", 1, 1000, HOT_RADIUS), int("cull", 0, 1000, 0)], variants: TALK },
     StageSpec { name: "hot-rooms", params: &[], variants: TALK },
+    StageSpec { name: "lock", params: &[pick("key", &["before-door", "anywhere"])], variants: OURS },
 ];
 
 pub enum Val {
@@ -355,14 +359,14 @@ impl Kind {
 
 /// Stages that read what an earlier stage placed must come after it in the same pipeline.
 fn check_order(stages: &[Stage], at: &str) -> Result<(), RecipeError> {
-    let (mut rooms, mut start, mut exit) = (false, false, false);
+    let (mut rooms, mut start, mut exit, mut lock) = (false, false, false, false);
     for (n, s) in stages.iter().enumerate() {
         let mut here = String::from(at);
         here.push('[');
         push_uint(&mut here, n as u64);
         here.push(']');
         if s.kind.is_generator() {
-            (rooms, start, exit) = (matches!(s.kind, Kind::Rooms | Kind::Bsp), false, false);
+            (rooms, start, exit, lock) = (matches!(s.kind, Kind::Rooms | Kind::Bsp), false, false, false);
         }
         let missing = match s.kind {
             Kind::Combine => {
@@ -378,6 +382,16 @@ fn check_order(stages: &[Stage], at: &str) -> Result<(), RecipeError> {
             Kind::Prefab if s.pick(1) == 0 && !rooms => Some("prefab place=room needs a rooms or bsp stage before it"),
             Kind::Exit if !start => Some("exit needs a start stage before it"),
             Kind::HotPath if !exit => Some("hot-path needs an exit stage before it"),
+            Kind::Lock if !exit => Some("lock needs an exit stage before it"),
+            Kind::Lock if lock => Some("a map takes one lock stage: this is a second"),
+            // The door and key belong to the finished map: nothing after them may change it.
+            Kind::Start | Kind::Exit | Kind::Prefab | Kind::DlaErode if lock => Some(AFTER_LOCK),
+            Kind::Cull if lock && s.pick(1) == 0 => Some(AFTER_LOCK),
+            Kind::HotPath if lock && s.int(1) > 0 => Some(AFTER_LOCK),
+            Kind::Lock => {
+                lock = true;
+                None
+            }
             Kind::HotRooms if !(exit && rooms) => Some("hot-rooms needs a rooms or bsp stage and an exit stage before it"),
             Kind::DlaErode if n == 0 => Some("dla-erode erodes a map: it needs a stage before it"),
             Kind::Start => {
@@ -397,7 +411,9 @@ fn check_order(stages: &[Stage], at: &str) -> Result<(), RecipeError> {
     Ok(())
 }
 
-const KINDS: [Kind; 15] = [
+const AFTER_LOCK: &str = "this stage changes the map, the start or the exit: it must come before the lock stage";
+
+const KINDS: [Kind; 16] = [
     Kind::Rooms,
     Kind::Bsp,
     Kind::Cellular,
@@ -413,6 +429,7 @@ const KINDS: [Kind; 15] = [
     Kind::Exit,
     Kind::HotPath,
     Kind::HotRooms,
+    Kind::Lock,
 ];
 
 fn choose(v: &Json, options: &[&str], at: &str) -> Result<u8, RecipeError> {

@@ -33,7 +33,7 @@ Each changes a map that another stage made, or joins two [[own]].
 
 ## Analysis and placement
 
-Each reads a map: what can be reached, where to start and end, and what lies near the way between [[own]]. The talk’s next set of algorithms all rely on Dijkstra maps [[t:209-211]].
+Each reads a map: what can be reached, where to start and end, and what lies near the way between [[own]]. The talk’s next set of algorithms all rely on Dijkstra maps [[t:209-211]]. The last card, the locked door, is a rule of our own for what the talk describes without code [[own]].
 
 @@group Analysis and placement
 
@@ -172,6 +172,7 @@ The talk doesn’t measure its maps. Each trait, the probe and each failure crit
 - **What is measured:** each of the talk’s 22 demos, as a recipe [[own]].
 - **Seeds:** 0 to 199, each built once, by the same core that runs in this page [[own]].
 - **The data file:** every value, with the recipe and the seed behind it [[data:traits]].
+- **Also measured:** our `lock` stage, on 9 pipelines over the same seeds, in a data file of its own [[data:lock]].
 
 ### Our definitions
 
@@ -192,10 +193,12 @@ A seed fails a demo when its map meets one of these [[own]]:
 
 - **Talk says:** hide something at the least accessible point of a map, for a treasure hunt [[t:253-256]].
 - **Talk says:** hide bonus things in the gray rooms, the ones its route doesn’t need [[t:267-271]].
+- **Talk says:** a locked door needs its key before it [[t:293-294 s:31]].
 - **The lab’s walk:** borrows that, as caches to find on the way to the exit. The talk has no walk, and these rules are ours [[own]]:
   - **Caches:** up to 5, on floor or grass, at least the hot path’s radius from the route by walking. The first: the tile farthest from the route. Each later one: the tile farthest from those placed, more than 12 steps from them [[own]].
   - **Sight:** up to 9 tiles away in straight lines, over tiles that can be walked on, plus the walls that touch what you see. What you have seen stays on the map [[own]].
-  - **Afterward:** the lab draws your route over the shortest one, on the map shaded by walking distance from the start [[own]].
+  - **A locked door:** on a level where a `lock` stage placed one. It stays closed, and blocks your view, until you step on the key. Caches keep more than 12 steps from the key [[own]].
+  - **Afterward:** the lab draws your route over the shortest one, which with a door goes by way of the key, on the map shaded by walking distance from the start [[own]].
 
 ### Faithfulness to the talk’s code
 
@@ -209,5 +212,5 @@ A seed fails a demo when its map meets one of these [[own]]:
 
 @@faithfulness
 
-- **Also with this page:** the comparison’s numbers, the talk’s code’s own traits and counts, and the recipe format’s schema [[data:faithfulness data:talktraits data:checks data:schema]].
+- **Also with this page:** the comparison’s numbers, the talk’s code’s own traits and counts, and the recipe format’s schema [[data:faithfulness data:talktraits data:checks data:lock data:schema]].
 - **On the command line:** the core is also `map-lab`, in this page’s repository. `map-lab build`, `traits`, `measure` and `walk` take the same recipes [[own]].

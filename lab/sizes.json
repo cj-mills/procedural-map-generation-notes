@@ -9,17 +9,17 @@
   "limitBytes": 51200,
   "counted": "the .wasm and its wasm-bindgen glue with its doc comments removed, each gzipped, summed; the page module adds to it",
   "glueDocComments": {
-    "bytes": 4771,
-    "gzipped": 1500
+    "bytes": 5248,
+    "gzipped": 1611
   },
   "wasm": {
-    "bytes": 81689,
-    "gzipped": 36215
+    "bytes": 90770,
+    "gzipped": 39696
   },
   "glue": {
-    "bytes": 16216,
-    "gzipped": 3082
+    "bytes": 16705,
+    "gzipped": 3121
   },
-  "totalGzipped": 39297,
-  "headroom": 11903
+  "totalGzipped": 42817,
+  "headroom": 8383
 }

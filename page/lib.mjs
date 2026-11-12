@@ -19,6 +19,8 @@ export const faithTally = json('lab/data/faithfulness.json').tally;
 export const checks = json('faithfulness/talk-checks.json');
 /** The talk's own code measured over the same seeds, a summary per demo and trait as in traits.json (faithfulness/, `measure`). */
 const talkTraits = json('faithfulness/talk-traits.json');
+/** Our lock stage measured over the same seeds: its two own recipes and the pipelines in lab/recipes/lock/ (`map-lab lock`). */
+export const lock = json('lab/data/lock.json');
 export const DEMOS = Object.fromEntries(traits.demos.map((d) => [d.id, d]));
 export const N = traits.seeds.to - traits.seeds.from; // seeds measured a demo
 
@@ -53,7 +55,7 @@ export function build(recipe, seed = recipe.seed) {
 export const GROUPS = [
   { title: 'Generators', kind: 'Generator', stages: ['rooms', 'bsp', 'cellular', 'drunkard', 'dla', 'voronoi', 'noise'] },
   { title: 'Shaping and combining', kind: 'Shaping', stages: ['dla-erode', 'combine', 'prefab'] },
-  { title: 'Analysis and placement', kind: 'Analysis', stages: ['cull', 'start', 'exit', 'hot-path', 'hot-rooms'] },
+  { title: 'Analysis and placement', kind: 'Analysis', stages: ['cull', 'start', 'exit', 'hot-path', 'hot-rooms', 'lock'] },
 ];
 /** The card each of the talk's demos belongs to: the stage it is a setting of. */
 export const SUBJECT = {
@@ -79,7 +81,32 @@ export const short = (id) => id.split('-')[0];
 export const OWN = {
   roads: { file: 'recipes/own/voronoi-roads.json', label: 'Roads (our rule)' },
   nocull: { file: 'recipes/own/exit-without-cull.json', label: 'Exit without a cull (ours)' },
+  door: { file: 'recipes/own/locked-door.json', label: 'Rooms, a locked door (ours)' },
+  anywhere: { file: 'recipes/own/locked-door-key-anywhere.json', label: 'Rooms, the key anywhere (ours)' },
+  nodoor: { file: 'recipes/lock/c18-ending-right-lock.json', label: 'Caves, no place for a door (ours)' },
 };
+/** The pipelines the lock stage is measured on (lab/data/lock.json), by a short name: what each is called on the page,
+ *  and the card of the generator it starts from. */
+export const LOCKED = {
+  rooms: { id: 'locked-door', label: 'Rooms, hot rooms (c21)', card: 'rooms' },
+  anywhere: { id: 'locked-door-key-anywhere', label: 'Rooms, the key anywhere', card: 'rooms' },
+  c18: { id: 'c18-ending-right-lock', label: 'Caves, exit at right (c18)', card: 'cellular' },
+  c19: { id: 'c19-ending-dijkstra-lock', label: 'Caves, exit farthest (c19)', card: 'cellular' },
+  c20: { id: 'c20-hot-path-lock', label: 'Caves, hot path cull (c20)', card: 'hot-path' },
+  bsp: { id: 'bsp-lock', label: 'BSP rooms', card: 'bsp' },
+  dla: { id: 'dla-lock', label: 'DLA, walking', card: 'dla' },
+  roads: { id: 'voronoi-roads-lock', label: 'Voronoi roads', card: 'voronoi' },
+  drunkard: { id: 'drunkard-lock', label: 'Drunkard’s walk', card: 'drunkard' },
+};
+for (const l of Object.values(LOCKED)) {
+  l.d = lock.demos.find((x) => x.id === l.id);
+  if (!l.d) throw new Error(`lab/data/lock.json has no ${l.id}`);
+  /** Seeds on which the stage placed a door. */
+  l.places = N - l.d.failingSeeds['door-no-place'].length;
+}
+/** A lock column's value as the page prints it: counts whole or to one place, shares and ratios to two. */
+export const LOCK_DIGITS = { chokepoints: 0, door_at: 2, start_side: 2, key_off_route: 0, finish: 0, finish_ratio: 2 };
+export const fmtLock = (v, column) => (v === null || v === undefined ? '–' : LOCK_DIGITS[column] ? v.toFixed(LOCK_DIGITS[column]) : Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10));
 for (const [id, o] of Object.entries(OWN)) {
   o.recipe = json(`lab/${o.file}`);
   SHORT[id] = o.label;
@@ -106,6 +133,7 @@ export const EXTRA_TRAITS = [
 export const FAIL_NAMES = {
   'prefab-no-place': 'No place for the prefab', 'exit-unreachable': 'Exit unreachable', 'no-floor': 'No floor',
   'guard-hit': 'A loop hit our cap', 'disconnected': 'Not one region', 'no-path': 'No path', 'short-path': 'Short path', 'few-rooms': 'Few rooms',
+  'door-no-place': 'No place for a door', 'key-behind-door': 'Key behind its door',
 };
 /** One scale a trait for every mark on the page: shares run to 1, the corridor ratio to 0.4, counts to the ten above the highest seen. */
 export const SCALE = { floor_share: 1, corridor_ratio: 0.4, water: 1, grass: 1, mountain: 1 };
@@ -154,6 +182,15 @@ export function value(name) {
     const s = talkTraits.demos.find((x) => short(x.id) === what)?.summary[trait];
     if (s && stat in s) return fmt(s[stat], stat === 'n' || stat === 'nulls' ? 'n' : trait);
   }
+  // lock.c18.places is the seeds on which our lock stage placed a door; lock.anywhere.behind those with the key behind
+  // it; lock.rooms.door_at.median a column of lab/data/lock.json over the seeds.
+  if (who === 'lock' && LOCKED[what]) {
+    const l = LOCKED[what], [, , column, stat] = name.split('.');
+    if (column === 'places' && !stat) return String(l.places);
+    if (column === 'nodoor' && !stat) return String(N - l.places);
+    if (column === 'behind' && !stat) return String(l.d.failingSeeds['key-behind-door'].length);
+    if (l.d.summary[column] && stat in l.d.summary[column]) return fmtLock(l.d.summary[column][stat], column);
+  }
   if (who === 'faith' && what === 'compared') return String(faithTally.traits);
   if (who === 'faith' && what === 'consistent') return String(faithTally.traits - faithTally.differ);
   if (who === 'seeds') return String(what === 'last' ? traits.seeds.to - 1 : N);
@@ -189,7 +226,7 @@ export function palette(theme) {
   const tint = (name, pct) => mix(c[name], pct, light);
   return {
     tiles: [dark, light, c.blue, tint('green', 65), mix(c.muted, 70, dark), c.yellow, c.red],
-    marks: { 1: c.primary, 2: c.red, 3: c.magenta, 4: c.green, 5: c.yellow, 6: c.primary, 7: tint('yellow', 55), 8: tint('red', 65), 9: tint('green', 60), 10: tint('muted', 40), 11: c.magenta },
+    marks: { 1: c.primary, 2: c.red, 3: c.magenta, 4: c.green, 5: c.yellow, 6: c.primary, 7: tint('yellow', 55), 8: tint('red', 65), 9: tint('green', 60), 10: tint('muted', 40), 11: c.magenta, 12: c.cyan, 13: c.magenta, 14: tint('green', 45) },
     groups: ['blue', 'green', 'yellow', 'magenta', 'cyan', 'red'].map((n) => tint(n, 75)),
     field: Array.from({ length: 33 }, (_, i) => mix(light, Math.round((i / 32) * 100), dark)),
   };
@@ -242,6 +279,9 @@ export function figure(b, at, theme) {
     for (let cell = 0; cell < w * h; cell++) if (rows[Math.floor(cell / w)][cell % w] === '*') fill(cell, P.marks[6], Math.round((2 * S) / 8));
     fill(b.start[1] * w + b.start[0], P.marks[4]);
     if (b.exit) fill(b.exit[1] * w + b.exit[0], P.marks[5]);
+    // A locked door and its key, as the module draws them.
+    if (b.door) fill(b.door[1] * w + b.door[0], P.marks[12]);
+    if (b.key) fill(b.key[1] * w + b.key[0], P.marks[13], Math.round((2 * S) / 8));
   }
   return png(w * S, h * S, rgb);
 }

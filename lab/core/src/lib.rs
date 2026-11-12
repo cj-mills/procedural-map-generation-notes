@@ -25,7 +25,7 @@ use grid::{Grid, Rect, WALL};
 use recipe::{Kind, Recipe, Stage};
 use record::{Frame, Recorder};
 use rng::Rng;
-pub use traits::{EXIT_UNREACHABLE, GUARD_HIT, NO_FLOOR, PREFAB_NO_PLACE};
+pub use traits::{DOOR_NO_PLACE, EXIT_UNREACHABLE, GUARD_HIT, KEY_BEHIND_DOOR, NO_FLOOR, PREFAB_NO_PLACE};
 
 /// A pipeline's working state as its stages run.
 pub struct Ctx<'r> {
@@ -49,6 +49,9 @@ pub struct Ctx<'r> {
     /// For each room, whether the path passes through it, after a hot-rooms stage.
     pub important: Vec<bool>,
     pub field: Vec<f32>,
+    /// The locked door and its key, after a lock stage that found a place for them.
+    pub door: Option<usize>,
+    pub key: Option<usize>,
     pub failures: u32,
 }
 
@@ -72,6 +75,9 @@ pub struct Build {
     /// Tiles fewer than this many steps from the path are on the hot path (`level::caches`).
     pub hot_radius: i32,
     pub field: Vec<f32>,
+    /// The locked door and its key, after a lock stage that found a place for them.
+    pub door: Option<usize>,
+    pub key: Option<usize>,
     /// Failures set by the stages as they ran (`traits::FAILURES`, the first four).
     pub stage_failures: u32,
 }
@@ -98,7 +104,7 @@ pub fn build(r: &Recipe, record: bool) -> Build {
     let mut names = Vec::new();
     let mut c = Ctx::fresh(r.seed, r.width, r.height, &mut rng, &mut rec, &mut names);
     run_stages(&mut c, &r.pipeline);
-    let Ctx { g, rooms, made_rooms, important, start, exit, path, dist, hot, hot_radius, field, failures, .. } = c;
+    let Ctx { g, rooms, made_rooms, important, start, exit, path, dist, hot, hot_radius, field, door, key, failures, .. } = c;
     let rooms = made_rooms.then_some(rooms);
     Build {
         width: r.width,
@@ -115,6 +121,8 @@ pub fn build(r: &Recipe, record: bool) -> Build {
         hot,
         hot_radius,
         field,
+        door,
+        key,
         stage_failures: failures,
     }
 }
@@ -151,6 +159,8 @@ impl<'r> Ctx<'r> {
             hot_radius: recipe::HOT_RADIUS as i32,
             important: Vec::new(),
             field: Vec::new(),
+            door: None,
+            key: None,
             failures: 0,
         }
     }
@@ -179,6 +189,8 @@ fn run_stages(c: &mut Ctx, stages: &[Stage]) {
             c.hot_radius = recipe::HOT_RADIUS as i32;
             c.important.clear();
             c.field.clear();
+            c.door = None;
+            c.key = None;
         }
         match s.kind {
             Kind::Rooms => generate::rooms(c, s),
@@ -196,6 +208,7 @@ fn run_stages(c: &mut Ctx, stages: &[Stage]) {
             Kind::Exit => analyze::exit(c, s),
             Kind::HotPath => analyze::hot_path(c, s),
             Kind::HotRooms => analyze::hot_rooms(c, s),
+            Kind::Lock => analyze::lock(c, s),
         }
     }
 }

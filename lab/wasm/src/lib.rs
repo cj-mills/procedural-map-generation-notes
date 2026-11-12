@@ -121,6 +121,22 @@ impl Lab {
     pub fn failures(&self) -> u32 {
         self.b.failures()
     }
+    /// The locked door and its key as cell indices, after a lock stage that placed them; -1 for none.
+    pub fn door(&self) -> i32 {
+        opt(self.b.door)
+    }
+    pub fn key(&self) -> i32 {
+        opt(self.b.key)
+    }
+    /// The shortest walk that finishes the level, as cell indices: the path, or with a locked
+    /// door, by way of the key. Empty when the level can't be finished.
+    pub fn finish(&self) -> Vec<u32> {
+        level::finish(&self.b).iter().map(|&i| i as u32).collect()
+    }
+    /// Whether the walker has the key.
+    pub fn has_key(&self) -> bool {
+        self.walk.as_ref().is_some_and(|w| w.has_key)
+    }
     /// Start the walk, or start it again, from the level's start (`map_lab_core::walk`). False
     /// when there is no level to walk: no start, no exit, or no path between them.
     pub fn walk(&mut self) -> bool {
