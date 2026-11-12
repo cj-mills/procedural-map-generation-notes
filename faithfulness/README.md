@@ -43,7 +43,8 @@ cd ../lab && node measure.mjs                                # regenerates data/
 ```
 
 `talk-traits.json` is committed: the comparison in `lab/data/faithfulness.json` regenerates
-from it without the talk's code. Building bracket-lib compiles its default window backend too,
+from it without the talk's code. The bundle carries it too, because the page states some of
+its medians (`page/lib.mjs`, `value()`, names such as `talk.c02.rooms.median`). Building bracket-lib compiles its default window backend too,
 though no window opens.
 
 ## What four demos do, counted

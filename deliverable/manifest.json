@@ -1,7 +1,7 @@
 {
   "format": "0.1",
   "id": "procedural-map-generation-techniques-notes",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "title": "Procedural map generation: an interactive lab built on Herbert Wolverson’s talk",
   "summary": "Build a map from the techniques of Herbert Wolverson’s talk, measure it over 200 seeds, and walk it to its exit.",
   "pageType": "post",
@@ -61,6 +61,11 @@
       "date": "2026-11-11",
       "version": "0.7.0",
       "note": "Adds a section on where the talk and its code differ: 12 places where the talk says one thing and its code does another, and 13 things the code does that the talk doesn’t mention, each cited to both, with counts from running the talk’s own code. The openings of the diffusion-limited aggregation and erosion cards now say what the code does, and the hot rooms card states the test the code applies."
+    },
+    {
+      "date": "2026-11-11",
+      "version": "0.7.1",
+      "note": "The page now carries the traits measured on the talk’s own code, seed by seed, which five counts in the section on where the talk and its code differ are read from. The text is unchanged but for the two items that name the page’s data files."
     }
   ],
   "testedAgainst": [

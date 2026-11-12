@@ -29,7 +29,7 @@ const content = join(root, 'page/content');
  *  the claim as partly ours and as stating a measured value. `backend` is the demos' shared map code, and
  *  data:<file> a file of the bundle's own. */
 const SOURCES = { talk: 'wolverson2020-talk/transcript', slides: 'wolverson2020-slides/pdf', code: 'wolverson2020-code' };
-const DATA = { traits: 'assets/lab/traits.json', faithfulness: 'assets/lab/faithfulness.json', checks: 'assets/lab/talk-checks.json', schema: 'assets/lab/recipe.schema.json' };
+const DATA = { traits: 'assets/lab/traits.json', faithfulness: 'assets/lab/faithfulness.json', checks: 'assets/lab/talk-checks.json', talktraits: 'assets/lab/talk-traits.json', schema: 'assets/lab/recipe.schema.json' };
 const demoDir = (id) => Object.keys(DEMOS).find((d) => short(d) === id);
 function citations(text, file) {
   // The values after run: are its list, to the next token of another kind.
